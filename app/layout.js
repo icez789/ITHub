@@ -1,14 +1,20 @@
-import "./globals.css"; // 👈 บรรทัดนี้สำคัญมาก! ต้องมี
+import "./globals.css";
+import ToastProvider from "../components/ToastProvider"; // 1. เรียกใช้ตัวที่เราเพิ่งสร้าง
 
 export const metadata = {
-  title: "IT Webboard",
+  title: "IT Techboard",
   description: "ชุมชนไอที วิทยาลัยเทคนิคเชียงใหม่",
 };
 
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body>
+        {/* 2. ใส่ ToastProvider ไว้ตรงนี้ (อยู่เหนือเนื้อหาทั้งหมด) */}
+        <ToastProvider />
+        
+        {children}
+      </body>
     </html>
   );
 }
