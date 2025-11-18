@@ -1,5 +1,6 @@
 import "./globals.css";
-import ToastProvider from "../components/ToastProvider"; // 1. เรียกใช้ตัวที่เราเพิ่งสร้าง
+import ToastProvider from "../components/ToastProvider";
+import { ThemeProvider } from "../components/ThemeProvider";
 
 export const metadata = {
   title: "IT Techboard",
@@ -8,12 +9,13 @@ export const metadata = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en">
-      <body>
-        {/* 2. ใส่ ToastProvider ไว้ตรงนี้ (อยู่เหนือเนื้อหาทั้งหมด) */}
-        <ToastProvider />
-        
-        {children}
+    <html lang="en" suppressHydrationWarning>
+      {/* แก้ไข: dark:bg-black (ดำสนิท) และ dark:text-gray-100 (ตัวหนังสือขาว) */}
+      <body className="bg-gray-50 text-gray-900 dark:bg-black dark:text-gray-100 transition-colors duration-300 min-h-screen">
+        <ThemeProvider>
+           <ToastProvider />
+           {children}
+        </ThemeProvider>
       </body>
     </html>
   );
