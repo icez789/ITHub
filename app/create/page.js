@@ -42,6 +42,8 @@ export default async function CreateTopicPage() {
       'INSERT INTO topics (title, category, content, user_id, image_url) VALUES (?, ?, ?, ?, ?)', 
       [title, category, content, user.id, imageUrl]
     );
+    // ✨ เพิ่มใหม่: บวกแต้ม post_count ให้ผู้ใช้ +1
+    await db.query('UPDATE users SET post_count = post_count + 1 WHERE id = ?', [user.id]);
 
     redirect('/?notify=create_success');
   }

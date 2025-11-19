@@ -1,13 +1,12 @@
-'use client'; // ต้องเป็น Client Component
+'use client';
 
 import React, { useState } from 'react';
 import dynamic from 'next/dynamic';
 
-// 1. เปลี่ยนการเรียกใช้เป็น 'react-quill-new'
 const ReactQuill = dynamic(() => import('react-quill-new'), { ssr: false });
-import 'react-quill-new/dist/quill.snow.css'; // เปลี่ยน CSS ด้วย
+import 'react-quill-new/dist/quill.snow.css';
 
-export default function Editor({ defaultValue = '' }) {
+export default function Editor({ defaultValue = '', className = "h-64 mb-12" }) {
   const [value, setValue] = useState(defaultValue);
 
   const modules = {
@@ -15,23 +14,20 @@ export default function Editor({ defaultValue = '' }) {
       [{ 'header': [1, 2, false] }],
       ['bold', 'italic', 'underline', 'strike', 'blockquote'],
       [{'list': 'ordered'}, {'list': 'bullet'}],
-      ['link'],
+      ['link', 'image'], // ✨ เพิ่ม 'image' ตรงนี้ เพื่อให้มีปุ่มอัปรูป
       ['clean']
     ],
   };
 
   return (
-    <div className="bg-white">
-      {/* ตัว Editor สำหรับพิมพ์ */}
+    <div className="bg-white text-black"> {/* บังคับ text-black เพื่อให้พิมพ์เห็นในโหมดมืด */}
       <ReactQuill 
         theme="snow" 
         value={value} 
         onChange={setValue} 
         modules={modules}
-        className="h-64 mb-12" 
+        className={className} // ใช้ className ที่ส่งมา (จะได้ปรับความสูงได้)
       />
-
-      {/* Input ล่องหน: เอาไว้ส่งค่าเข้า Server Action (name="content") */}
       <input type="hidden" name="content" value={value} />
     </div>
   );
