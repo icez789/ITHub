@@ -4,39 +4,59 @@ import db from '../../lib/db';
 import { redirect } from 'next/navigation';
 import { cookies } from 'next/headers';
 import { revalidatePath } from 'next/cache';
+import Link from 'next/link';
 
 export default async function AdminDashboard() {
-  // 1. เช็กสิทธิ์ Admin (ห้ามคนนอกเข้า!)
   const cookieStore = await cookies();
   const session = cookieStore.get('user_session');
   if (!session) redirect('/login');
   
   const currentUser = JSON.parse(session.value);
   
-  // ดึงข้อมูลล่าสุดของคนล็อกอินเพื่อเช็ก Role อีกที (กันเหนียว)
   const [adminCheck] = await db.query('SELECT role FROM users WHERE id = ?', [currentUser.id]);
   if (adminCheck[0].role !== 'admin') {
-    redirect('/'); // ไม่ใช่แอดมิน ดีดกลับหน้าแรก
+    redirect('/'); 
   }
 
-  // 2. ดึงสถิติรวม (Stats)
+  // 1. ดึงสถิติ
   const [userCount] = await db.query('SELECT COUNT(*) as count FROM users');
   const [topicCount] = await db.query('SELECT COUNT(*) as count FROM topics');
   const [commentCount] = await db.query('SELECT COUNT(*) as count FROM comments');
 
-  // 3. ดึงรายชื่อสมาชิกทั้งหมด (เรียงจากใหม่ไปเก่า)
+  // 2. ดึง User
   const [users] = await db.query('SELECT * FROM users ORDER BY created_at DESC');
 
-  // --- Server Action: สั่งแบน/ปลดแบน ---
+  // ✨ 3. เพิ่มใหม่: ดึงรายการแจ้งปัญหา (Reports) ที่สถานะเป็น 'pending'
+  // เราต้อง JOIN เพื่อดูว่าใครแจ้ง และแจ้งเนื้อหาอะไร
+  const [reports] = await db.query(`
+    SELECT r.*, 
+           reporter.username as reporter_name,
+           t.title as topic_title,
+           c.content as comment_content
+    FROM reports r
+    LEFT JOIN users reporter ON r.reporter_id = reporter.id
+    LEFT JOIN topics t ON r.topic_id = t.id
+    LEFT JOIN comments c ON r.comment_id = c.id
+    WHERE r.status = 'pending'
+    ORDER BY r.created_at DESC
+  `);
+
+  // --- Server Actions ---
+  
   async function toggleBan(formData) {
     'use server';
     const userId = formData.get('userId');
-    const currentStatus = formData.get('currentStatus') === '1'; // แปลงเป็น boolean
-    
-    // สลับสถานะ (ถ้าแบนอยู่ -> ปลด, ถ้าปกติ -> แบน)
+    const currentStatus = formData.get('currentStatus') === '1'; 
     const newStatus = !currentStatus;
-    
     await db.query('UPDATE users SET is_banned = ? WHERE id = ?', [newStatus, userId]);
+    revalidatePath('/admin');
+  }
+
+  // ✨ Action: กดเคลียร์งาน (เปลี่ยนสถานะเป็น resolved)
+  async function resolveReport(formData) {
+    'use server';
+    const reportId = formData.get('reportId');
+    await db.query("UPDATE reports SET status = 'resolved' WHERE id = ?", [reportId]);
     revalidatePath('/admin');
   }
 
@@ -45,11 +65,11 @@ export default async function AdminDashboard() {
       <Navbar />
       
       <div className="container mx-auto p-6 max-w-6xl">
-        <h1 className="text-3xl font-bold mb-8 flex items-center gap-3">
+        <h1 className="text-3xl font-bold mb-8 flex items-center gap-3 dark:text-white">
           <span className="text-4xl">🛡️</span> Admin Dashboard
         </h1>
 
-        {/* --- ส่วนแสดงสถิติ (Stat Cards) --- */}
+        {/* --- ส่วนสถิติ (Stats) --- */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
           <div className="bg-white p-6 rounded-xl shadow-sm border-l-4 border-blue-500 dark:bg-neutral-900 dark:border-neutral-800">
             <h3 className="text-gray-500 text-sm font-bold uppercase dark:text-gray-400">สมาชิกทั้งหมด</h3>
@@ -65,7 +85,65 @@ export default async function AdminDashboard() {
           </div>
         </div>
 
-        {/* --- ตารางรายชื่อสมาชิก --- */}
+        {/* --- ✨ ส่วนใหม่: รายการแจ้งปัญหา (Reports) --- */}
+        {reports.length > 0 && (
+          <div className="bg-white rounded-xl shadow-lg overflow-hidden mb-10 border border-red-100 dark:bg-neutral-900 dark:border-red-900/30">
+            <div className="px-6 py-4 border-b border-red-100 bg-red-50 flex justify-between items-center dark:bg-red-900/20 dark:border-red-900/30">
+              <h3 className="font-bold text-red-700 flex items-center gap-2 dark:text-red-400">
+                🚨 แจ้งปัญหาที่รอตรวจสอบ ({reports.length})
+              </h3>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-sm">
+                <thead className="bg-red-50 text-red-700 uppercase font-bold dark:bg-red-900/10 dark:text-red-400">
+                  <tr>
+                    <th className="px-6 py-3">ประเภท</th>
+                    <th className="px-6 py-3">เนื้อหาที่ถูกแจ้ง</th>
+                    <th className="px-6 py-3">เหตุผล</th>
+                    <th className="px-6 py-3">ผู้แจ้ง</th>
+                    <th className="px-6 py-3 text-center">จัดการ</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-red-100 dark:divide-neutral-800">
+                  {reports.map((r) => (
+                    <tr key={r.id} className="hover:bg-red-50/50 transition dark:hover:bg-neutral-800">
+                      <td className="px-6 py-4">
+                        <span className={`px-2 py-1 rounded text-xs font-bold ${r.topic_id ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300' : 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300'}`}>
+                          {r.topic_id ? 'กระทู้' : 'คอมเมนต์'}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 max-w-xs truncate font-medium dark:text-gray-300">
+                        {r.topic_id ? (
+                          <Link href={`/topic/${r.topic_id}`} target="_blank" className="hover:underline text-blue-600 dark:text-blue-400">
+                            {r.topic_title || '(กระทู้อาจถูกลบไปแล้ว)'} ↗
+                          </Link>
+                        ) : (
+                          <span className="italic">"{r.comment_content || '(คอมเมนต์ถูกลบ)'}"</span>
+                        )}
+                      </td>
+                      <td className="px-6 py-4 text-red-600 font-bold dark:text-red-400">{r.reason}</td>
+                      <td className="px-6 py-4 text-gray-500 dark:text-gray-400">{r.reporter_name}</td>
+                      <td className="px-6 py-4 text-center">
+                        <form action={resolveReport}>
+                          <input type="hidden" name="reportId" value={r.id} />
+                          <button 
+                            type="submit" 
+                            className="px-3 py-1 rounded text-xs font-bold bg-green-500 text-white hover:bg-green-600 shadow-sm transition"
+                            title="กดเมื่อจัดการเสร็จแล้ว"
+                          >
+                            ✅ เคลียร์
+                          </button>
+                        </form>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {/* --- ตารางรายชื่อสมาชิก (เหมือนเดิม) --- */}
         <div className="bg-white rounded-xl shadow-lg overflow-hidden dark:bg-neutral-900 dark:border dark:border-neutral-800">
           <div className="px-6 py-4 border-b border-gray-200 bg-gray-50 flex justify-between items-center dark:bg-neutral-800 dark:border-neutral-700">
             <h3 className="font-bold text-gray-700 dark:text-gray-200">📋 รายชื่อผู้ใช้งาน</h3>
@@ -111,17 +189,13 @@ export default async function AdminDashboard() {
                       )}
                     </td>
                     <td className="px-6 py-4 text-center">
-                      {/* ห้ามแบนตัวเอง! */}
                       {u.id !== currentUser.id && (
                         <form action={toggleBan}>
                           <input type="hidden" name="userId" value={u.id} />
                           <input type="hidden" name="currentStatus" value={u.is_banned ? '1' : '0'} />
                           <button 
                             type="submit" 
-                            className={`px-3 py-1 rounded text-xs font-bold transition shadow-sm ${u.is_banned 
-                              ? 'bg-gray-500 text-white hover:bg-gray-600' // ปุ่มปลดแบน
-                              : 'bg-red-500 text-white hover:bg-red-600'   // ปุ่มแบน
-                            }`}
+                            className={`px-3 py-1 rounded text-xs font-bold transition shadow-sm ${u.is_banned ? 'bg-gray-500 text-white hover:bg-gray-600' : 'bg-red-500 text-white hover:bg-red-600'}`}
                           >
                             {u.is_banned ? '🔓 ปลดแบน' : '🚫 แบน'}
                           </button>

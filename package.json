@@ -12,6 +12,7 @@
     "axios": "^1.13.2",
     "bcryptjs": "^3.0.3",
     "framer-motion": "^12.23.24",
+    "highlight.js": "^11.11.1",
     "lucide-react": "^0.554.0",
     "mysql2": "^3.15.3",
     "next": "16.0.3",

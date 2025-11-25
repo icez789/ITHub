@@ -3,19 +3,7 @@
 /* บังคับให้ dark: ทำงานเมื่อมี class="dark" */
 @variant dark (&:where(.dark, .dark *));
 
-/* === สูตรทำอนิเมชันไล่สี === */
-@keyframes gradient-flow {
-  0% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
-}
-
-.animate-gradient-flow {
-  background-size: 300% 300%; /* ขยายพื้นหลังให้ใหญ่กว่ากล่อง เพื่อให้เลื่อนได้ */
-  animation: gradient-flow 8s ease infinite; /* สั่งให้ขยับไปมาทุก 8 วินาที */
-}
-
-/* เพิ่มส่วนนี้ต่อท้ายสุด */
+/* อนิเมชันพื้นหลังสีรุ้ง */
 @keyframes rainbow-move {
   0% { background-position: 0% 50%; }
   50% { background-position: 100% 50%; }
@@ -26,4 +14,50 @@
   background: linear-gradient(270deg, #ff0000, #ff7f00, #ffff00, #00ff00, #0000ff, #4b0082, #9400d3, #ff0000);
   background-size: 400% 400%;
   animation: rainbow-move 10s ease infinite;
+}
+
+/* ตกแต่งกล่องโค้ด (Syntax Highlight) */
+.ql-syntax {
+  background-color: #282c34; /* สีพื้นหลัง Atom Dark */
+  color: #abb2bf;            /* สีตัวหนังสือ */
+  padding: 1rem;
+  border-radius: 0.5rem;
+  overflow-x: auto;          /* ถ้าโค้ดยาวให้เลื่อนซ้ายขวาได้ */
+  font-family: 'Courier New', Courier, monospace;
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+  border: 1px solid #3e4451;
+}
+
+/* ปรับรูปใน Editor ให้ไม่ล้น */
+.prose img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 0.5rem;
+}
+
+/* ✨✨✨ เพิ่มส่วนนี้: ปรับแต่ง Quill Editor ให้รองรับ Dark Mode ✨✨✨ */
+
+/* ปรับสี Toolbar (แถบเครื่องมือด้านบน) ในโหมดมืด */
+.dark .ql-toolbar {
+  background-color: #262626; /* Neutral-800 */
+  border-color: #404040 !important; /* Neutral-700 */
+}
+
+/* ปรับสีไอคอนเครื่องมือให้เป็นสีขาว */
+.dark .ql-stroke { stroke: #d4d4d4 !important; }
+.dark .ql-fill { fill: #d4d4d4 !important; }
+.dark .ql-picker { color: #d4d4d4 !important; }
+
+/* ปรับพื้นที่เขียนข้อความ (Container) */
+.dark .ql-container {
+  background-color: #171717; /* Neutral-900 */
+  border-color: #404040 !important;
+  color: #e5e5e5 !important; /* ตัวหนังสือสีขาว */
+}
+
+/* ปรับ Placeholder (ข้อความจางๆ ตอนยังไม่พิมพ์) */
+.dark .ql-editor.ql-blank::before {
+  color: #a3a3a3 !important;
+  font-style: normal;
 }

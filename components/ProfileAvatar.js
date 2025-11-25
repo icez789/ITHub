@@ -5,9 +5,9 @@ import Link from 'next/link';
 
 export default function ProfileAvatar({ user, updateAvatar, myTopicsCount }) {
   return (
-    // 1. Container หลัก: dark:bg-neutral-900 (เทาเข้ม)
     <div className="bg-white p-6 rounded-xl shadow-md text-center border-t-4 border-gray-800 dark:bg-neutral-900 dark:border-neutral-700">
       
+      {/* ส่วนรูปโปรไฟล์ */}
       <div className="relative w-32 h-32 mx-auto mb-4 group">
         <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-white shadow-lg bg-gray-200 flex items-center justify-center relative dark:border-neutral-700 dark:bg-neutral-800">
            {user.avatar_url ? (
@@ -28,7 +28,7 @@ export default function ProfileAvatar({ user, updateAvatar, myTopicsCount }) {
       <h2 className="text-2xl font-bold text-gray-800 dark:text-white">{user.username}</h2>
       <p className="text-gray-500 text-sm mb-4 dark:text-gray-400">{user.email}</p>
       
-      {/* 2. กล่อง Bio: ใช้ bg-gray-50 (สว่าง) และ dark:bg-neutral-800 (มืด - เทาเข้ม) */}
+      {/* ส่วน Bio */}
       {user.bio && (
         <div className="mb-6 text-gray-600 italic text-sm p-3 rounded-lg border border-gray-100 
                         bg-gray-50 dark:bg-neutral-800 dark:border-neutral-700 dark:text-gray-300 
@@ -37,10 +37,20 @@ export default function ProfileAvatar({ user, updateAvatar, myTopicsCount }) {
         </div>
       )}
 
-      <Link href="/profile/edit" className="inline-block w-full mb-6 py-2 px-4 bg-white border border-gray-300 text-gray-700 font-bold rounded-lg hover:bg-gray-50 transition dark:bg-neutral-800 dark:border-neutral-700 dark:text-gray-200 dark:hover:bg-neutral-700">
-        ⚙️ แก้ไขข้อมูลส่วนตัว
-      </Link>
+      {/* กลุ่มปุ่ม Action */}
+      <div className="flex flex-col gap-3 mb-6">
+          {/* ปุ่มแก้ไข */}
+          <Link href="/profile/edit" className="w-full py-2 px-4 bg-white border border-gray-300 text-gray-700 font-bold rounded-lg hover:bg-gray-50 transition dark:bg-neutral-800 dark:border-neutral-700 dark:text-gray-200 dark:hover:bg-neutral-700">
+            ⚙️ แก้ไขข้อมูลส่วนตัว
+          </Link>
+
+          {/* ปุ่มดูรายการที่บันทึก (Saved Topics) */}
+          <Link href="/profile/saved" className="w-full py-2 px-4 bg-blue-50 border border-blue-200 text-blue-700 font-bold rounded-lg hover:bg-blue-100 transition dark:bg-blue-900/20 dark:border-blue-800 dark:text-blue-300 dark:hover:bg-blue-900/40">
+            🔖 รายการที่บันทึกไว้
+          </Link>
+      </div>
       
+      {/* ส่วนสถิติ */}
       <div className="text-left bg-gray-50 p-4 rounded-lg text-sm space-y-2 dark:bg-black dark:border dark:border-neutral-800">
         <div className="flex justify-between">
           <span className="text-gray-500 dark:text-gray-400">สถานะ:</span>

@@ -2,12 +2,12 @@
 
 import React, { useState } from 'react';
 import UserBadge from './UserBadge';
-import Editor from './Editor'; // เราจะใช้ Editor ตัวเดิมตอบกลับก็ได้ หรือจะใช้ textarea ธรรมดาก็ได้ (ในที่นี้ขอใช้ textarea เพื่อความเบา)
+import ReportButton from './ReportButton'; // 1. เรียกใช้
 
-export default function CommentItem({ comment, currentUser, isAdmin, topicUserId, deleteAction, replyAction }) {
+// รับ reportAction เข้ามาด้วย
+export default function CommentItem({ comment, currentUser, isAdmin, topicUserId, deleteAction, replyAction, reportAction }) {
   const [isReplying, setIsReplying] = useState(false);
 
-  // เช็กสิทธิ์ลบ: เจ้าของเม้น OR เจ้าของกระทู้ OR แอดมิน
   const canDelete = currentUser && (
     currentUser.id === comment.user_id || 
     currentUser.id === topicUserId || 
@@ -18,7 +18,6 @@ export default function CommentItem({ comment, currentUser, isAdmin, topicUserId
     <div className="flex flex-col">
       <div className={`bg-white p-4 rounded-xl border border-gray-200 shadow-sm flex gap-4 group relative dark:bg-neutral-900 dark:border-neutral-800 ${comment.parent_id ? 'ml-8 md:ml-12 border-l-4 border-l-gray-300 dark:border-l-neutral-700' : ''}`}>
         
-        {/* Avatar */}
         <div className="w-10 h-10 bg-gray-100 rounded-full flex-shrink-0 flex items-center justify-center font-bold text-red-600 border border-gray-300 dark:bg-neutral-800 dark:border-neutral-700 dark:text-red-400">
           {(comment.username || '?').charAt(0).toUpperCase()}
         </div>
@@ -30,16 +29,21 @@ export default function CommentItem({ comment, currentUser, isAdmin, topicUserId
                 <UserBadge role={comment.role} postCount={comment.post_count} />
                 {comment.parent_id && <span className="text-xs text-gray-400">ตอบกลับความคิดเห็น</span>}
              </div>
-             <span className="text-xs text-gray-400 dark:text-gray-500">{new Date(comment.created_at).toLocaleString('th-TH')}</span>
+             <div className="flex items-center gap-2">
+                <span className="text-xs text-gray-400 dark:text-gray-500">{new Date(comment.created_at).toLocaleString('th-TH')}</span>
+                
+                {/* 2. เพิ่มปุ่ม Report ตรงนี้ (แสดงถ้าไม่ใช่คอมเมนต์เราเอง) */}
+                {currentUser && currentUser.id !== comment.user_id && (
+                   <ReportButton targetId={comment.id} type="comment" reportAction={reportAction} />
+                )}
+             </div>
           </div>
           
-          {/* เนื้อหาคอมเมนต์ */}
           <div 
             className="text-gray-700 whitespace-pre-wrap leading-relaxed dark:text-gray-300 prose max-w-none dark:prose-invert text-sm" 
             dangerouslySetInnerHTML={{ __html: comment.content }} 
           />
 
-          {/* ปุ่ม Action ด้านล่าง */}
           <div className="mt-3 flex gap-3 items-center">
             {currentUser && (
                 <button 
@@ -52,7 +56,6 @@ export default function CommentItem({ comment, currentUser, isAdmin, topicUserId
           </div>
         </div>
 
-        {/* ปุ่มลบ (มุมขวาบน) */}
         {canDelete && (
           <form action={deleteAction} className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
              <input type="hidden" name="commentId" value={comment.id} />
@@ -61,12 +64,11 @@ export default function CommentItem({ comment, currentUser, isAdmin, topicUserId
         )}
       </div>
 
-      {/* ฟอร์มตอบกลับ (แสดงเมื่อกดปุ่ม) */}
       {isReplying && (
         <div className={`mt-2 mb-4 ${comment.parent_id ? 'ml-12 md:ml-16' : 'ml-12 md:ml-16'}`}>
             <form action={(formData) => {
                 replyAction(formData);
-                setIsReplying(false); // ปิดฟอร์มเมื่อส่ง
+                setIsReplying(false); 
             }} className="flex gap-2 items-start">
                 <div className="flex-1">
                     <textarea 
@@ -85,7 +87,6 @@ export default function CommentItem({ comment, currentUser, isAdmin, topicUserId
         </div>
       )}
 
-      {/* แสดงลูกๆ (Nested Comments) แบบ Recursive */}
       {comment.children && comment.children.length > 0 && (
         <div className="mt-2 flex flex-col gap-2">
             {comment.children.map(child => (
@@ -97,6 +98,7 @@ export default function CommentItem({ comment, currentUser, isAdmin, topicUserId
                     topicUserId={topicUserId}
                     deleteAction={deleteAction}
                     replyAction={replyAction}
+                    reportAction={reportAction} // อย่าลืมส่งต่อให้ลูกๆ ด้วย
                 />
             ))}
         </div>
