@@ -4,10 +4,10 @@ import db from '../../lib/db';
 import { redirect } from 'next/navigation';
 import bcrypt from 'bcryptjs';
 import Link from 'next/link';
+import RippleButton from '../../components/RippleButton'; // เรียกใช้
 
 export default function RegisterPage() {
 
-  // --- Server Action: สมัครสมาชิก ---
   async function registerUser(formData) {
     'use server';
     
@@ -16,7 +16,6 @@ export default function RegisterPage() {
     const password = formData.get('password');
     const confirmPassword = formData.get('confirmPassword');
 
-    // เช็กเบื้องต้น
     if (password !== confirmPassword) {
         console.log("Error: รหัสผ่านไม่ตรงกัน");
         return;
@@ -25,19 +24,15 @@ export default function RegisterPage() {
     const hashedPassword = await bcrypt.hash(password, 10);
 
     try {
-      // บันทึกลง Database
       await db.query(
         'INSERT INTO users (username, email, password) VALUES (?, ?, ?)',
         [username, email, hashedPassword]
       );
     } catch (error) {
       console.error("Register Error:", error);
-      // ถ้า Error (เช่น อีเมลซ้ำ) ให้หยุดทำงานตรงนี้ ไม่ไปบรรทัด redirect
       return; 
     }
 
-    // ✅ ย้าย redirect ออกมาไว้นอก try-catch แล้ว!
-    // แบบนี้ Next.js จะเปลี่ยนหน้าได้ปกติครับ
     redirect('/login?notify=register_success');
   }
 
@@ -57,54 +52,31 @@ export default function RegisterPage() {
             
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1 dark:text-gray-300">ชื่อผู้ใช้ (Username)</label>
-              <input 
-                name="username"
-                type="text" 
-                required
-                placeholder="เช่น Somchai IT"
-                className="w-full bg-gray-50 border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-red-500 focus:outline-none dark:bg-black dark:border-neutral-700 dark:text-white dark:placeholder-gray-600"
-              />
+              <input name="username" type="text" required placeholder="เช่น Somchai IT" className="w-full bg-gray-50 border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-red-500 focus:outline-none dark:bg-black dark:border-neutral-700 dark:text-white dark:placeholder-gray-600" />
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1 dark:text-gray-300">อีเมล</label>
-              <input 
-                name="email"
-                type="email" 
-                required
-                placeholder="name@example.com"
-                className="w-full bg-gray-50 border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-red-500 focus:outline-none dark:bg-black dark:border-neutral-700 dark:text-white dark:placeholder-gray-600"
-              />
+              <input name="email" type="email" required placeholder="name@example.com" className="w-full bg-gray-50 border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-red-500 focus:outline-none dark:bg-black dark:border-neutral-700 dark:text-white dark:placeholder-gray-600" />
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1 dark:text-gray-300">รหัสผ่าน</label>
-              <input 
-                name="password"
-                type="password" 
-                required
-                placeholder="••••••••"
-                className="w-full bg-gray-50 border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-red-500 focus:outline-none dark:bg-black dark:border-neutral-700 dark:text-white dark:placeholder-gray-600"
-              />
+              <input name="password" type="password" required placeholder="••••••••" className="w-full bg-gray-50 border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-red-500 focus:outline-none dark:bg-black dark:border-neutral-700 dark:text-white dark:placeholder-gray-600" />
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1 dark:text-gray-300">ยืนยันรหัสผ่าน</label>
-              <input 
-                name="confirmPassword"
-                type="password" 
-                required
-                placeholder="••••••••"
-                className="w-full bg-gray-50 border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-red-500 focus:outline-none dark:bg-black dark:border-neutral-700 dark:text-white dark:placeholder-gray-600"
-              />
+              <input name="confirmPassword" type="password" required placeholder="••••••••" className="w-full bg-gray-50 border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-red-500 focus:outline-none dark:bg-black dark:border-neutral-700 dark:text-white dark:placeholder-gray-600" />
             </div>
 
-            <button 
+            {/* ใช้ RippleButton */}
+            <RippleButton 
               type="submit" 
-              className="mt-4 w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 rounded-lg shadow-lg transition-all transform active:scale-95 dark:bg-red-700 dark:hover:bg-red-600"
+              className="mt-4 w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 rounded-lg shadow-lg dark:bg-red-700 dark:hover:bg-red-600"
             >
               สมัครสมาชิก
-            </button>
+            </RippleButton>
           </form>
 
           <p className="text-center mt-6 text-gray-500 text-sm dark:text-gray-400">

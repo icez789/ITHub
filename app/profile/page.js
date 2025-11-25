@@ -7,6 +7,7 @@ import Link from 'next/link';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import ProfileAvatar from '../../components/ProfileAvatar'; 
+import Footer from '../../components/Footer'; // 1. Import Footer (ถอย 2 ชั้น)
 
 export default async function ProfilePage() {
   const cookieStore = await cookies();
@@ -53,12 +54,10 @@ export default async function ProfilePage() {
   }
 
   return (
-    // 1. แก้ Container หลัก: เพิ่ม dark:bg-black dark:text-gray-100
     <div className="min-h-screen bg-gray-100 font-sans text-gray-800 dark:bg-black dark:text-gray-100 transition-colors duration-300">
       <Navbar />
       
       <div className="container mx-auto p-6 max-w-5xl">
-        {/* 2. แก้หัวข้อ: เพิ่ม dark:text-white dark:border-red-700 */}
         <h1 className="text-3xl font-bold mb-8 text-gray-800 border-l-8 border-red-600 pl-4 dark:text-white dark:border-red-700">
           โปรไฟล์ของฉัน
         </h1>
@@ -74,7 +73,6 @@ export default async function ProfilePage() {
           </div>
 
           <div className="md:col-span-2">
-            {/* 3. แก้หัวข้อย่อย: เพิ่ม dark:text-gray-200 */}
             <h3 className="text-xl font-bold mb-4 flex items-center gap-2 dark:text-gray-200">
               📝 กระทู้ที่คุณตั้งไว้ ({myTopics.length})
             </h3>
@@ -82,7 +80,6 @@ export default async function ProfilePage() {
             <div className="space-y-4">
               {myTopics.length > 0 ? (
                 myTopics.map((topic) => (
-                  // 4. แก้การ์ดกระทู้: เพิ่ม dark:bg-neutral-900 dark:border-neutral-800 และสีตัวหนังสือภายใน
                   <div key={topic.id} className="bg-white p-5 rounded-xl shadow-sm border border-gray-200 hover:shadow-md transition-all flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 dark:bg-neutral-900 dark:border-neutral-800">
                     <div className="flex-1">
                        <div className="flex items-center gap-2 mb-1">
@@ -120,6 +117,9 @@ export default async function ProfilePage() {
 
         </div>
       </div>
+
+      {/* 2. เพิ่ม Footer ตรงนี้ */}
+      <Footer />
     </div>
   );
 }

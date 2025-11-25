@@ -5,6 +5,7 @@ import { redirect } from 'next/navigation';
 import bcrypt from 'bcryptjs';
 import Link from 'next/link';
 import { cookies } from 'next/headers';
+import RippleButton from '../../components/RippleButton'; // เรียกใช้
 
 export default function LoginPage() {
 
@@ -17,17 +18,14 @@ export default function LoginPage() {
     const [users] = await db.query('SELECT * FROM users WHERE email = ?', [email]);
     const user = users[0];
 
-    // ถ้าไม่เจอ User หรือ รหัสผิด
     if (!user || !(await bcrypt.compare(password, user.password))) {
-      redirect('/login?notify=login_failed'); // ส่งไปแจ้งเตือนว่ารหัสผิด
+      redirect('/login?notify=login_failed');
     }
 
-    // ✨ เช็กว่าโดนแบนไหม?
     if (user.is_banned) {
-       redirect('/login?notify=banned'); // ส่งไปแจ้งเตือนว่าโดนแบน
+       redirect('/login?notify=banned');
     }
 
-    // ถ้าผ่านทุกด่าน -> สร้าง Cookie
     const userData = JSON.stringify({ 
       id: user.id, 
       username: user.username,
@@ -64,13 +62,18 @@ export default function LoginPage() {
               <label className="block text-sm font-medium text-gray-700 mb-1 dark:text-gray-300">รหัสผ่าน</label>
               <input name="password" type="password" required placeholder="••••••••" className="w-full bg-gray-50 border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-red-500 focus:outline-none dark:bg-black dark:border-neutral-700 dark:text-white" />
             </div>
-            <button type="submit" className="mt-4 w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 rounded-lg shadow-lg transition-all transform active:scale-95">
+            
+            {/* ใช้ RippleButton */}
+            <RippleButton 
+              type="submit" 
+              className="mt-4 w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 rounded-lg shadow-lg dark:bg-red-700 dark:hover:bg-red-600"
+            >
               เข้าสู่ระบบ
-            </button>
+            </RippleButton>
           </form>
 
           <p className="text-center mt-6 text-gray-500 text-sm dark:text-gray-400">
-            ยังไม่มีบัญชี? <Link href="/register" className="text-red-600 hover:underline font-bold">สมัครสมาชิก</Link>
+            ยังไม่มีบัญชี? <Link href="/register" className="text-red-600 hover:underline font-bold dark:text-red-400">สมัครสมาชิก</Link>
           </p>
         </div>
       </div>

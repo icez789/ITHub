@@ -4,7 +4,8 @@ import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import db from '../lib/db'; 
 import ThemeToggle from './ThemeToggle'; 
-import NotificationBell from './NotificationBell'; // 1. เรียกใช้
+import NotificationBell from './NotificationBell';
+import BouncyLink from './BouncyLink'; // 1. เรียกใช้ BouncyLink
 
 export default async function Navbar() {
   const cookieStore = await cookies();
@@ -19,22 +20,12 @@ export default async function Navbar() {
       const [users] = await db.query('SELECT * FROM users WHERE id = ?', [sessionData.id]);
       user = users[0]; 
       
-      // 2. ดึงแจ้งเตือนล่าสุด 10 รายการ
       if (user) {
-        const [notis] = await db.query(
-          'SELECT * FROM notifications WHERE user_id = ? ORDER BY created_at DESC LIMIT 10', 
-          [user.id]
-        );
+        const [notis] = await db.query('SELECT * FROM notifications WHERE user_id = ? ORDER BY created_at DESC LIMIT 10', [user.id]);
         notifications = notis;
-
-        // นับจำนวนที่ยังไม่อ่าน (is_read = 0)
-        const [count] = await db.query(
-          'SELECT COUNT(*) as count FROM notifications WHERE user_id = ? AND is_read = 0', 
-          [user.id]
-        );
+        const [count] = await db.query('SELECT COUNT(*) as count FROM notifications WHERE user_id = ? AND is_read = 0', [user.id]);
         unreadCount = count[0].count;
       }
-
     } catch (error) {
       console.error("Session Error:", error);
     }
@@ -49,50 +40,34 @@ export default async function Navbar() {
 
   return (
     <header className="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between gap-6 shadow-sm z-50 sticky top-0 dark:bg-black dark:border-neutral-800 transition-colors duration-300">
-      
       <Link href="/" className="flex items-center gap-3">
-         <div className="w-12 h-12 bg-gradient-to-br from-red-600 to-red-800 rounded-lg flex items-center justify-center text-white font-bold text-xl shadow-lg">
-            IT
-         </div>
+         <div className="w-12 h-12 bg-gradient-to-br from-red-600 to-red-800 rounded-lg flex items-center justify-center text-white font-bold text-xl shadow-lg">IT</div>
          <span className="font-bold text-xl tracking-tight hidden sm:block text-gray-900 dark:text-white">TECH<span className="text-red-600">BOARD</span></span>
       </Link>
       
       <div className="flex-1 max-w-xl relative hidden md:block">
         <form action="/" method="GET">
-          <input 
-            name="search" 
-            type="text" 
-            placeholder="ค้นหาหัวข้อ... (กด Enter)" 
-            className="w-full bg-gray-100 border border-gray-300 text-gray-700 rounded-full py-2 px-6 focus:outline-none focus:ring-2 focus:ring-red-500 focus:bg-white transition-all dark:bg-neutral-900 dark:border-neutral-700 dark:text-gray-100 dark:focus:bg-black dark:focus:border-red-600" 
-          />
+          <input name="search" type="text" placeholder="ค้นหาหัวข้อ... (กด Enter)" className="w-full bg-gray-100 border border-gray-300 text-gray-700 rounded-full py-2 px-6 focus:outline-none focus:ring-2 focus:ring-red-500 focus:bg-white transition-all dark:bg-neutral-900 dark:border-neutral-700 dark:text-gray-100 dark:focus:bg-black dark:focus:border-red-600" />
         </form>
       </div>
 
       <nav className="flex gap-3 items-center">
-        
         <ThemeToggle />
 
         {user ? (
           <div className="flex items-center gap-4">
-             
-             {/* ✨ 3. ใส่ปุ่มกระดิ่งแจ้งเตือนตรงนี้ */}
              <NotificationBell count={unreadCount} notifications={notifications} />
 
              {user.role === 'admin' && (
-               <Link 
-                 href="/admin" 
-                 className="hidden md:flex items-center gap-1 text-sm font-bold text-gray-700 hover:text-black border border-gray-300 px-3 py-2 rounded-lg transition bg-white shadow-sm dark:bg-neutral-900 dark:text-gray-200 dark:border-neutral-700 dark:hover:bg-neutral-800"
-               >
+               <BouncyLink href="/admin" className="hidden md:flex items-center gap-1 text-sm font-bold text-gray-700 hover:text-black border border-gray-300 px-3 py-2 rounded-lg transition bg-white shadow-sm dark:bg-neutral-900 dark:text-gray-200 dark:border-neutral-700 dark:hover:bg-neutral-800">
                  🛡️ Admin
-               </Link>
+               </BouncyLink>
              )}
 
-             <Link 
-               href="/create" 
-               className="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-bold shadow-md transition-all transform hover:scale-105 active:scale-95 text-sm"
-             >
+             {/* ปุ่มสร้างกระทู้แบบ Bouncy */}
+             <BouncyLink href="/create" className="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-bold shadow-md transition-all text-sm cursor-pointer">
                <span>+</span> <span className="hidden sm:inline">สร้างกระทู้</span>
-             </Link>
+             </BouncyLink>
 
              <Link href="/profile" className="text-right hidden sm:block cursor-pointer hover:opacity-80 transition-opacity group">
                 <p className="text-xs text-gray-400 font-medium group-hover:text-red-500 transition-colors">ยินดีต้อนรับ,</p>
@@ -119,7 +94,10 @@ export default async function Navbar() {
         ) : (
           <>
             <Link href="/register" className="text-gray-600 hover:text-red-600 font-medium px-3 py-2 transition-colors dark:text-gray-300">Register</Link>
-            <Link href="/login" className="bg-red-600 hover:bg-red-700 text-white px-5 py-2 rounded-md font-medium shadow-md transition-all hover:shadow-red-500/30">Login</Link>
+            {/* ปุ่ม Login แบบ Bouncy */}
+            <BouncyLink href="/login" className="bg-red-600 hover:bg-red-700 text-white px-5 py-2 rounded-md font-medium shadow-md transition-all hover:shadow-red-500/30 cursor-pointer">
+              Login
+            </BouncyLink>
           </>
         )}
       </nav>

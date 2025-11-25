@@ -2,3 +2,28 @@
 
 /* บังคับให้ dark: ทำงานเมื่อมี class="dark" */
 @variant dark (&:where(.dark, .dark *));
+
+/* === สูตรทำอนิเมชันไล่สี === */
+@keyframes gradient-flow {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.animate-gradient-flow {
+  background-size: 300% 300%; /* ขยายพื้นหลังให้ใหญ่กว่ากล่อง เพื่อให้เลื่อนได้ */
+  animation: gradient-flow 8s ease infinite; /* สั่งให้ขยับไปมาทุก 8 วินาที */
+}
+
+/* เพิ่มส่วนนี้ต่อท้ายสุด */
+@keyframes rainbow-move {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.animate-rainbow {
+  background: linear-gradient(270deg, #ff0000, #ff7f00, #ffff00, #00ff00, #0000ff, #4b0082, #9400d3, #ff0000);
+  background-size: 400% 400%;
+  animation: rainbow-move 10s ease infinite;
+}

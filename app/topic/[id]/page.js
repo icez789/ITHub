@@ -9,7 +9,8 @@ import { cookies } from 'next/headers';
 import UserBadge from '../../../components/UserBadge';
 import TopicCard from '../../../components/TopicCard';
 import Editor from '../../../components/Editor'; 
-import CommentItem from '../../../components/CommentItem'; // เรียกใช้ Component คอมเมนต์
+import CommentItem from '../../../components/CommentItem';
+import RippleButton from '../../../components/RippleButton'; // 1. เรียกใช้ RippleButton
 
 export default async function TopicDetailPage({ params }) {
   const { id } = await params;
@@ -35,7 +36,7 @@ export default async function TopicDetailPage({ params }) {
 
   if (!topic) return <div className="p-10 text-center dark:text-white">ไม่พบกระทู้นี้...</div>;
 
-  // 2. ดึงคอมเมนต์ทั้งหมด (เรียงตามเวลา)
+  // 2. ดึงคอมเมนต์ทั้งหมด
   const [allComments] = await db.query(`
     SELECT comments.*, users.username, users.role, users.post_count 
     FROM comments 
@@ -44,23 +45,19 @@ export default async function TopicDetailPage({ params }) {
     ORDER BY created_at ASC
   `, [id]);
 
-  // --- 🧠 Logic จัดกลุ่มคอมเมนต์ (Tree Structure) ---
+  // --- Logic จัดกลุ่มคอมเมนต์ (Tree Structure) ---
   const commentMap = {};
   const rootComments = [];
 
-  // สร้าง Map เพื่อให้อ้างอิงง่าย
   allComments.forEach(c => {
       c.children = [];
       commentMap[c.id] = c;
   });
 
-  // จัดกลุ่ม Parent - Child
   allComments.forEach(c => {
       if (c.parent_id && commentMap[c.parent_id]) {
-          // ถ้ามีพ่อ ให้เอาตัวเองไปยัดใส่ลูกของพ่อ
           commentMap[c.parent_id].children.push(c);
       } else {
-          // ถ้าไม่มีพ่อ แสดงว่าเป็นคอมเมนต์หลัก (Root)
           rootComments.push(c);
       }
   });
@@ -103,7 +100,6 @@ export default async function TopicDetailPage({ params }) {
           [id, content, currentUser.id, parentId]
       ); 
       
-      // แจ้งเตือนเจ้าของกระทู้ (ถ้าไม่ใช่การตอบกลับคอมเมนต์ และไม่ใช่กระทู้ตัวเอง)
       if (!parentId && topic.user_id !== currentUser.id) {
           await db.query('INSERT INTO notifications (user_id, actor_id, topic_id, type, message) VALUES (?, ?, ?, ?, ?)', 
             [topic.user_id, currentUser.id, id, 'comment', `${currentUser.username} แสดงความคิดเห็นในกระทู้ของคุณ`]
@@ -187,11 +183,10 @@ export default async function TopicDetailPage({ params }) {
             </div>
           </div>
 
-          {/* === Comments Section (Recursive) === */}
+          {/* Comments Section */}
           <div className="mb-8">
             <h3 className="text-xl font-bold text-gray-700 mb-4 flex items-center gap-2 dark:text-gray-200">💬 ความคิดเห็น ({allComments.length})</h3>
             <div className="flex flex-col gap-4">
-              {/* ✨ แก้ไข: วนลูป rootComments แทน comments */}
               {rootComments.length > 0 ? (
                 rootComments.map((comment) => (
                    <CommentItem 
@@ -220,7 +215,15 @@ export default async function TopicDetailPage({ params }) {
                 <div className="mb-4 border border-gray-300 rounded-lg overflow-hidden dark:border-neutral-700">
                    <Editor className="h-32 mb-12 bg-white text-black" />
                 </div>
-                <button type="submit" className="bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition-all dark:bg-red-700 dark:hover:bg-red-600">ส่งความคิดเห็น 🚀</button>
+                
+                {/* 2. ใช้ RippleButton แทนปุ่มเดิม */}
+                <RippleButton 
+                  type="submit" 
+                  className="bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-6 rounded-lg shadow-md dark:bg-red-700 dark:hover:bg-red-600"
+                >
+                  ส่งความคิดเห็น 🚀
+                </RippleButton>
+
               </form>
             ) : (
               <div className="text-center py-4 bg-gray-100 rounded-lg border border-gray-300 dark:bg-neutral-800 dark:border-neutral-700">

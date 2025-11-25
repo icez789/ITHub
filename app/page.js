@@ -4,38 +4,40 @@ import Sidebar from '../components/Sidebar';
 import Navbar from '../components/Navbar';
 import db from '../lib/db'; 
 import TopicCard from '../components/TopicCard'; 
+import Footer from '../components/Footer';
 
 export default async function HomePage({ searchParams }) {
-  // 1. รับค่า Params
   const params = await searchParams;
   const search = params?.search || '';
   const category = params?.category || '';
   const page = parseInt(params?.page || '1'); 
-  const sort = params?.sort || 'latest'; // รับค่า sort (default: latest)
-  
   const pageSize = 9; 
   const offset = (page - 1) * pageSize;
 
-  // --- ฟังก์ชันช่วยสร้าง Link (เพื่อให้กด Sort แล้ว Search/Category ไม่หาย) ---
   const buildLink = (newSort, newPage) => {
     const q = new URLSearchParams();
     if (search) q.set('search', search);
     if (category) q.set('category', category);
     if (newSort) q.set('sort', newSort);
+    
+    const currentSort = params?.sort || 'latest'; 
+    if (!newSort && currentSort) q.set('sort', currentSort); 
+    
     if (newPage > 1) q.set('page', newPage);
     return `/?${q.toString()}`;
   };
 
-  // --- เตรียม SQL ---
+  const sort = params?.sort || 'latest';
+
   const conditions = [];
   const sqlParams = [];
 
   if (search) {
-    conditions.push('topics.title LIKE ?'); // ระบุตาราง topics.title กันสับสน
+    conditions.push('title LIKE ?');
     sqlParams.push(`%${search}%`);
   }
   if (category) {
-    conditions.push('topics.category = ?');
+    conditions.push('category = ?');
     sqlParams.push(category);
   }
 
@@ -44,30 +46,25 @@ export default async function HomePage({ searchParams }) {
     whereClause = ' WHERE ' + conditions.join(' AND ');
   }
 
-  // --- Logic การเลือก ORDER BY ---
-  let orderBy = 'topics.created_at DESC'; // ค่าเริ่มต้น (ล่าสุด)
+  let orderBy = 'topics.created_at DESC';
   let joinLikes = '';
   let selectLikeCount = '';
   let groupBy = '';
 
   if (sort === 'popular') {
-    // เรียงตามยอดวิว
     orderBy = 'topics.views DESC, topics.created_at DESC';
   } else if (sort === 'likes') {
-    // เรียงตามยอดไลก์ (ต้อง JOIN และนับ)
     selectLikeCount = ', COUNT(likes.user_id) as like_count';
     joinLikes = 'LEFT JOIN likes ON topics.id = likes.topic_id';
     groupBy = 'GROUP BY topics.id';
     orderBy = 'like_count DESC, topics.created_at DESC';
   }
 
-  // Query 1: นับจำนวนรวม
   const countSql = `SELECT COUNT(DISTINCT topics.id) as total FROM topics ${joinLikes} ${whereClause}`;
   const [countResult] = await db.query(countSql, sqlParams);
   const totalTopics = countResult[0].total;
   const totalPages = Math.ceil(totalTopics / pageSize);
 
-  // Query 2: ดึงข้อมูลจริง
   let sql = `
     SELECT topics.*, users.username ${selectLikeCount}
     FROM topics 
@@ -93,17 +90,29 @@ export default async function HomePage({ searchParams }) {
         
         <div className="flex-1 overflow-y-auto p-8 pl-6 md:pl-8">
           
-          {/* Banner */}
+          {/* Banner (แสดงเฉพาะหน้าแรก) */}
           {!search && !category && page === 1 && sort === 'latest' && (
-            <section className="w-full h-72 rounded-2xl overflow-hidden relative mb-10 group shadow-xl">
-              <div className="absolute inset-0 bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900"></div>
-              <div className="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-red-500 to-transparent"></div>
+            <section className="w-full h-72 rounded-2xl overflow-hidden relative mb-10 group shadow-xl border border-gray-200 dark:border-neutral-800">
+              
+              {/* ✨✨✨ กลับมาใช้ธีม Red-Black (และยังขยับได้ด้วย animate-gradient-flow) ✨✨✨ */}
+              <div className="absolute inset-0 bg-gradient-to-r from-gray-900 via-red-900 to-black animate-gradient-flow"></div>
+              
+              {/* Grid Texture */}
+              <div className="absolute inset-0 opacity-20" style={{ backgroundImage: 'radial-gradient(#ffffff 1px, transparent 1px)', backgroundSize: '20px 20px' }}></div>
+
+              {/* เงาดำด้านล่าง */}
+              <div className="absolute bottom-0 left-0 w-full h-2/3 bg-gradient-to-t from-black/90 to-transparent"></div>
+
               <div className="relative z-10 h-full flex flex-col items-center justify-center text-center p-6">
-                <span className="text-red-500 font-bold tracking-[0.2em] text-sm mb-2 animate-pulse">HOT TOPIC</span>
-                <h1 className="text-4xl md:text-5xl font-extrabold text-white mb-4">
-                  อัปเดตเทรนด์ <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-400 to-red-600">AI & Technology</span>
+                <span className="text-red-500 font-bold tracking-[0.2em] text-sm mb-2 animate-pulse bg-black/60 px-3 py-1 rounded-full border border-red-500/30 shadow-lg backdrop-blur-sm">
+                  HOT TOPIC
+                </span>
+                <h1 className="text-4xl md:text-5xl font-extrabold text-white mb-4 drop-shadow-2xl tracking-tight">
+                  อัปเดตเทรนด์ <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-400 to-orange-500">AI & Technology</span>
                 </h1>
-                <p className="text-gray-400 max-w-lg">ร่วมพูดคุย แลกเปลี่ยนความรู้ด้านไอที ฮาร์ดแวร์ และนวัตกรรมใหม่ๆ ได้ที่นี่</p>
+                <p className="text-gray-300 max-w-lg drop-shadow-md font-medium">
+                  ร่วมพูดคุย แลกเปลี่ยนความรู้ด้านไอที ฮาร์ดแวร์ และนวัตกรรมใหม่ๆ ได้ที่นี่
+                </p>
               </div>
             </section>
           )}
@@ -113,31 +122,20 @@ export default async function HomePage({ searchParams }) {
             {/* ฝั่งซ้าย: เนื้อหา */}
             <div className="lg:col-span-3">
               
-              {/* Header + Sorting Buttons */}
               <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
                  <h2 className="text-2xl font-bold text-gray-800 border-l-4 border-red-600 pl-4 flex items-center gap-2 dark:text-white">
                    {search ? `ผลการค้นหา: "${search}"` : category ? `หมวดหมู่: ${category}` : 'รายการกระทู้'}
                    <span className="text-sm text-gray-400 font-normal ml-2">(หน้า {page})</span>
                  </h2>
 
-                 {/* ปุ่มตัวเลือกการเรียงลำดับ */}
                  <div className="flex bg-white dark:bg-neutral-900 p-1 rounded-lg shadow-sm border border-gray-200 dark:border-neutral-800">
-                    <Link 
-                      href={buildLink('latest', 1)} 
-                      className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all ${sort === 'latest' ? 'bg-gray-100 text-gray-900 dark:bg-neutral-700 dark:text-white' : 'text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white'}`}
-                    >
+                    <Link href={buildLink('latest', 1)} className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all ${sort === 'latest' ? 'bg-gray-100 text-gray-900 dark:bg-neutral-700 dark:text-white' : 'text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white'}`}>
                       🕒 ล่าสุด
                     </Link>
-                    <Link 
-                      href={buildLink('popular', 1)} 
-                      className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all ${sort === 'popular' ? 'bg-red-50 text-red-600 dark:bg-red-900/30 dark:text-red-400' : 'text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white'}`}
-                    >
+                    <Link href={buildLink('popular', 1)} className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all ${sort === 'popular' ? 'bg-red-50 text-red-600 dark:bg-red-900/30 dark:text-red-400' : 'text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white'}`}>
                       🔥 ยอดนิยม
                     </Link>
-                    <Link 
-                      href={buildLink('likes', 1)} 
-                      className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all ${sort === 'likes' ? 'bg-pink-50 text-pink-600 dark:bg-pink-900/30 dark:text-pink-400' : 'text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white'}`}
-                    >
+                    <Link href={buildLink('likes', 1)} className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all ${sort === 'likes' ? 'bg-pink-50 text-pink-600 dark:bg-pink-900/30 dark:text-pink-400' : 'text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white'}`}>
                       ❤️ มาแรง
                     </Link>
                  </div>
@@ -163,7 +161,6 @@ export default async function HomePage({ searchParams }) {
                 )}
               </section>
 
-              {/* Pagination */}
               {totalPages > 1 && (
                 <div className="flex justify-center items-center gap-4 mt-8 mb-12">
                   {page > 1 ? (
@@ -223,9 +220,7 @@ export default async function HomePage({ searchParams }) {
 
           </div>
 
-          <footer className="w-full border-t border-gray-200 py-8 text-center text-gray-500 text-sm mt-12 dark:bg-black dark:border-neutral-800 dark:text-gray-400">
-            © 2025 <span className="font-bold text-red-600">IT TECHBOARD</span>. All rights reserved.
-          </footer>
+          <Footer />
 
         </div>
       </main>
