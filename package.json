@@ -9,6 +9,7 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@vercel/og": "^0.8.5",
     "axios": "^1.13.2",
     "bcryptjs": "^3.0.3",
     "framer-motion": "^12.23.24",

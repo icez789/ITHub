@@ -11,7 +11,21 @@ import TopicCard from '../../../components/TopicCard';
 import Editor from '../../../components/Editor'; 
 import CommentItem from '../../../components/CommentItem';
 import RippleButton from '../../../components/RippleButton'; 
-import ReportButton from '../../../components/ReportButton'; // 1. เรียกใช้ปุ่ม Report
+import ReportButton from '../../../components/ReportButton'; 
+
+// ✨ Metadata แบบเรียบง่าย (แค่เปลี่ยนชื่อ Tab พอ ไม่ต้องเอารูป)
+export async function generateMetadata({ params }) {
+  const { id } = await params;
+  const [topics] = await db.query('SELECT title, content FROM topics WHERE id = ?', [id]);
+  const topic = topics[0];
+
+  if (!topic) return { title: 'ไม่พบเนื้อหา | IT Techboard' };
+
+  return {
+    title: `${topic.title} | IT Techboard`,
+    description: topic.content.replace(/<[^>]*>?/gm, '').slice(0, 100) + '...',
+  };
+}
 
 export default async function TopicDetailPage({ params }) {
   const { id } = await params;
@@ -23,8 +37,10 @@ export default async function TopicDetailPage({ params }) {
 
   const isAdmin = currentUser?.role === 'admin';
 
+  // อัปเดตยอดวิว
   await db.query('UPDATE topics SET views = views + 1 WHERE id = ?', [id]);
 
+  // 1. ดึงข้อมูลกระทู้หลัก
   const [topics] = await db.query(`
     SELECT topics.*, users.username, users.role, users.post_count 
     FROM topics 
@@ -35,6 +51,7 @@ export default async function TopicDetailPage({ params }) {
 
   if (!topic) return <div className="p-10 text-center dark:text-white">ไม่พบกระทู้นี้...</div>;
 
+  // 2. ดึงคอมเมนต์ทั้งหมด
   const [allComments] = await db.query(`
     SELECT comments.*, users.username, users.role, users.post_count 
     FROM comments 
@@ -43,12 +60,24 @@ export default async function TopicDetailPage({ params }) {
     ORDER BY created_at ASC
   `, [id]);
 
-  // Logic จัดกลุ่มคอมเมนต์
+  // --- Logic จัดกลุ่มคอมเมนต์ ---
   const commentMap = {};
   const rootComments = [];
-  allComments.forEach(c => { c.children = []; commentMap[c.id] = c; });
-  allComments.forEach(c => { if (c.parent_id && commentMap[c.parent_id]) { commentMap[c.parent_id].children.push(c); } else { rootComments.push(c); } });
 
+  allComments.forEach(c => {
+      c.children = [];
+      commentMap[c.id] = c;
+  });
+
+  allComments.forEach(c => {
+      if (c.parent_id && commentMap[c.parent_id]) {
+          commentMap[c.parent_id].children.push(c);
+      } else {
+          rootComments.push(c);
+      }
+  });
+
+  // 3. ดึงยอดไลก์
   const [likeCountResult] = await db.query('SELECT COUNT(*) as count FROM likes WHERE topic_id = ?', [id]);
   const likeCount = likeCountResult[0].count;
 
@@ -58,12 +87,14 @@ export default async function TopicDetailPage({ params }) {
     isLiked = userLike.length > 0;
   }
 
+  // Bookmark Logic
   let isBookmarked = false;
   if (currentUser) {
     const [bookmark] = await db.query('SELECT * FROM bookmarks WHERE topic_id = ? AND user_id = ?', [id, currentUser.id]);
     isBookmarked = bookmark.length > 0;
   }
 
+  // Related Topics
   const [relatedTopics] = await db.query(`
     SELECT topics.*, users.username 
     FROM topics 
@@ -77,17 +108,46 @@ export default async function TopicDetailPage({ params }) {
 
   // --- Server Actions ---
   async function deleteTopic() { 'use server'; await db.query('DELETE FROM topics WHERE id = ?', [id]); redirect('/?notify=delete_success'); }
-  async function addComment(formData) { 'use server'; const content = formData.get('content'); const parentId = formData.get('parentId') || null; if (currentUser) { await db.query('INSERT INTO comments (topic_id, content, user_id, parent_id) VALUES (?, ?, ?, ?)', [id, content, currentUser.id, parentId]); if (!parentId && topic.user_id !== currentUser.id) { await db.query('INSERT INTO notifications (user_id, actor_id, topic_id, type, message) VALUES (?, ?, ?, ?, ?)', [topic.user_id, currentUser.id, id, 'comment', `${currentUser.username} แสดงความคิดเห็นในกระทู้ของคุณ`]); } revalidatePath(`/topic/${id}`); } }
-  async function toggleLike() { 'use server'; if (!currentUser) return; const [existing] = await db.query('SELECT * FROM likes WHERE user_id = ? AND topic_id = ?', [currentUser.id, id]); if (existing.length > 0) { await db.query('DELETE FROM likes WHERE user_id = ? AND topic_id = ?', [currentUser.id, id]); } else { await db.query('INSERT INTO likes (user_id, topic_id) VALUES (?, ?)', [currentUser.id, id]); if (topic.user_id !== currentUser.id) { await db.query('INSERT INTO notifications (user_id, actor_id, topic_id, type, message) VALUES (?, ?, ?, ?, ?)', [topic.user_id, currentUser.id, id, 'like', `${currentUser.username} ถูกใจกระทู้ของคุณ`]); } } revalidatePath(`/topic/${id}`); }
+  
+  async function addComment(formData) { 
+    'use server'; 
+    const content = formData.get('content'); 
+    const parentId = formData.get('parentId') || null;
+    if (currentUser) { 
+      await db.query('INSERT INTO comments (topic_id, content, user_id, parent_id) VALUES (?, ?, ?, ?)', [id, content, currentUser.id, parentId]); 
+      
+      if (!parentId && topic.user_id !== currentUser.id) {
+          await db.query('INSERT INTO notifications (user_id, actor_id, topic_id, type, message) VALUES (?, ?, ?, ?, ?)', 
+            [topic.user_id, currentUser.id, id, 'comment', `${currentUser.username} แสดงความคิดเห็นในกระทู้ของคุณ`]
+          );
+      }
+      revalidatePath(`/topic/${id}`); 
+    } 
+  }
+
+  async function toggleLike() { 
+    'use server'; 
+    if (!currentUser) return; 
+    const [existing] = await db.query('SELECT * FROM likes WHERE user_id = ? AND topic_id = ?', [currentUser.id, id]); 
+    if (existing.length > 0) { await db.query('DELETE FROM likes WHERE user_id = ? AND topic_id = ?', [currentUser.id, id]); } 
+    else { 
+      await db.query('INSERT INTO likes (user_id, topic_id) VALUES (?, ?)', [currentUser.id, id]); 
+      if (topic.user_id !== currentUser.id) {
+        await db.query('INSERT INTO notifications (user_id, actor_id, topic_id, type, message) VALUES (?, ?, ?, ?, ?)', [topic.user_id, currentUser.id, id, 'like', `${currentUser.username} ถูกใจกระทู้ของคุณ`]);
+      }
+    } 
+    revalidatePath(`/topic/${id}`); 
+  }
+
   async function toggleBookmark() { 'use server'; if (!currentUser) return; const [existing] = await db.query('SELECT * FROM bookmarks WHERE user_id = ? AND topic_id = ?', [currentUser.id, id]); if (existing.length > 0) { await db.query('DELETE FROM bookmarks WHERE user_id = ? AND topic_id = ?', [currentUser.id, id]); } else { await db.query('INSERT INTO bookmarks (user_id, topic_id) VALUES (?, ?)', [currentUser.id, id]); } revalidatePath(`/topic/${id}`); }
+  
   async function deleteComment(formData) { 'use server'; const commentId = formData.get('commentId'); await db.query('DELETE FROM comments WHERE id = ?', [commentId]); revalidatePath(`/topic/${id}`); }
 
-  // ✨ Action สำหรับรับเรื่องรายงาน (Report)
   async function submitReport(formData) {
     'use server';
     if (!currentUser) return;
     const targetId = formData.get('targetId');
-    const type = formData.get('type'); // 'topic' หรือ 'comment'
+    const type = formData.get('type'); 
     const reason = formData.get('reason');
 
     if (type === 'topic') {
@@ -95,7 +155,6 @@ export default async function TopicDetailPage({ params }) {
     } else if (type === 'comment') {
       await db.query('INSERT INTO reports (reporter_id, comment_id, reason) VALUES (?, ?, ?)', [currentUser.id, targetId, reason]);
     }
-    // ไม่ต้อง revalidate เพราะ User ไม่เห็นผลทันที (Admin เท่านั้นที่เห็น)
   }
 
   return (
@@ -108,7 +167,7 @@ export default async function TopicDetailPage({ params }) {
           <div className="flex justify-between items-center mb-6">
             <Link href="/" className="inline-flex items-center gap-2 text-gray-500 hover:text-red-600 transition-colors dark:text-gray-400 dark:hover:text-red-400">&larr; กลับหน้าหลัก</Link>
             <div className="flex gap-3 items-center">
-                {/* 2. ปุ่ม Report กระทู้ (ใส่ตรงนี้) */}
+                
                 {currentUser && <ReportButton targetId={id} type="topic" reportAction={submitReport} />}
 
                 {isOwner && <Link href={`/edit/${id}`} className="flex items-center gap-2 px-4 py-2 bg-yellow-100 text-yellow-700 rounded-lg hover:bg-yellow-500 hover:text-white transition border border-yellow-200 dark:bg-yellow-900/30 dark:text-yellow-400 dark:border-yellow-800 dark:hover:bg-yellow-700">✏️ แก้ไข</Link>}
@@ -116,6 +175,7 @@ export default async function TopicDetailPage({ params }) {
             </div>
           </div>
 
+          {/* Topic Content */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden mb-8 relative dark:bg-neutral-900 dark:border-neutral-800">
             <div className="bg-gray-900 p-8 text-white relative overflow-hidden dark:bg-black">
                <div className="absolute top-0 right-0 w-32 h-32 bg-red-600 rounded-full blur-[80px] opacity-50"></div>
@@ -158,6 +218,7 @@ export default async function TopicDetailPage({ params }) {
             </div>
           </div>
 
+          {/* Comments Section */}
           <div className="mb-8">
             <h3 className="text-xl font-bold text-gray-700 mb-4 flex items-center gap-2 dark:text-gray-200">💬 ความคิดเห็น ({allComments.length})</h3>
             <div className="flex flex-col gap-4">
@@ -171,8 +232,7 @@ export default async function TopicDetailPage({ params }) {
                       topicUserId={topic.user_id}
                       deleteAction={deleteComment}
                       replyAction={addComment}
-                      // 3. ส่ง reportAction ไปให้คอมเมนต์ใช้ด้วย
-                      reportAction={submitReport}
+                      reportAction={submitReport} 
                    />
                 ))
               ) : (
@@ -183,6 +243,7 @@ export default async function TopicDetailPage({ params }) {
             </div>
           </div>
 
+          {/* Comment Form */}
           <div className="bg-white p-6 rounded-xl shadow-lg border-t-4 border-red-600 dark:bg-neutral-900 dark:border-red-700">
             <h3 className="font-bold text-lg mb-4 dark:text-gray-200">แสดงความคิดเห็น</h3>
             {currentUser ? (
