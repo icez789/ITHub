@@ -5,6 +5,7 @@ import { redirect } from 'next/navigation';
 import db from '../lib/db'; 
 import ThemeToggle from './ThemeToggle'; 
 import NotificationBell from './NotificationBell';
+import SearchInput from './SearchInput'; // 1. เรียกใช้ช่องค้นหาใหม่
 
 export default async function Navbar() {
   const cookieStore = await cookies();
@@ -16,11 +17,9 @@ export default async function Navbar() {
   if (session) {
     try {
       const sessionData = JSON.parse(session.value);
-      // ดึงข้อมูล User ล่าสุด
       const [users] = await db.query('SELECT * FROM users WHERE id = ?', [sessionData.id]);
       user = users[0]; 
       
-      // ดึงแจ้งเตือน
       if (user) {
         const [notis] = await db.query('SELECT * FROM notifications WHERE user_id = ? ORDER BY created_at DESC LIMIT 10', [user.id]);
         notifications = notis;
@@ -50,16 +49,8 @@ export default async function Navbar() {
          <span className="font-bold text-xl tracking-tight hidden sm:block text-gray-900 dark:text-white">TECH<span className="text-red-600">BOARD</span></span>
       </Link>
       
-      <div className="flex-1 max-w-xl relative hidden md:block">
-        <form action="/" method="GET">
-          <input 
-            name="search" 
-            type="text" 
-            placeholder="ค้นหาหัวข้อ... (กด Enter)" 
-            className="w-full bg-gray-100 border border-gray-300 text-gray-700 rounded-full py-2 px-6 focus:outline-none focus:ring-2 focus:ring-red-500 focus:bg-white transition-all dark:bg-neutral-900 dark:border-neutral-700 dark:text-gray-100 dark:focus:bg-black dark:focus:border-red-600" 
-          />
-        </form>
-      </div>
+      {/* 2. ใช้ SearchInput แทน Form เดิม */}
+      <SearchInput />
 
       <nav className="flex gap-3 items-center">
         
@@ -68,19 +59,8 @@ export default async function Navbar() {
         {user ? (
           <div className="flex items-center gap-4">
              
-             {/* ปุ่มกระดิ่งแจ้งเตือน */}
              <NotificationBell count={unreadCount} notifications={notifications} />
 
-             {/* ✨ ปุ่ม Leaderboard (ใหม่) */}
-             <Link 
-                href="/leaderboard" 
-                className="p-2 text-gray-600 hover:text-yellow-500 transition-colors dark:text-gray-300 dark:hover:text-yellow-400"
-                title="จัดอันดับสมาชิก"
-             >
-               <span className="text-xl">🏆</span>
-             </Link>
-
-             {/* ปุ่ม Admin (เฉพาะแอดมิน) */}
              {user.role === 'admin' && (
                <Link 
                  href="/admin" 
@@ -90,7 +70,6 @@ export default async function Navbar() {
                </Link>
              )}
 
-             {/* ปุ่มสร้างกระทู้ */}
              <Link 
                href="/create" 
                className="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-bold shadow-md transition-all transform hover:scale-105 active:scale-95 text-sm"
@@ -98,13 +77,11 @@ export default async function Navbar() {
                <span>+</span> <span className="hidden sm:inline">สร้างกระทู้</span>
              </Link>
 
-             {/* ชื่อโปรไฟล์ */}
              <Link href="/profile" className="text-right hidden sm:block cursor-pointer hover:opacity-80 transition-opacity group">
                 <p className="text-xs text-gray-400 font-medium group-hover:text-red-500 transition-colors">ยินดีต้อนรับ,</p>
                 <p className="text-sm font-bold text-gray-800 group-hover:text-red-600 transition-colors dark:text-gray-200">{user.username}</p>
              </Link>
              
-             {/* รูป Avatar */}
              <Link href="/profile">
                <div className="w-10 h-10 rounded-full overflow-hidden border border-red-200 cursor-pointer hover:shadow-md transition-all bg-gray-100 flex items-center justify-center dark:bg-neutral-800 dark:border-neutral-700">
                   {user.avatar_url ? (
@@ -115,7 +92,6 @@ export default async function Navbar() {
                </div>
              </Link>
              
-             {/* ปุ่ม Logout */}
              <form action={logout}>
                 <button className="text-sm text-gray-500 hover:text-red-600 border border-gray-300 hover:border-red-600 px-3 py-2 rounded-lg transition-all bg-white dark:bg-neutral-900 dark:text-gray-400 dark:border-neutral-700 dark:hover:text-red-500 dark:hover:border-red-500" title="ออกจากระบบ">
                   <span className="sm:hidden">Exit</span>
@@ -124,7 +100,6 @@ export default async function Navbar() {
              </form>
           </div>
         ) : (
-          // ถ้ายังไม่ล็อกอิน
           <>
             <Link href="/register" className="text-gray-600 hover:text-red-600 font-medium px-3 py-2 transition-colors dark:text-gray-300">Register</Link>
             <Link href="/login" className="bg-red-600 hover:bg-red-700 text-white px-5 py-2 rounded-md font-medium shadow-md transition-all hover:shadow-red-500/30">Login</Link>

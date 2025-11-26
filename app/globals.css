@@ -61,3 +61,16 @@
   color: #a3a3a3 !important;
   font-style: normal;
 }
+
+/* ✨ สั่งซ่อน Scrollbar (แต่ยังเลื่อนได้) ✨ */
+@layer utilities {
+  /* สำหรับ Chrome, Safari and Opera */
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .no-scrollbar {
+    -ms-overflow-style: none;  /* สำหรับ IE and Edge */
+    scrollbar-width: none;  /* สำหรับ Firefox */
+  }
+}

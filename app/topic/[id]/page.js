@@ -11,16 +11,23 @@ import TopicCard from '../../../components/TopicCard';
 import Editor from '../../../components/Editor'; 
 import CommentItem from '../../../components/CommentItem';
 import RippleButton from '../../../components/RippleButton'; 
-import ReportButton from '../../../components/ReportButton'; 
+import ReportButton from '../../../components/ReportButton';
+import ViewCounter from '../../../components/ViewCounter'; 
 
-// ✨ Metadata แบบเรียบง่าย (แค่เปลี่ยนชื่อ Tab พอ ไม่ต้องเอารูป)
+// Metadata
 export async function generateMetadata({ params }) {
   const { id } = await params;
-  const [topics] = await db.query('SELECT title, content FROM topics WHERE id = ?', [id]);
+  const [topics] = await db.query('SELECT title, content, user_id FROM topics WHERE id = ?', [id]);
   const topic = topics[0];
 
   if (!topic) return { title: 'ไม่พบเนื้อหา | IT Techboard' };
 
+  const [users] = await db.query('SELECT username FROM users WHERE id = ?', [topic.user_id]);
+  const authorName = users[0]?.username || 'Member';
+
+  const baseUrl = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000';
+  // (ส่วนรูป OG เราลบออกไปแล้ว เหลือแค่ Title)
+  
   return {
     title: `${topic.title} | IT Techboard`,
     description: topic.content.replace(/<[^>]*>?/gm, '').slice(0, 100) + '...',
@@ -37,8 +44,8 @@ export default async function TopicDetailPage({ params }) {
 
   const isAdmin = currentUser?.role === 'admin';
 
-  // อัปเดตยอดวิว
-  await db.query('UPDATE topics SET views = views + 1 WHERE id = ?', [id]);
+  // ❌ ลบบรรทัดนี้ออก: await db.query('UPDATE topics SET views = views + 1 WHERE id = ?', [id]);
+  // เราจะใช้ ViewCounter แทนด้านล่าง
 
   // 1. ดึงข้อมูลกระทู้หลัก
   const [topics] = await db.query(`
@@ -149,12 +156,8 @@ export default async function TopicDetailPage({ params }) {
     const targetId = formData.get('targetId');
     const type = formData.get('type'); 
     const reason = formData.get('reason');
-
-    if (type === 'topic') {
-      await db.query('INSERT INTO reports (reporter_id, topic_id, reason) VALUES (?, ?, ?)', [currentUser.id, targetId, reason]);
-    } else if (type === 'comment') {
-      await db.query('INSERT INTO reports (reporter_id, comment_id, reason) VALUES (?, ?, ?)', [currentUser.id, targetId, reason]);
-    }
+    if (type === 'topic') { await db.query('INSERT INTO reports (reporter_id, topic_id, reason) VALUES (?, ?, ?)', [currentUser.id, targetId, reason]); } 
+    else if (type === 'comment') { await db.query('INSERT INTO reports (reporter_id, comment_id, reason) VALUES (?, ?, ?)', [currentUser.id, targetId, reason]); }
   }
 
   return (
@@ -164,12 +167,13 @@ export default async function TopicDetailPage({ params }) {
         <Navbar />
         <div className="flex-1 overflow-y-auto p-8 pl-6 md:pl-8">
           
+          {/* 2. ✨ ใส่ตัวนับวิวไว้ตรงนี้ (มันจะทำงานเงียบๆ) */}
+          <ViewCounter topicId={id} />
+
           <div className="flex justify-between items-center mb-6">
             <Link href="/" className="inline-flex items-center gap-2 text-gray-500 hover:text-red-600 transition-colors dark:text-gray-400 dark:hover:text-red-400">&larr; กลับหน้าหลัก</Link>
             <div className="flex gap-3 items-center">
-                
                 {currentUser && <ReportButton targetId={id} type="topic" reportAction={submitReport} />}
-
                 {isOwner && <Link href={`/edit/${id}`} className="flex items-center gap-2 px-4 py-2 bg-yellow-100 text-yellow-700 rounded-lg hover:bg-yellow-500 hover:text-white transition border border-yellow-200 dark:bg-yellow-900/30 dark:text-yellow-400 dark:border-yellow-800 dark:hover:bg-yellow-700">✏️ แก้ไข</Link>}
                 {(isOwner || isAdmin) && <form action={deleteTopic}><button type="submit" className="flex items-center gap-2 px-4 py-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-600 hover:text-white transition border border-red-200 dark:bg-red-900/30 dark:text-red-400 dark:border-red-800 dark:hover:bg-red-700">🗑️ {isAdmin && !isOwner ? 'ลบ (Admin)' : 'ลบกระทู้นี้'}</button></form>}
             </div>
@@ -218,7 +222,6 @@ export default async function TopicDetailPage({ params }) {
             </div>
           </div>
 
-          {/* Comments Section */}
           <div className="mb-8">
             <h3 className="text-xl font-bold text-gray-700 mb-4 flex items-center gap-2 dark:text-gray-200">💬 ความคิดเห็น ({allComments.length})</h3>
             <div className="flex flex-col gap-4">
@@ -243,7 +246,6 @@ export default async function TopicDetailPage({ params }) {
             </div>
           </div>
 
-          {/* Comment Form */}
           <div className="bg-white p-6 rounded-xl shadow-lg border-t-4 border-red-600 dark:bg-neutral-900 dark:border-red-700">
             <h3 className="font-bold text-lg mb-4 dark:text-gray-200">แสดงความคิดเห็น</h3>
             {currentUser ? (
