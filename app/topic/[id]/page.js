@@ -12,22 +12,13 @@ import Editor from '../../../components/Editor';
 import CommentItem from '../../../components/CommentItem';
 import RippleButton from '../../../components/RippleButton'; 
 import ReportButton from '../../../components/ReportButton';
-import ViewCounter from '../../../components/ViewCounter'; 
+import ViewCounter from '../../../components/ViewCounter';
 
-// Metadata
 export async function generateMetadata({ params }) {
   const { id } = await params;
-  const [topics] = await db.query('SELECT title, content, user_id FROM topics WHERE id = ?', [id]);
+  const [topics] = await db.query('SELECT title, content FROM topics WHERE id = ?', [id]);
   const topic = topics[0];
-
   if (!topic) return { title: 'ไม่พบเนื้อหา | IT Techboard' };
-
-  const [users] = await db.query('SELECT username FROM users WHERE id = ?', [topic.user_id]);
-  const authorName = users[0]?.username || 'Member';
-
-  const baseUrl = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000';
-  // (ส่วนรูป OG เราลบออกไปแล้ว เหลือแค่ Title)
-  
   return {
     title: `${topic.title} | IT Techboard`,
     description: topic.content.replace(/<[^>]*>?/gm, '').slice(0, 100) + '...',
@@ -44,22 +35,15 @@ export default async function TopicDetailPage({ params }) {
 
   const isAdmin = currentUser?.role === 'admin';
 
-  // ❌ ลบบรรทัดนี้ออก: await db.query('UPDATE topics SET views = views + 1 WHERE id = ?', [id]);
-  // เราจะใช้ ViewCounter แทนด้านล่าง
-
-  // 1. ดึงข้อมูลกระทู้หลัก
-  const [topics] = await db.query(`
+  // 🔥 เทคนิค Turbo: เตรียมคำสั่ง Query ไว้ก่อน (ยังไม่รอ)
+  const topicQuery = db.query(`
     SELECT topics.*, users.username, users.role, users.post_count 
     FROM topics 
     LEFT JOIN users ON topics.user_id = users.id 
     WHERE topics.id = ?
   `, [id]);
-  const topic = topics[0];
 
-  if (!topic) return <div className="p-10 text-center dark:text-white">ไม่พบกระทู้นี้...</div>;
-
-  // 2. ดึงคอมเมนต์ทั้งหมด
-  const [allComments] = await db.query(`
+  const commentsQuery = db.query(`
     SELECT comments.*, users.username, users.role, users.post_count 
     FROM comments 
     LEFT JOIN users ON comments.user_id = users.id 
@@ -67,41 +51,37 @@ export default async function TopicDetailPage({ params }) {
     ORDER BY created_at ASC
   `, [id]);
 
-  // --- Logic จัดกลุ่มคอมเมนต์ ---
-  const commentMap = {};
-  const rootComments = [];
+  const likeCountQuery = db.query('SELECT COUNT(*) as count FROM likes WHERE topic_id = ?', [id]);
 
-  allComments.forEach(c => {
-      c.children = [];
-      commentMap[c.id] = c;
-  });
+  // Query ที่ต้องใช้ currentUser (ถ้าไม่มี user ก็ไม่ต้องทำ)
+  const userLikeQuery = currentUser 
+    ? db.query('SELECT * FROM likes WHERE topic_id = ? AND user_id = ?', [id, currentUser.id])
+    : Promise.resolve([[]]); // คืนค่าว่างถ้าไม่ได้ล็อกอิน
 
-  allComments.forEach(c => {
-      if (c.parent_id && commentMap[c.parent_id]) {
-          commentMap[c.parent_id].children.push(c);
-      } else {
-          rootComments.push(c);
-      }
-  });
+  const bookmarkQuery = currentUser
+    ? db.query('SELECT * FROM bookmarks WHERE topic_id = ? AND user_id = ?', [id, currentUser.id])
+    : Promise.resolve([[]]);
 
-  // 3. ดึงยอดไลก์
-  const [likeCountResult] = await db.query('SELECT COUNT(*) as count FROM likes WHERE topic_id = ?', [id]);
-  const likeCount = likeCountResult[0].count;
+  // 🚀 สั่งรันทุกอย่างพร้อมกัน! (Parallel Execution)
+  const [
+    [topics], 
+    [allComments], 
+    [likeCountResult], 
+    [userLike], 
+    [bookmark]
+  ] = await Promise.all([
+    topicQuery, 
+    commentsQuery, 
+    likeCountQuery, 
+    userLikeQuery, 
+    bookmarkQuery
+  ]);
 
-  let isLiked = false;
-  if (currentUser) {
-    const [userLike] = await db.query('SELECT * FROM likes WHERE topic_id = ? AND user_id = ?', [id, currentUser.id]);
-    isLiked = userLike.length > 0;
-  }
+  const topic = topics[0];
 
-  // Bookmark Logic
-  let isBookmarked = false;
-  if (currentUser) {
-    const [bookmark] = await db.query('SELECT * FROM bookmarks WHERE topic_id = ? AND user_id = ?', [id, currentUser.id]);
-    isBookmarked = bookmark.length > 0;
-  }
+  if (!topic) return <div className="p-10 text-center dark:text-white">ไม่พบกระทู้นี้...</div>;
 
-  // Related Topics
+  // --- ดึง Related Topics (ต้องรอกระทู้หลักก่อน เพราะต้องใช้ category) ---
   const [relatedTopics] = await db.query(`
     SELECT topics.*, users.username 
     FROM topics 
@@ -111,54 +91,35 @@ export default async function TopicDetailPage({ params }) {
     LIMIT 4
   `, [topic.category, id]);
 
+  // --- Logic จัดการข้อมูล (เหมือนเดิม) ---
+  const commentMap = {};
+  const rootComments = [];
+  allComments.forEach(c => { c.children = []; commentMap[c.id] = c; });
+  allComments.forEach(c => { if (c.parent_id && commentMap[c.parent_id]) { commentMap[c.parent_id].children.push(c); } else { rootComments.push(c); } });
+
+  const likeCount = likeCountResult[0].count;
+  const isLiked = userLike.length > 0;
+  const isBookmarked = bookmark.length > 0;
   const isOwner = currentUser && (currentUser.id === topic.user_id);
 
-  // --- Server Actions ---
+  // --- Server Actions (เหมือนเดิม) ---
   async function deleteTopic() { 'use server'; await db.query('DELETE FROM topics WHERE id = ?', [id]); redirect('/?notify=delete_success'); }
-  
   async function addComment(formData) { 
     'use server'; 
     const content = formData.get('content'); 
     const parentId = formData.get('parentId') || null;
     if (currentUser) { 
       await db.query('INSERT INTO comments (topic_id, content, user_id, parent_id) VALUES (?, ?, ?, ?)', [id, content, currentUser.id, parentId]); 
-      
       if (!parentId && topic.user_id !== currentUser.id) {
-          await db.query('INSERT INTO notifications (user_id, actor_id, topic_id, type, message) VALUES (?, ?, ?, ?, ?)', 
-            [topic.user_id, currentUser.id, id, 'comment', `${currentUser.username} แสดงความคิดเห็นในกระทู้ของคุณ`]
-          );
+          await db.query('INSERT INTO notifications (user_id, actor_id, topic_id, type, message) VALUES (?, ?, ?, ?, ?)', [topic.user_id, currentUser.id, id, 'comment', `${currentUser.username} แสดงความคิดเห็นในกระทู้ของคุณ`]);
       }
       revalidatePath(`/topic/${id}`); 
     } 
   }
-
-  async function toggleLike() { 
-    'use server'; 
-    if (!currentUser) return; 
-    const [existing] = await db.query('SELECT * FROM likes WHERE user_id = ? AND topic_id = ?', [currentUser.id, id]); 
-    if (existing.length > 0) { await db.query('DELETE FROM likes WHERE user_id = ? AND topic_id = ?', [currentUser.id, id]); } 
-    else { 
-      await db.query('INSERT INTO likes (user_id, topic_id) VALUES (?, ?)', [currentUser.id, id]); 
-      if (topic.user_id !== currentUser.id) {
-        await db.query('INSERT INTO notifications (user_id, actor_id, topic_id, type, message) VALUES (?, ?, ?, ?, ?)', [topic.user_id, currentUser.id, id, 'like', `${currentUser.username} ถูกใจกระทู้ของคุณ`]);
-      }
-    } 
-    revalidatePath(`/topic/${id}`); 
-  }
-
+  async function toggleLike() { 'use server'; if (!currentUser) return; const [existing] = await db.query('SELECT * FROM likes WHERE user_id = ? AND topic_id = ?', [currentUser.id, id]); if (existing.length > 0) { await db.query('DELETE FROM likes WHERE user_id = ? AND topic_id = ?', [currentUser.id, id]); } else { await db.query('INSERT INTO likes (user_id, topic_id) VALUES (?, ?)', [currentUser.id, id]); if (topic.user_id !== currentUser.id) { await db.query('INSERT INTO notifications (user_id, actor_id, topic_id, type, message) VALUES (?, ?, ?, ?, ?)', [topic.user_id, currentUser.id, id, 'like', `${currentUser.username} ถูกใจกระทู้ของคุณ`]); } } revalidatePath(`/topic/${id}`); }
   async function toggleBookmark() { 'use server'; if (!currentUser) return; const [existing] = await db.query('SELECT * FROM bookmarks WHERE user_id = ? AND topic_id = ?', [currentUser.id, id]); if (existing.length > 0) { await db.query('DELETE FROM bookmarks WHERE user_id = ? AND topic_id = ?', [currentUser.id, id]); } else { await db.query('INSERT INTO bookmarks (user_id, topic_id) VALUES (?, ?)', [currentUser.id, id]); } revalidatePath(`/topic/${id}`); }
-  
   async function deleteComment(formData) { 'use server'; const commentId = formData.get('commentId'); await db.query('DELETE FROM comments WHERE id = ?', [commentId]); revalidatePath(`/topic/${id}`); }
-
-  async function submitReport(formData) {
-    'use server';
-    if (!currentUser) return;
-    const targetId = formData.get('targetId');
-    const type = formData.get('type'); 
-    const reason = formData.get('reason');
-    if (type === 'topic') { await db.query('INSERT INTO reports (reporter_id, topic_id, reason) VALUES (?, ?, ?)', [currentUser.id, targetId, reason]); } 
-    else if (type === 'comment') { await db.query('INSERT INTO reports (reporter_id, comment_id, reason) VALUES (?, ?, ?)', [currentUser.id, targetId, reason]); }
-  }
+  async function submitReport(formData) { 'use server'; if (!currentUser) return; const targetId = formData.get('targetId'); const type = formData.get('type'); const reason = formData.get('reason'); if (type === 'topic') { await db.query('INSERT INTO reports (reporter_id, topic_id, reason) VALUES (?, ?, ?)', [currentUser.id, targetId, reason]); } else if (type === 'comment') { await db.query('INSERT INTO reports (reporter_id, comment_id, reason) VALUES (?, ?, ?)', [currentUser.id, targetId, reason]); } }
 
   return (
     <div className="flex min-h-screen bg-gray-100 font-sans text-gray-800 dark:bg-black dark:text-gray-100 transition-colors duration-300">
@@ -167,7 +128,6 @@ export default async function TopicDetailPage({ params }) {
         <Navbar />
         <div className="flex-1 overflow-y-auto p-8 pl-6 md:pl-8">
           
-          {/* 2. ✨ ใส่ตัวนับวิวไว้ตรงนี้ (มันจะทำงานเงียบๆ) */}
           <ViewCounter topicId={id} />
 
           <div className="flex justify-between items-center mb-6">
@@ -275,7 +235,6 @@ export default async function TopicDetailPage({ params }) {
               </div>
             </div>
           )}
-          
         </div>
       </main>
     </div>
