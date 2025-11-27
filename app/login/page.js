@@ -35,8 +35,10 @@ export default function LoginPage() {
     const cookieStore = await cookies();
     cookieStore.set('user_session', userData, { 
       httpOnly: true, 
-      secure: process.env.NODE_ENV === 'production',
-      maxAge: 60 * 60 * 24 
+      secure: true, // บังคับ Secure เสมอ (เพราะ Vercel เป็น HTTPS)
+      sameSite: 'lax', // สำคัญ! ช่วยให้ Cookie อยู่รอดตอน Redirect
+      path: '/',       // ให้ใช้ได้ทุกหน้า
+      maxAge: 60 * 60 * 24 // 1 วัน
     });
 
     redirect('/?notify=login_success');
