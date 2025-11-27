@@ -1,6 +1,6 @@
 import React from 'react';
-import Navbar from '../../../components/Navbar';
-import Sidebar from '../../../components/Sidebar';
+// import Navbar from '../../../components/Navbar'; <-- ลบออก (Layout จัดการให้แล้ว)
+// import Sidebar from '../../../components/Sidebar'; <-- ลบออก
 import db from '../../../lib/db';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
@@ -13,6 +13,7 @@ import CommentItem from '../../../components/CommentItem';
 import RippleButton from '../../../components/RippleButton'; 
 import ReportButton from '../../../components/ReportButton';
 import ViewCounter from '../../../components/ViewCounter';
+import { pusherServer } from '../../../lib/pusher'; // ✅ 1. Import Pusher
 
 export async function generateMetadata({ params }) {
   const { id } = await params;
@@ -35,7 +36,6 @@ export default async function TopicDetailPage({ params }) {
 
   const isAdmin = currentUser?.role === 'admin';
 
-  // 🔥 เทคนิค Turbo: เตรียมคำสั่ง Query ไว้ก่อน (ยังไม่รอ)
   const topicQuery = db.query(`
     SELECT topics.*, users.username, users.role, users.post_count 
     FROM topics 
@@ -53,16 +53,14 @@ export default async function TopicDetailPage({ params }) {
 
   const likeCountQuery = db.query('SELECT COUNT(*) as count FROM likes WHERE topic_id = ?', [id]);
 
-  // Query ที่ต้องใช้ currentUser (ถ้าไม่มี user ก็ไม่ต้องทำ)
   const userLikeQuery = currentUser 
     ? db.query('SELECT * FROM likes WHERE topic_id = ? AND user_id = ?', [id, currentUser.id])
-    : Promise.resolve([[]]); // คืนค่าว่างถ้าไม่ได้ล็อกอิน
+    : Promise.resolve([[]]); 
 
   const bookmarkQuery = currentUser
     ? db.query('SELECT * FROM bookmarks WHERE topic_id = ? AND user_id = ?', [id, currentUser.id])
     : Promise.resolve([[]]);
 
-  // 🚀 สั่งรันทุกอย่างพร้อมกัน! (Parallel Execution)
   const [
     [topics], 
     [allComments], 
@@ -81,7 +79,6 @@ export default async function TopicDetailPage({ params }) {
 
   if (!topic) return <div className="p-10 text-center dark:text-white">ไม่พบกระทู้นี้...</div>;
 
-  // --- ดึง Related Topics (ต้องรอกระทู้หลักก่อน เพราะต้องใช้ category) ---
   const [relatedTopics] = await db.query(`
     SELECT topics.*, users.username 
     FROM topics 
@@ -91,7 +88,6 @@ export default async function TopicDetailPage({ params }) {
     LIMIT 4
   `, [topic.category, id]);
 
-  // --- Logic จัดการข้อมูล (เหมือนเดิม) ---
   const commentMap = {};
   const rootComments = [];
   allComments.forEach(c => { c.children = []; commentMap[c.id] = c; });
@@ -102,31 +98,45 @@ export default async function TopicDetailPage({ params }) {
   const isBookmarked = bookmark.length > 0;
   const isOwner = currentUser && (currentUser.id === topic.user_id);
 
-  // --- Server Actions (เหมือนเดิม) ---
   async function deleteTopic() { 'use server'; await db.query('DELETE FROM topics WHERE id = ?', [id]); redirect('/?notify=delete_success'); }
+  
   async function addComment(formData) { 
     'use server'; 
     const content = formData.get('content'); 
     const parentId = formData.get('parentId') || null;
     if (currentUser) { 
       await db.query('INSERT INTO comments (topic_id, content, user_id, parent_id) VALUES (?, ?, ?, ?)', [id, content, currentUser.id, parentId]); 
+      
+      // ถ้าไม่ได้ตอบโพสต์ตัวเอง ให้แจ้งเตือนเจ้าของกระทู้
       if (!parentId && topic.user_id !== currentUser.id) {
           await db.query('INSERT INTO notifications (user_id, actor_id, topic_id, type, message) VALUES (?, ?, ?, ?, ?)', [topic.user_id, currentUser.id, id, 'comment', `${currentUser.username} แสดงความคิดเห็นในกระทู้ของคุณ`]);
+          
+          // ✅ 2. สั่งยิง Real-time Notification ไปหาเจ้าของกระทู้
+          try {
+            await pusherServer.trigger(
+              `user-${topic.user_id}`, // ส่งเข้าช่องส่วนตัวของเจ้าของกระทู้
+              'new-notification', 
+              {
+                message: `${currentUser.username} แสดงความคิดเห็นในกระทู้ของคุณ`,
+                link: `/topic/${id}`,
+                created_at: new Date()
+              }
+            );
+          } catch (error) {
+            console.error("Pusher Error:", error);
+          }
       }
       revalidatePath(`/topic/${id}`); 
     } 
   }
+
   async function toggleLike() { 'use server'; if (!currentUser) return; const [existing] = await db.query('SELECT * FROM likes WHERE user_id = ? AND topic_id = ?', [currentUser.id, id]); if (existing.length > 0) { await db.query('DELETE FROM likes WHERE user_id = ? AND topic_id = ?', [currentUser.id, id]); } else { await db.query('INSERT INTO likes (user_id, topic_id) VALUES (?, ?)', [currentUser.id, id]); if (topic.user_id !== currentUser.id) { await db.query('INSERT INTO notifications (user_id, actor_id, topic_id, type, message) VALUES (?, ?, ?, ?, ?)', [topic.user_id, currentUser.id, id, 'like', `${currentUser.username} ถูกใจกระทู้ของคุณ`]); } } revalidatePath(`/topic/${id}`); }
   async function toggleBookmark() { 'use server'; if (!currentUser) return; const [existing] = await db.query('SELECT * FROM bookmarks WHERE user_id = ? AND topic_id = ?', [currentUser.id, id]); if (existing.length > 0) { await db.query('DELETE FROM bookmarks WHERE user_id = ? AND topic_id = ?', [currentUser.id, id]); } else { await db.query('INSERT INTO bookmarks (user_id, topic_id) VALUES (?, ?)', [currentUser.id, id]); } revalidatePath(`/topic/${id}`); }
   async function deleteComment(formData) { 'use server'; const commentId = formData.get('commentId'); await db.query('DELETE FROM comments WHERE id = ?', [commentId]); revalidatePath(`/topic/${id}`); }
   async function submitReport(formData) { 'use server'; if (!currentUser) return; const targetId = formData.get('targetId'); const type = formData.get('type'); const reason = formData.get('reason'); if (type === 'topic') { await db.query('INSERT INTO reports (reporter_id, topic_id, reason) VALUES (?, ?, ?)', [currentUser.id, targetId, reason]); } else if (type === 'comment') { await db.query('INSERT INTO reports (reporter_id, comment_id, reason) VALUES (?, ?, ?)', [currentUser.id, targetId, reason]); } }
 
   return (
-    <div className="flex min-h-screen bg-gray-100 font-sans text-gray-800 dark:bg-black dark:text-gray-100 transition-colors duration-300">
-      <Sidebar />
-      <main className="flex-1 flex flex-col h-screen overflow-hidden bg-gray-50 dark:bg-black transition-colors duration-300">
-        <Navbar />
-        <div className="flex-1 overflow-y-auto p-8 pl-6 md:pl-8">
+    <div className="p-8 pl-6 md:pl-8 max-w-7xl mx-auto">
           
           <ViewCounter topicId={id} />
 
@@ -196,7 +206,7 @@ export default async function TopicDetailPage({ params }) {
                       deleteAction={deleteComment}
                       replyAction={addComment}
                       reportAction={submitReport} 
-                   />
+                    />
                 ))
               ) : (
                 <div className="text-center py-8 text-gray-400 bg-gray-50 rounded-xl border border-dashed border-gray-300 dark:bg-neutral-900 dark:border-neutral-800 dark:text-gray-500">
@@ -235,8 +245,6 @@ export default async function TopicDetailPage({ params }) {
               </div>
             </div>
           )}
-        </div>
-      </main>
     </div>
   );
 }

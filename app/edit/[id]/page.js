@@ -1,90 +1,114 @@
 import React from 'react';
-import Navbar from '../../../components/Navbar';
+// import Navbar from '../../../components/Navbar'; <-- ลบออก!
 import { redirect } from 'next/navigation';
 import db from '../../../lib/db';
-import Link from 'next/link';
 import { cookies } from 'next/headers';
-import Editor from '../../../components/Editor'; // เรียกใช้ Editor
+import Editor from '../../../components/Editor'; 
 
 export default async function EditTopicPage({ params }) {
-  const { id } = await params;
-  
-  // เช็กสิทธิ์
+  const { id } = await params; // ดึง ID กระทู้จาก URL
+
   const cookieStore = await cookies();
   const session = cookieStore.get('user_session');
+  
+  // 1. เช็คว่าล็อกอินไหม
   if (!session) redirect('/login');
-  const currentUser = JSON.parse(session.value);
+  
+  const user = JSON.parse(session.value);
 
+  // 2. ดึงข้อมูลกระทู้เดิมมาแสดง
   const [topics] = await db.query('SELECT * FROM topics WHERE id = ?', [id]);
   const topic = topics[0];
 
-  if (!topic) return <div>ไม่พบข้อมูล</div>;
-
-  // ป้องกันคนอื่นมาเนียนแก้ (ถ้าไม่ใช่เจ้าของ และไม่ใช่แอดมิน ดีดออก)
-  const isOwner = currentUser.id === topic.user_id;
-  const isAdmin = currentUser.role === 'admin';
-  if (!isOwner && !isAdmin) {
-    redirect('/');
+  // ถ้าหากระทู้ไม่เจอ
+  if (!topic) {
+    return <div className="text-center p-10 text-white">ไม่พบกระทู้นี้</div>;
   }
 
+  // 3. 🔒 Security Check: ต้องเป็นเจ้าของกระทู้ หรือ Admin เท่านั้นถึงจะแก้ได้
+  if (topic.user_id !== user.id && user.role !== 'admin') {
+      redirect('/'); // ถ้าไม่ใช่เจ้าของ ดีดกลับหน้าแรก
+  }
+
+  // Server Action สำหรับบันทึกการแก้ไข
   async function updateTopic(formData) {
     'use server';
+
     const title = formData.get('title');
     const category = formData.get('category');
-    const content = formData.get('content'); // รับ HTML จาก Editor
+    const content = formData.get('content');
 
+    // อัปเดตลง Database (แก้ไขเฉพาะ Text ก่อน รูปภาพอาจจะซับซ้อนถ้าต้องลบอันเก่า)
     await db.query(
-      'UPDATE topics SET title = ?, category = ?, content = ? WHERE id = ?',
+      'UPDATE topics SET title = ?, category = ?, content = ? WHERE id = ?', 
       [title, category, content, id]
     );
 
+    // กลับไปหน้ากระทู้นั้น พร้อมแจ้งเตือน
     redirect(`/topic/${id}?notify=edit_success`);
   }
 
   return (
-    <div className="min-h-screen bg-gray-100 font-sans">
-      <Navbar />
+    // เอา min-h-screen ออก เพื่อให้ Layout จัดการ
+    <div className="container mx-auto p-6 max-w-3xl">
       
-      <div className="container mx-auto p-6 max-w-2xl">
-        <Link href={`/topic/${id}`} className="text-gray-500 hover:text-red-600 mb-4 inline-block">
-          &larr; ยกเลิกการแก้ไข
-        </Link>
+      <div className="bg-white p-8 rounded-xl shadow-lg border-t-4 border-yellow-500 dark:bg-neutral-900 dark:border-yellow-600">
+        <h1 className="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-2 dark:text-white">
+          <span className="text-3xl">✏️</span> แก้ไขกระทู้
+        </h1>
+        
+        <form action={updateTopic} className="flex flex-col gap-6">
+          
+          {/* หัวข้อกระทู้ */}
+          <div>
+            <label className="block text-gray-700 font-bold mb-2 dark:text-gray-200">หัวข้อกระทู้</label>
+            <input 
+                name="title" 
+                type="text" 
+                defaultValue={topic.title} // ใส่ค่าเดิม
+                required 
+                className="w-full bg-gray-50 border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-yellow-500 dark:bg-black dark:border-neutral-700 dark:text-white dark:placeholder-gray-500" 
+            />
+          </div>
 
-        <div className="bg-white p-8 rounded-xl shadow-lg border-t-4 border-yellow-500">
-          <h1 className="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-2">
-            <span className="text-yellow-500 text-2xl">✏️</span> แก้ไขกระทู้
-          </h1>
+          {/* หมวดหมู่ */}
+          <div>
+            <label className="block text-gray-700 font-bold mb-2 dark:text-gray-200">หมวดหมู่</label>
+            <select 
+                name="category" 
+                defaultValue={topic.category} // เลือกค่าเดิม
+                className="w-full bg-gray-50 border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-yellow-500 dark:bg-black dark:border-neutral-700 dark:text-white"
+            >
+                <option value="Hardware">Hardware (อุปกรณ์คอมพิวเตอร์)</option>
+                <option value="Software">Software (โปรแกรม & OS)</option>
+                <option value="Network">Network (เครือข่าย & Internet)</option>
+                <option value="AI & Data">AI & Data Science</option>
+                <option value="General">General (พูดคุยทั่วไป)</option>
+            </select>
+          </div>
 
-          <form action={updateTopic} className="flex flex-col gap-4">
-            
-            <div>
-              <label className="block text-gray-600 font-medium mb-1">หัวข้อกระทู้</label>
-              <input name="title" type="text" required defaultValue={topic.title} className="w-full bg-gray-50 border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-yellow-400" />
+          {/* รายละเอียด (Editor) */}
+          <div>
+            <label className="block text-gray-700 font-bold mb-2 dark:text-gray-200">รายละเอียด</label>
+            <div className="border border-gray-300 rounded-lg overflow-hidden dark:border-neutral-700 bg-white dark:bg-black">
+                {/* ส่งค่า content เดิมไปให้ Editor (ต้องแน่ใจว่า Editor รับ prop เช่น initialValue หรือ children นะครับ) */}
+                <Editor defaultValue={topic.content} /> 
             </div>
+          </div>
 
-            <div>
-              <label className="block text-gray-600 font-medium mb-1">หมวดหมู่</label>
-              <select name="category" defaultValue={topic.category} className="w-full bg-gray-50 border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-yellow-400">
-                <option value="Hardware">Hardware</option>
-                <option value="Software">Software</option>
-                <option value="Network">Network</option>
-                <option value="AI & Data">AI & Data</option>
-                <option value="General">General</option>
-              </select>
-            </div>
+          <div className="flex gap-4 mt-4">
+             {/* ปุ่มยกเลิก */}
+             <a href={`/topic/${id}`} className="flex-1 py-3 text-center border border-gray-300 rounded-lg text-gray-600 font-bold hover:bg-gray-100 transition dark:text-gray-300 dark:border-neutral-600 dark:hover:bg-neutral-800">
+                ยกเลิก
+             </a>
+             
+             {/* ปุ่มบันทึก */}
+             <button type="submit" className="flex-[2] bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-3 rounded-lg shadow-md transition-all transform hover:scale-[1.01] active:scale-95 dark:bg-yellow-600 dark:hover:bg-yellow-500">
+                บันทึกการแก้ไข 💾
+             </button>
+          </div>
 
-            <div>
-              <label className="block text-gray-600 font-medium mb-1">รายละเอียด</label>
-              {/* ส่งค่าเก่า (defaultValue) ไปให้ Editor */}
-              <Editor defaultValue={topic.content} />
-            </div>
-
-            <button type="submit" className="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-3 rounded-lg shadow-md transition-all mt-4">
-              บันทึกการแก้ไข
-            </button>
-
-          </form>
-        </div>
+        </form>
       </div>
     </div>
   );

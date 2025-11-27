@@ -1,5 +1,5 @@
 import React from 'react';
-import Navbar from '../../components/Navbar';
+// import Navbar from '../../components/Navbar'; <-- ลบออก (Layout จัดการให้แล้ว)
 import db from '../../lib/db';
 import { redirect } from 'next/navigation';
 import { cookies } from 'next/headers';
@@ -9,25 +9,27 @@ import Link from 'next/link';
 export default async function AdminDashboard() {
   const cookieStore = await cookies();
   const session = cookieStore.get('user_session');
+  
+  // 1. เช็คว่าล็อกอินไหม
   if (!session) redirect('/login');
   
   const currentUser = JSON.parse(session.value);
   
+  // 2. เช็คว่าเป็น Admin จริงไหม (Double Check กับ DB)
   const [adminCheck] = await db.query('SELECT role FROM users WHERE id = ?', [currentUser.id]);
-  if (adminCheck[0].role !== 'admin') {
-    redirect('/'); 
+  if (!adminCheck[0] || adminCheck[0].role !== 'admin') {
+    redirect('/'); // ถ้าไม่ใช่ Admin ดีดกลับหน้าแรกทันที
   }
 
-  // 1. ดึงสถิติ
+  // 3. ดึงสถิติ
   const [userCount] = await db.query('SELECT COUNT(*) as count FROM users');
   const [topicCount] = await db.query('SELECT COUNT(*) as count FROM topics');
   const [commentCount] = await db.query('SELECT COUNT(*) as count FROM comments');
 
-  // 2. ดึง User
+  // 4. ดึง User
   const [users] = await db.query('SELECT * FROM users ORDER BY created_at DESC');
 
-  // ✨ 3. เพิ่มใหม่: ดึงรายการแจ้งปัญหา (Reports) ที่สถานะเป็น 'pending'
-  // เราต้อง JOIN เพื่อดูว่าใครแจ้ง และแจ้งเนื้อหาอะไร
+  // 5. ดึงรายการแจ้งปัญหา (Reports)
   const [reports] = await db.query(`
     SELECT r.*, 
            reporter.username as reporter_name,
@@ -52,7 +54,6 @@ export default async function AdminDashboard() {
     revalidatePath('/admin');
   }
 
-  // ✨ Action: กดเคลียร์งาน (เปลี่ยนสถานะเป็น resolved)
   async function resolveReport(formData) {
     'use server';
     const reportId = formData.get('reportId');
@@ -61,10 +62,10 @@ export default async function AdminDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-100 font-sans text-gray-800 dark:bg-black dark:text-gray-100 transition-colors duration-300">
-      <Navbar />
+    // ปรับ div นอกสุดให้เข้ากับ layout หลัก (เอา min-h-screen ออก)
+    <div className="p-6 font-sans text-gray-800 dark:text-gray-100 transition-colors duration-300">
       
-      <div className="container mx-auto p-6 max-w-6xl">
+      <div className="container mx-auto max-w-6xl">
         <h1 className="text-3xl font-bold mb-8 flex items-center gap-3 dark:text-white">
           <span className="text-4xl">🛡️</span> Admin Dashboard
         </h1>
@@ -85,7 +86,7 @@ export default async function AdminDashboard() {
           </div>
         </div>
 
-        {/* --- ✨ ส่วนใหม่: รายการแจ้งปัญหา (Reports) --- */}
+        {/* --- รายการแจ้งปัญหา (Reports) --- */}
         {reports.length > 0 && (
           <div className="bg-white rounded-xl shadow-lg overflow-hidden mb-10 border border-red-100 dark:bg-neutral-900 dark:border-red-900/30">
             <div className="px-6 py-4 border-b border-red-100 bg-red-50 flex justify-between items-center dark:bg-red-900/20 dark:border-red-900/30">
@@ -129,7 +130,6 @@ export default async function AdminDashboard() {
                           <button 
                             type="submit" 
                             className="px-3 py-1 rounded text-xs font-bold bg-green-500 text-white hover:bg-green-600 shadow-sm transition"
-                            title="กดเมื่อจัดการเสร็จแล้ว"
                           >
                             ✅ เคลียร์
                           </button>
@@ -143,7 +143,7 @@ export default async function AdminDashboard() {
           </div>
         )}
 
-        {/* --- ตารางรายชื่อสมาชิก (เหมือนเดิม) --- */}
+        {/* --- ตารางรายชื่อสมาชิก --- */}
         <div className="bg-white rounded-xl shadow-lg overflow-hidden dark:bg-neutral-900 dark:border dark:border-neutral-800">
           <div className="px-6 py-4 border-b border-gray-200 bg-gray-50 flex justify-between items-center dark:bg-neutral-800 dark:border-neutral-700">
             <h3 className="font-bold text-gray-700 dark:text-gray-200">📋 รายชื่อผู้ใช้งาน</h3>
@@ -167,12 +167,12 @@ export default async function AdminDashboard() {
                   <tr key={u.id} className="hover:bg-gray-50 transition dark:hover:bg-neutral-800/50">
                     <td className="px-6 py-4 font-mono text-gray-500 dark:text-gray-600">#{u.id}</td>
                     <td className="px-6 py-4 flex items-center gap-3">
-                       <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-xs font-bold text-gray-600 dark:bg-neutral-700 dark:text-gray-300">
-                         {u.avatar_url ? (
-                           <img src={u.avatar_url} className="w-full h-full rounded-full object-cover"/> 
-                         ) : u.username.charAt(0).toUpperCase()}
-                       </div>
-                       <span className="font-bold dark:text-gray-200">{u.username}</span>
+                        <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-xs font-bold text-gray-600 dark:bg-neutral-700 dark:text-gray-300">
+                          {u.avatar_url ? (
+                            <img src={u.avatar_url} className="w-full h-full rounded-full object-cover"/> 
+                          ) : u.username.charAt(0).toUpperCase()}
+                        </div>
+                        <span className="font-bold dark:text-gray-200">{u.username}</span>
                     </td>
                     <td className="px-6 py-4 text-gray-500 dark:text-gray-400">{u.email}</td>
                     <td className="px-6 py-4">

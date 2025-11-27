@@ -1,5 +1,5 @@
 import React from 'react';
-import Navbar from '../../components/Navbar';
+// import Navbar from '../../components/Navbar'; <-- ลบออก
 import Footer from '../../components/Footer';
 import db from '../../lib/db';
 import Link from 'next/link';
@@ -14,10 +14,8 @@ export default async function LeaderboardPage() {
   const rest = users.slice(3);
 
   return (
-    <div className="min-h-screen bg-gray-100 font-sans text-gray-800 dark:bg-black dark:text-gray-100 transition-colors duration-300">
-      <Navbar />
-      
-      <div className="container mx-auto p-6 max-w-4xl">
+    // ปรับ div นอกสุดให้เรียบง่าย ไม่ต้องกำหนด min-h-screen ซ้ำ
+    <div className="container mx-auto p-6 max-w-4xl">
         
         {/* Header */}
         <div className="text-center mb-12 mt-4">
@@ -34,7 +32,7 @@ export default async function LeaderboardPage() {
             <div className="order-2 md:order-1 bg-white p-6 rounded-2xl shadow-lg border-b-4 border-gray-400 flex flex-col items-center transform hover:-translate-y-2 transition-transform dark:bg-neutral-900 dark:border-gray-600">
               <div className="text-4xl mb-2">🥈</div>
               <div className="w-20 h-20 rounded-full overflow-hidden border-4 border-gray-300 mb-3 bg-gray-100 flex items-center justify-center dark:border-gray-600 dark:bg-black">
-                 {top3[1].avatar_url ? <img src={top3[1].avatar_url} className="w-full h-full object-cover" /> : <span className="text-2xl font-bold">{top3[1].username.charAt(0)}</span>}
+                  {top3[1].avatar_url ? <img src={top3[1].avatar_url} className="w-full h-full object-cover" /> : <span className="text-2xl font-bold">{top3[1].username.charAt(0)}</span>}
               </div>
               <h2 className="font-bold text-lg text-gray-700 dark:text-gray-200">{top3[1].username}</h2>
               <p className="text-sm text-gray-500 dark:text-gray-400">{top3[1].post_count} โพสต์</p>
@@ -47,7 +45,7 @@ export default async function LeaderboardPage() {
               <div className="absolute top-0 w-full h-1 bg-gradient-to-r from-yellow-200 to-yellow-500"></div>
               <div className="text-6xl mb-2 animate-bounce">👑</div>
               <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-yellow-400 mb-3 bg-yellow-50 flex items-center justify-center shadow-lg dark:bg-black">
-                 {top3[0].avatar_url ? <img src={top3[0].avatar_url} className="w-full h-full object-cover" /> : <span className="text-3xl font-bold">{top3[0].username.charAt(0)}</span>}
+                  {top3[0].avatar_url ? <img src={top3[0].avatar_url} className="w-full h-full object-cover" /> : <span className="text-3xl font-bold">{top3[0].username.charAt(0)}</span>}
               </div>
               <h2 className="font-bold text-2xl text-gray-800 dark:text-white">{top3[0].username}</h2>
               <UserBadge role={top3[0].role} postCount={top3[0].post_count} />
@@ -60,7 +58,7 @@ export default async function LeaderboardPage() {
             <div className="order-3 bg-white p-6 rounded-2xl shadow-lg border-b-4 border-orange-700 flex flex-col items-center transform hover:-translate-y-2 transition-transform dark:bg-neutral-900 dark:border-orange-900">
               <div className="text-4xl mb-2">🥉</div>
               <div className="w-20 h-20 rounded-full overflow-hidden border-4 border-orange-300 mb-3 bg-orange-50 flex items-center justify-center dark:border-orange-900 dark:bg-black">
-                 {top3[2].avatar_url ? <img src={top3[2].avatar_url} className="w-full h-full object-cover" /> : <span className="text-2xl font-bold">{top3[2].username.charAt(0)}</span>}
+                  {top3[2].avatar_url ? <img src={top3[2].avatar_url} className="w-full h-full object-cover" /> : <span className="text-2xl font-bold">{top3[2].username.charAt(0)}</span>}
               </div>
               <h2 className="font-bold text-lg text-gray-700 dark:text-gray-200">{top3[2].username}</h2>
               <p className="text-sm text-gray-500 dark:text-gray-400">{top3[2].post_count} โพสต์</p>
@@ -87,7 +85,7 @@ export default async function LeaderboardPage() {
                     </td>
                     <td className="px-6 py-4 flex items-center gap-3">
                       <div className="w-8 h-8 rounded-full overflow-hidden bg-gray-200 flex items-center justify-center text-xs font-bold dark:bg-neutral-700">
-                         {u.avatar_url ? <img src={u.avatar_url} className="w-full h-full object-cover" /> : u.username.charAt(0).toUpperCase()}
+                          {u.avatar_url ? <img src={u.avatar_url} className="w-full h-full object-cover" /> : u.username.charAt(0).toUpperCase()}
                       </div>
                       <span className="font-bold text-gray-700 dark:text-gray-200">{u.username}</span>
                       <UserBadge role={u.role} postCount={u.post_count} />
@@ -106,8 +104,9 @@ export default async function LeaderboardPage() {
           )}
         </div>
 
-      </div>
-      <Footer />
+        <div className="mt-12">
+            <Footer />
+        </div>
     </div>
   );
 }

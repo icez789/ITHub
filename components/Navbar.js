@@ -5,7 +5,7 @@ import { redirect } from 'next/navigation';
 import db from '../lib/db'; 
 import ThemeToggle from './ThemeToggle'; 
 import NotificationBell from './NotificationBell';
-import SearchInput from './SearchInput'; // 1. เรียกใช้ช่องค้นหาใหม่
+import SearchInput from './SearchInput';
 
 export default async function Navbar() {
   const cookieStore = await cookies();
@@ -44,12 +44,11 @@ export default async function Navbar() {
       
       <Link href="/" className="flex items-center gap-3">
          <div className="w-12 h-12 bg-gradient-to-br from-red-600 to-red-800 rounded-lg flex items-center justify-center text-white font-bold text-xl shadow-lg">
-            IT
+           IT
          </div>
          <span className="font-bold text-xl tracking-tight hidden sm:block text-gray-900 dark:text-white">TECH<span className="text-red-600">BOARD</span></span>
       </Link>
       
-      {/* 2. ใช้ SearchInput แทน Form เดิม */}
       <SearchInput />
 
       <nav className="flex gap-3 items-center">
@@ -58,46 +57,51 @@ export default async function Navbar() {
 
         {user ? (
           <div className="flex items-center gap-4">
-             
-             <NotificationBell count={unreadCount} notifications={notifications} />
+              
+              {/* ✅ ส่ง user.id ไปให้ NotificationBell */}
+              <NotificationBell 
+                count={unreadCount} 
+                notifications={notifications} 
+                currentUserId={user.id} 
+              />
 
-             {user.role === 'admin' && (
-               <Link 
-                 href="/admin" 
-                 className="hidden md:flex items-center gap-1 text-sm font-bold text-gray-700 hover:text-black border border-gray-300 px-3 py-2 rounded-lg transition bg-white shadow-sm dark:bg-neutral-900 dark:text-gray-200 dark:border-neutral-700 dark:hover:bg-neutral-800"
-               >
-                 🛡️ Admin
-               </Link>
-             )}
+              {user.role === 'admin' && (
+                <Link 
+                  href="/admin" 
+                  className="hidden md:flex items-center gap-1 text-sm font-bold text-gray-700 hover:text-black border border-gray-300 px-3 py-2 rounded-lg transition bg-white shadow-sm dark:bg-neutral-900 dark:text-gray-200 dark:border-neutral-700 dark:hover:bg-neutral-800"
+                >
+                  🛡️ Admin
+                </Link>
+              )}
 
-             <Link 
-               href="/create" 
-               className="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-bold shadow-md transition-all transform hover:scale-105 active:scale-95 text-sm"
-             >
-               <span>+</span> <span className="hidden sm:inline">สร้างกระทู้</span>
-             </Link>
+              <Link 
+                href="/create" 
+                className="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-bold shadow-md transition-all transform hover:scale-105 active:scale-95 text-sm"
+              >
+                <span>+</span> <span className="hidden sm:inline">สร้างกระทู้</span>
+              </Link>
 
-             <Link href="/profile" className="text-right hidden sm:block cursor-pointer hover:opacity-80 transition-opacity group">
-                <p className="text-xs text-gray-400 font-medium group-hover:text-red-500 transition-colors">ยินดีต้อนรับ,</p>
-                <p className="text-sm font-bold text-gray-800 group-hover:text-red-600 transition-colors dark:text-gray-200">{user.username}</p>
-             </Link>
-             
-             <Link href="/profile">
-               <div className="w-10 h-10 rounded-full overflow-hidden border border-red-200 cursor-pointer hover:shadow-md transition-all bg-gray-100 flex items-center justify-center dark:bg-neutral-800 dark:border-neutral-700">
-                  {user.avatar_url ? (
-                    <img src={user.avatar_url} alt="avatar" className="w-full h-full object-cover" />
-                  ) : (
-                    <span className="font-bold text-red-600">{user.username.charAt(0).toUpperCase()}</span>
-                  )}
-               </div>
-             </Link>
-             
-             <form action={logout}>
-                <button className="text-sm text-gray-500 hover:text-red-600 border border-gray-300 hover:border-red-600 px-3 py-2 rounded-lg transition-all bg-white dark:bg-neutral-900 dark:text-gray-400 dark:border-neutral-700 dark:hover:text-red-500 dark:hover:border-red-500" title="ออกจากระบบ">
-                  <span className="sm:hidden">Exit</span>
-                  <span className="hidden sm:inline">Logout</span>
-                </button>
-             </form>
+              <Link href="/profile" className="text-right hidden sm:block cursor-pointer hover:opacity-80 transition-opacity group">
+                 <p className="text-xs text-gray-400 font-medium group-hover:text-red-500 transition-colors">ยินดีต้อนรับ,</p>
+                 <p className="text-sm font-bold text-gray-800 group-hover:text-red-600 transition-colors dark:text-gray-200">{user.username}</p>
+              </Link>
+              
+              <Link href="/profile">
+                <div className="w-10 h-10 rounded-full overflow-hidden border border-red-200 cursor-pointer hover:shadow-md transition-all bg-gray-100 flex items-center justify-center dark:bg-neutral-800 dark:border-neutral-700">
+                   {user.avatar_url ? (
+                     <img src={user.avatar_url} alt="avatar" className="w-full h-full object-cover" />
+                   ) : (
+                     <span className="font-bold text-red-600">{user.username.charAt(0).toUpperCase()}</span>
+                   )}
+                </div>
+              </Link>
+              
+              <form action={logout}>
+                 <button className="text-sm text-gray-500 hover:text-red-600 border border-gray-300 hover:border-red-600 px-3 py-2 rounded-lg transition-all bg-white dark:bg-neutral-900 dark:text-gray-400 dark:border-neutral-700 dark:hover:text-red-500 dark:hover:border-red-500" title="ออกจากระบบ">
+                   <span className="sm:hidden">Exit</span>
+                   <span className="hidden sm:inline">Logout</span>
+                 </button>
+              </form>
           </div>
         ) : (
           <>

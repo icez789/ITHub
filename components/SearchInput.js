@@ -1,38 +1,56 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 
 export default function SearchInput() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const pathname = usePathname();
   
-  // ดึงค่าค้นหาเดิมจาก URL มาใส่ (ถ้ามี)
   const [text, setText] = useState(searchParams.get('search') || '');
+  const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
-    // ตั้งเวลาหน่วง (Debounce) 500ms
+    setIsMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (!isMounted) return;
+
+    // ✨ Logic ใหม่: เช็คก่อนว่าค่าที่พิมพ์ กับ ค่าใน URL มันต่างกันจริงไหม?
+    // ถ้าค่าเหมือนเดิม (เช่น เราแค่กด Sort แต่ไม่ได้พิมพ์ค้นหาใหม่) ก็ไม่ต้องทำอะไร
+    const currentSearch = searchParams.get('search') || '';
+    if (text === currentSearch) {
+        return; 
+    }
+
     const timer = setTimeout(() => {
-      
-      // สร้าง URL Parameters ใหม่ โดยเอาค่าเดิมมาด้วย (เช่น sort, category)
+      // ถ้าไม่ได้อยู่หน้าแรก และไม่ได้พิมพ์อะไร ก็ไม่ต้องทำอะไร
+      if (!text && pathname !== '/') {
+        return; 
+      }
+
       const params = new URLSearchParams(searchParams.toString());
       
       if (text) {
         params.set('search', text);
       } else {
-        params.delete('search'); // ถ้าลบจนหมด ให้เอา parameter ออก
+        params.delete('search');
       }
       
-      // รีเซ็ตหน้าไปหน้า 1 เสมอเวลาค้นหาใหม่
-      params.delete('page');
+      // เมื่อมีการค้นหา ให้รีเซ็ตไปหน้า 1
+      if (text !== currentSearch) {
+          params.delete('page');
+      }
 
-      // สั่งเปลี่ยน URL (Next.js จะโหลดหน้าใหม่ให้อัตโนมัติ)
-      router.push(`/?${params.toString()}`);
+      // 🚀 สั่งเปลี่ยน URL โดยเพิ่ม { scroll: false } เพื่อไม่ให้ดีดกลับขึ้นบน
+      router.push(`/?${params.toString()}`, { scroll: false });
 
-    }, 500); // 0.5 วินาที
+    }, 500);
 
     return () => clearTimeout(timer);
-  }, [text, router, searchParams]);
+  }, [text, router, searchParams, pathname, isMounted]);
 
   return (
     <div className="flex-1 max-w-xl relative hidden md:block">

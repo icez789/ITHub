@@ -1,9 +1,9 @@
 @import "tailwindcss";
 
-/* บังคับให้ dark: ทำงานเมื่อมี class="dark" */
+/* 1. Base Config */
 @variant dark (&:where(.dark, .dark *));
 
-/* อนิเมชันพื้นหลังสีรุ้ง */
+/* 2. Animations */
 @keyframes rainbow-move {
   0% { background-position: 0% 50%; }
   50% { background-position: 100% 50%; }
@@ -16,61 +16,89 @@
   animation: rainbow-move 10s ease infinite;
 }
 
-/* ตกแต่งกล่องโค้ด (Syntax Highlight) */
-.ql-syntax {
-  background-color: #282c34; /* สีพื้นหลัง Atom Dark */
-  color: #abb2bf;            /* สีตัวหนังสือ */
-  padding: 1rem;
-  border-radius: 0.5rem;
-  overflow-x: auto;          /* ถ้าโค้ดยาวให้เลื่อนซ้ายขวาได้ */
-  font-family: 'Courier New', Courier, monospace;
-  margin-top: 1rem;
-  margin-bottom: 1rem;
-  border: 1px solid #3e4451;
+/* 3. Utility Classes */
+@layer utilities {
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
 }
 
-/* ปรับรูปใน Editor ให้ไม่ล้น */
+/* 4. Global Styles */
 .prose img {
   max-width: 100%;
   height: auto;
   border-radius: 0.5rem;
 }
 
-/* ✨✨✨ เพิ่มส่วนนี้: ปรับแต่ง Quill Editor ให้รองรับ Dark Mode ✨✨✨ */
+/* -------------------------------------------------------------------------- */
+/* 🖋️ REACT QUILL EDITOR STYLES (รวมทุกอย่างไว้ที่นี่ที่เดียว)                 */
+/* -------------------------------------------------------------------------- */
 
-/* ปรับสี Toolbar (แถบเครื่องมือด้านบน) ในโหมดมืด */
-.dark .ql-toolbar {
-  background-color: #262626; /* Neutral-800 */
-  border-color: #404040 !important; /* Neutral-700 */
+/* ปรับความสูงขั้นต่ำ */
+.ql-editor {
+  min-height: 200px;
 }
 
-/* ปรับสีไอคอนเครื่องมือให้เป็นสีขาว */
-.dark .ql-stroke { stroke: #d4d4d4 !important; }
-.dark .ql-fill { fill: #d4d4d4 !important; }
-.dark .ql-picker { color: #d4d4d4 !important; }
+/* ตกแต่งกล่องโค้ด (Syntax Highlight) */
+.ql-syntax {
+  background-color: #282c34;
+  color: #abb2bf;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  overflow-x: auto;
+  font-family: 'Courier New', Courier, monospace;
+  margin: 1rem 0;
+  border: 1px solid #3e4451;
+}
 
-/* ปรับพื้นที่เขียนข้อความ (Container) */
-.dark .ql-container {
-  background-color: #171717; /* Neutral-900 */
+/* --- 🌑 DARK MODE CONFIGURATION (ใช้ html.dark body เพื่อความชัวร์) --- */
+
+/* พื้นหลัง Toolbar และ Editor Area */
+html.dark body .ql-toolbar.ql-snow,
+html.dark body .ql-container.ql-snow {
+  background-color: #171717 !important; /* สีเทาเข้ม */
   border-color: #404040 !important;
-  color: #e5e5e5 !important; /* ตัวหนังสือสีขาว */
+  color: #e5e5e5 !important;
 }
 
-/* ปรับ Placeholder (ข้อความจางๆ ตอนยังไม่พิมพ์) */
-.dark .ql-editor.ql-blank::before {
+/* เปลี่ยนสีไอคอนเครื่องมือต่างๆ ให้เป็นสีขาว/เทา */
+html.dark body .ql-snow .ql-stroke { stroke: #e5e5e5 !important; }
+html.dark body .ql-snow .ql-fill { fill: #e5e5e5 !important; }
+html.dark body .ql-snow .ql-picker { color: #e5e5e5 !important; }
+
+/* แก้สี Placeholder (ข้อความจางๆ) */
+html.dark body .ql-editor.ql-blank::before {
   color: #a3a3a3 !important;
-  font-style: normal;
+  font-style: italic;
 }
 
-/* ✨ สั่งซ่อน Scrollbar (แต่ยังเลื่อนได้) ✨ */
-@layer utilities {
-  /* สำหรับ Chrome, Safari and Opera */
-  .no-scrollbar::-webkit-scrollbar {
-    display: none;
-  }
+/* --- 🔽 DROPDOWN MENU (จุดปราบเซียน) --- */
 
-  .no-scrollbar {
-    -ms-overflow-style: none;  /* สำหรับ IE and Edge */
-    scrollbar-width: none;  /* สำหรับ Firefox */
-  }
+/* พื้นหลังกล่องเมนูที่เด้งออกมา */
+html.dark body .ql-snow .ql-picker-options {
+  background-color: #262626 !important;
+  border-color: #525252 !important;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5) !important;
+  z-index: 9999 !important;
+}
+
+/* สีตัวหนังสือในเมนู */
+html.dark body .ql-snow .ql-picker-item {
+  color: #d4d4d4 !important;
+}
+
+/* สีตอนเอาเมาส์ชี้ (Hover) หรือเลือกอยู่ */
+html.dark body .ql-snow .ql-picker-item:hover,
+html.dark body .ql-snow .ql-picker-item.ql-selected {
+  color: #ffffff !important;
+  background-color: #ef4444 !important; /* สีแดง Theme เรา */
+}
+
+/* แก้สีหัวข้อ (Label) ด้านบน */
+html.dark body .ql-snow .ql-picker-label {
+  color: #e5e5e5 !important;
 }
