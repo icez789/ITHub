@@ -3,52 +3,49 @@
 import React, { useState, useEffect } from 'react';
 import Pusher from 'pusher-js';
 import Link from 'next/link';
+// 1. ✅ Import Server Action ที่เราเพิ่งสร้าง
+import { markNotificationsAsRead } from '../lib/actions'; 
 
 export default function NotificationBell({ count: initialCount, notifications: initialNotifications, currentUserId }) {
-  console.log("Pusher Key:", process.env.NEXT_PUBLIC_PUSHER_KEY);
-  // ✅ รับ currentUserId เข้ามาเพื่อใช้ Subscribe ช่องตัวเอง
-  
   const [unreadCount, setUnreadCount] = useState(initialCount);
   const [notifications, setNotifications] = useState(initialNotifications);
   const [isOpen, setIsOpen] = useState(false);
 
+  // ... (ส่วน useEffect ของ Pusher ปล่อยไว้เหมือนเดิม ไม่ต้องแก้) ...
   useEffect(() => {
-    // ถ้าไม่ได้ล็อกอิน ไม่ต้องเชื่อมต่อ
     if (!currentUserId) return;
-
-    // 1. เชื่อมต่อ Pusher (ใส่ Key ที่ได้จาก .env)
     const pusher = new Pusher(process.env.NEXT_PUBLIC_PUSHER_KEY, {
       cluster: process.env.NEXT_PUBLIC_PUSHER_CLUSTER,
     });
-
-    // 2. สมัครรับข้อมูลจากช่องของตัวเอง "user-ไอดี"
     const channel = pusher.subscribe(`user-${currentUserId}`);
-
-    // 3. เมื่อมี Event 'new-notification' เข้ามา
     channel.bind('new-notification', (data) => {
       console.log("🔔 New Notification!", data);
-      
-      // อัปเดตตัวเลขและรายการแจ้งเตือนทันที
       setUnreadCount((prev) => prev + 1);
       setNotifications((prev) => [data, ...prev]);
-      
-      // (Optional) เล่นเสียงแจ้งเตือนได้ที่นี่
     });
-
-    // 4. Cleanup: เลิกติดตามเมื่อ Component ถูกทำลาย
     return () => {
       pusher.unsubscribe(`user-${currentUserId}`);
     };
   }, [currentUserId]);
 
-  // --- ฟังก์ชันเคลียร์แจ้งเตือน (Mock) ---
-  const handleBellClick = () => {
+  // 2. ✅ แก้ไขฟังก์ชันตอนกดกระดิ่ง
+  const handleBellClick = async () => {
+    // สลับสถานะเปิด/ปิด
     setIsOpen(!isOpen);
-    // ในอนาคตสามารถใส่ Logic ยิง API ไปเคลียร์ is_read = 1 ได้ที่นี่
+
+    // ถ้า "กำลังจะเปิด" และ "มีเลขแจ้งเตือนค้างอยู่"
+    if (!isOpen && unreadCount > 0) {
+      // 2.1 เคลียร์ตัวเลขหน้าเว็บทันที (UX ลื่นๆ)
+      setUnreadCount(0);
+      
+      // 2.2 สั่ง Database ให้เคลียร์ค่าจริงๆ (Server Action)
+      await markNotificationsAsRead(currentUserId);
+    }
   };
 
   return (
      <div className="relative">
+        {/* 3. ✅ เปลี่ยน onClick ให้มาใช้ฟังก์ชันใหม่ของเรา */}
         <button onClick={handleBellClick} className="relative p-2 text-gray-600 hover:text-red-600 transition-colors dark:text-gray-300 dark:hover:text-red-400">
            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
            
@@ -63,7 +60,6 @@ export default function NotificationBell({ count: initialCount, notifications: i
            <div className="absolute right-0 mt-2 w-80 bg-white shadow-xl rounded-xl overflow-hidden border border-gray-200 z-50 dark:bg-neutral-900 dark:border-neutral-700">
               <div className="p-3 font-bold border-b bg-gray-50 text-gray-700 flex justify-between items-center dark:bg-neutral-800 dark:border-neutral-700 dark:text-gray-200">
                   <span>การแจ้งเตือน</span>
-                  {unreadCount > 0 && <span className="text-xs text-red-500 cursor-pointer hover:underline" onClick={() => setUnreadCount(0)}>อ่านทั้งหมด</span>}
               </div>
               <div className="max-h-80 overflow-y-auto">
                  {notifications.length > 0 ? (

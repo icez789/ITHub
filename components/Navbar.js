@@ -58,14 +58,15 @@ export default async function Navbar() {
         {user ? (
           <div className="flex items-center gap-4">
               
-              {/* ✅ ส่ง user.id ไปให้ NotificationBell */}
+              {/* ✅ 1. ส่ง user.id ไปให้ NotificationBell เพื่อใช้กับ Pusher */}
               <NotificationBell 
                 count={unreadCount} 
                 notifications={notifications} 
                 currentUserId={user.id} 
               />
 
-              {user.role === 'admin' && (
+              {/* ✅ 2. อนุญาตให้ทั้ง admin และ super_admin เห็นปุ่มนี้ */}
+              {(user.role === 'admin' || user.role === 'super_admin') && (
                 <Link 
                   href="/admin" 
                   className="hidden md:flex items-center gap-1 text-sm font-bold text-gray-700 hover:text-black border border-gray-300 px-3 py-2 rounded-lg transition bg-white shadow-sm dark:bg-neutral-900 dark:text-gray-200 dark:border-neutral-700 dark:hover:bg-neutral-800"

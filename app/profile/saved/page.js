@@ -1,205 +1,76 @@
 import React from 'react';
-// import Navbar from '../../../components/Navbar'; <-- ลบออก
+// import Navbar from '../../../components/Navbar'; <-- ลบออกตามสูตร
+import Footer from '../../../components/Footer';
 import db from '../../../lib/db';
 import { redirect } from 'next/navigation';
 import { cookies } from 'next/headers';
-import bcrypt from 'bcryptjs';
 import Link from 'next/link';
+import TopicCard from '../../../components/TopicCard';
 
-export default async function EditProfilePage({ searchParams }) {
+export default async function SavedTopicsPage() {
   const cookieStore = await cookies();
   const session = cookieStore.get('user_session');
-
+  
   // 1. เช็ค Session
   if (!session) redirect('/login');
-
-  let userSession;
+  
+  // 2. ป้องกัน Error กรณีคุกกี้พัง
+  let user;
   try {
-    userSession = JSON.parse(session.value);
+    user = JSON.parse(session.value);
   } catch (error) {
     redirect('/login');
   }
 
-  // 2. ดึงข้อมูล User ล่าสุดจาก DB (เผื่อมีการแก้ไขไปแล้ว)
-  const [users] = await db.query('SELECT * FROM users WHERE id = ?', [userSession.id]);
-  const currentUser = users[0];
-
-  if (!currentUser) redirect('/login');
-
-  // รับค่า Notify เพื่อแจ้งเตือน
-  const params = await searchParams;
-  const notify = params?.notify;
-
-  // --- Server Action ---
-  async function updateProfile(formData) {
-    'use server';
-    
-    const username = formData.get('username');
-    const bio = formData.get('bio'); // *ต้องมีคอลัมน์ bio ใน DB หรือถ้าไม่มีให้ลบส่วนนี้ออก
-    
-    const oldPassword = formData.get('oldPassword');
-    const newPassword = formData.get('newPassword');
-    const confirmNewPassword = formData.get('confirmNewPassword');
-
-    // 1. อัปเดตข้อมูลทั่วไป (Username, Bio)
-    try {
-        // เช็คก่อนว่า column bio มีไหม ถ้าไม่มีให้ลบ bio ออกจาก query นี้นะครับ
-        await db.query('UPDATE users SET username = ?, bio = ? WHERE id = ?', [username, bio, userSession.id]);
-    } catch (error) {
-        console.error(error);
-        // กรณีไม่มี column bio ให้ใช้บรรทัดนี้แทน:
-        // await db.query('UPDATE users SET username = ? WHERE id = ?', [username, userSession.id]);
-    }
-
-    // 2. Logic เปลี่ยนรหัสผ่าน (ถ้ามีการกรอก)
-    if (newPassword || oldPassword) {
-        if (!oldPassword || !newPassword) {
-            redirect('/profile/edit?notify=missing_password');
-        }
-
-        // เช็คว่ารหัสเดิมถูกไหม
-        const match = await bcrypt.compare(oldPassword, currentUser.password);
-        if (!match) {
-            redirect('/profile/edit?notify=wrong_old_password');
-        }
-
-        if (newPassword !== confirmNewPassword) {
-            redirect('/profile/edit?notify=password_mismatch');
-        }
-
-        // แฮชรหัสใหม่แล้วบันทึก
-        const hashedPassword = await bcrypt.hash(newPassword, 10);
-        await db.query('UPDATE users SET password = ? WHERE id = ?', [hashedPassword, userSession.id]);
-    }
-
-    // อัปเดต Session Cookie (เพราะ Username อาจเปลี่ยน)
-    const newSessionData = JSON.stringify({
-        ...userSession,
-        username: username
-    });
-    
-    const cookieStore = await cookies();
-    cookieStore.set('user_session', newSessionData, { 
-        httpOnly: true, 
-        secure: process.env.NODE_ENV === 'production', 
-        sameSite: 'lax', 
-        path: '/',
-        maxAge: 60 * 60 * 24 
-    });
-
-    redirect('/profile?notify=profile_updated');
-  }
+  // 3. ดึงข้อมูลกระทู้ที่ User นี้กด Bookmark ไว้
+  // (ต้อง JOIN ตาราง topics กับ bookmarks เพื่อเอาข้อมูลกระทู้มาโชว์)
+  const [savedTopics] = await db.query(`
+    SELECT topics.*, users.username 
+    FROM bookmarks
+    JOIN topics ON bookmarks.topic_id = topics.id
+    LEFT JOIN users ON topics.user_id = users.id
+    WHERE bookmarks.user_id = ?
+    ORDER BY bookmarks.created_at DESC
+  `, [user.id]);
 
   return (
-    <div className="container mx-auto p-6 max-w-2xl">
-      
-      {/* Header & Back Button */}
-      <div className="mb-8">
-        <Link href="/profile" className="text-gray-500 hover:text-red-600 dark:text-gray-400 dark:hover:text-red-400 mb-4 inline-flex items-center gap-1 transition-colors">
-            &larr; กลับหน้าโปรไฟล์
-        </Link>
-        <h1 className="text-3xl font-bold text-gray-800 dark:text-white flex items-center gap-2">
-            ⚙️ แก้ไขข้อมูลส่วนตัว
-        </h1>
-      </div>
-
-      {/* แจ้งเตือน Error */}
-      {notify === 'wrong_old_password' && (
-          <div className="mb-6 p-4 bg-red-50 text-red-600 border border-red-200 rounded-lg text-center font-bold">
-              รหัสผ่านเดิมไม่ถูกต้อง
-          </div>
-      )}
-      {notify === 'password_mismatch' && (
-          <div className="mb-6 p-4 bg-red-50 text-red-600 border border-red-200 rounded-lg text-center font-bold">
-              รหัสผ่านใหม่ไม่ตรงกัน
-          </div>
-      )}
-      {notify === 'missing_password' && (
-          <div className="mb-6 p-4 bg-yellow-50 text-yellow-700 border border-yellow-200 rounded-lg text-center">
-              กรุณากรอกรหัสผ่านเดิม และรหัสผ่านใหม่ให้ครบถ้วน
-          </div>
-      )}
-
-      <div className="bg-white p-8 rounded-xl shadow-lg border border-gray-200 dark:bg-neutral-900 dark:border-neutral-800">
+    <div className="container mx-auto p-6 max-w-5xl">
         
-        <form action={updateProfile} className="space-y-6">
-            
-            {/* ส่วนข้อมูลทั่วไป */}
-            <div>
-                <h2 className="text-xl font-bold text-gray-800 border-b pb-2 mb-4 dark:text-gray-200">ข้อมูลทั่วไป</h2>
-                
-                <div className="mb-4">
-                    <label className="block text-sm font-bold text-gray-700 mb-1 dark:text-gray-300">ชื่อผู้ใช้ (Username)</label>
-                    <input 
-                        name="username" 
-                        type="text" 
-                        defaultValue={currentUser.username}
-                        required 
-                        className="w-full bg-gray-50 border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-red-500 dark:bg-black dark:border-neutral-700 dark:text-white" 
+        {/* Header */}
+        <div className="flex items-center gap-4 mb-8">
+            <Link href="/profile" className="text-gray-500 hover:text-red-600 dark:text-gray-400 dark:hover:text-red-400 text-2xl transition-colors">
+                &larr;
+            </Link>
+            <h1 className="text-3xl font-bold text-gray-800 border-l-8 border-blue-600 pl-4 dark:text-white dark:border-blue-500">
+                🔖 กระทู้ที่บันทึกไว้
+            </h1>
+        </div>
+
+        {/* รายการกระทู้ */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
+            {savedTopics.length > 0 ? (
+                savedTopics.map((topic, index) => (
+                    <TopicCard 
+                        key={topic.id} 
+                        index={index}
+                        id={topic.id} 
+                        title={topic.title}
+                        username={topic.username}
+                        created_at={topic.created_at}
+                        image_url={topic.image_url}
                     />
+                ))
+            ) : (
+                <div className="col-span-full text-center py-20 text-gray-500 dark:text-gray-400 bg-white dark:bg-neutral-900 rounded-xl border border-dashed border-gray-300 dark:border-neutral-800">
+                    <p className="text-lg">คุณยังไม่มีกระทู้ที่บันทึกไว้</p>
+                    <Link href="/" className="text-blue-600 hover:underline mt-2 inline-block dark:text-blue-400">
+                        ไปสำรวจกระทู้น่าสนใจ
+                    </Link>
                 </div>
+            )}
+        </div>
 
-                <div className="mb-4">
-                    <label className="block text-sm font-bold text-gray-700 mb-1 dark:text-gray-300">คำแนะนำตัว (Bio)</label>
-                    <textarea 
-                        name="bio" 
-                        defaultValue={currentUser.bio || ''}
-                        placeholder="เขียนอะไรสักหน่อยเกี่ยวกับตัวคุณ..."
-                        rows="3"
-                        className="w-full bg-gray-50 border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-red-500 dark:bg-black dark:border-neutral-700 dark:text-white" 
-                    ></textarea>
-                </div>
-            </div>
-
-            {/* ส่วนเปลี่ยนรหัสผ่าน */}
-            <div className="bg-gray-50 p-6 rounded-lg border border-gray-200 dark:bg-neutral-800 dark:border-neutral-700">
-                <h2 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2 dark:text-gray-200">
-                    🔒 เปลี่ยนรหัสผ่าน <span className="text-sm font-normal text-gray-500">(ถ้าต้องการ)</span>
-                </h2>
-
-                <div className="mb-4">
-                    <label className="block text-sm font-medium text-gray-600 mb-1 dark:text-gray-400">รหัสผ่านเดิม</label>
-                    <input 
-                        name="oldPassword" 
-                        type="password" 
-                        placeholder="กรอกเพื่อยืนยันการเปลี่ยนรหัส"
-                        className="w-full bg-white border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-red-500 dark:bg-black dark:border-neutral-600 dark:text-white" 
-                    />
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                        <label className="block text-sm font-medium text-gray-600 mb-1 dark:text-gray-400">รหัสผ่านใหม่</label>
-                        <input 
-                            name="newPassword" 
-                            type="password" 
-                            className="w-full bg-white border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-red-500 dark:bg-black dark:border-neutral-600 dark:text-white" 
-                        />
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium text-gray-600 mb-1 dark:text-gray-400">ยืนยันรหัสใหม่</label>
-                        <input 
-                            name="confirmNewPassword" 
-                            type="password" 
-                            className="w-full bg-white border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-red-500 dark:bg-black dark:border-neutral-600 dark:text-white" 
-                        />
-                    </div>
-                </div>
-            </div>
-
-            {/* ปุ่มบันทึก */}
-            <div className="flex justify-end gap-3 pt-4">
-                <Link href="/profile" className="px-6 py-3 rounded-lg border border-gray-300 text-gray-700 font-bold hover:bg-gray-100 transition dark:text-gray-300 dark:border-neutral-600 dark:hover:bg-neutral-800">
-                    ยกเลิก
-                </Link>
-                <button type="submit" className="px-8 py-3 rounded-lg bg-red-600 text-white font-bold hover:bg-red-700 shadow-md transition hover:scale-105 active:scale-95 dark:bg-red-700 dark:hover:bg-red-600">
-                    บันทึกการแก้ไข
-                </button>
-            </div>
-
-        </form>
-
-      </div>
+        <Footer />
     </div>
   );
 }
