@@ -1,11 +1,11 @@
 import React from 'react';
 import Link from 'next/link';
 import { cookies } from 'next/headers';
-import { redirect } from 'next/navigation';
 import db from '../lib/db'; 
 import ThemeToggle from './ThemeToggle'; 
 import NotificationBell from './NotificationBell';
 import SearchInput from './SearchInput';
+import LogoutButton from './LogoutButton'; // ✅ นำเข้าปุ่มใหม่ที่เราเพิ่งสร้าง
 
 export default async function Navbar() {
   const cookieStore = await cookies();
@@ -14,34 +14,52 @@ export default async function Navbar() {
   let notifications = [];
   let unreadCount = 0;
 
+  // ✅ Logic ดึงข้อมูลที่ปลอดภัยขึ้น (เว็บไม่ล่มแม้ DB หลุด)
   if (session) {
     try {
-      const sessionData = JSON.parse(session.value);
-      const [users] = await db.query('SELECT * FROM users WHERE id = ?', [sessionData.id]);
-      user = users[0]; 
-      
-      if (user) {
-        const [notis] = await db.query('SELECT * FROM notifications WHERE user_id = ? ORDER BY created_at DESC LIMIT 10', [user.id]);
-        notifications = notis;
-        const [count] = await db.query('SELECT COUNT(*) as count FROM notifications WHERE user_id = ? AND is_read = 0', [user.id]);
-        unreadCount = count[0].count;
+      // 1. ลองแปลง Session
+      let sessionData;
+      try {
+        sessionData = JSON.parse(session.value);
+      } catch (e) {
+        throw new Error("Invalid Session Data");
       }
 
-    } catch (error) {
-      console.error("Session Error:", error);
-    }
-  }
+      // 2. เช็ค Database Connection
+      if (!db) throw new Error("Database connection fail");
 
-  async function logout() {
-    'use server';
-    const cookieStore = await cookies();
-    cookieStore.delete('user_session');
-    redirect('/login?notify=logout_success');
+      // 3. ดึง User (ดึงเฉพาะที่จำเป็น)
+      const [users] = await db.query(
+        'SELECT id, username, role, avatar_url FROM users WHERE id = ?', 
+        [sessionData.id]
+      );
+      
+      if (users && users.length > 0) {
+        user = users[0];
+        
+        // 4. ดึง Notification (แยก try-catch เพื่อไม่ให้กระทบส่วนอื่น)
+        try {
+            const [notisResult, countResult] = await Promise.all([
+                db.query('SELECT * FROM notifications WHERE user_id = ? ORDER BY created_at DESC LIMIT 10', [user.id]),
+                db.query('SELECT COUNT(*) as count FROM notifications WHERE user_id = ? AND is_read = 0', [user.id])
+            ]);
+            notifications = notisResult[0] || [];
+            unreadCount = countResult[0][0]?.count || 0;
+        } catch (notiError) {
+            console.error("Navbar Noti Error:", notiError.message);
+            // ปล่อยผ่าน ได้แค่ไม่มีแจ้งเตือนขึ้น
+        }
+      }
+    } catch (error) {
+      console.error("🔴 DEBUG ERROR:", error);
+      // user จะเป็น null อัตโนมัติ ทำให้ Navbar แสดงผลแบบคนไม่ได้ Login แทนที่จะ Error จอแดง
+    }
   }
 
   return (
     <header className="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between gap-6 shadow-sm z-50 sticky top-0 dark:bg-black dark:border-neutral-800 transition-colors duration-300">
       
+      {/* LOGO */}
       <Link href="/" className="flex items-center gap-3">
          <div className="w-12 h-12 bg-gradient-to-br from-red-600 to-red-800 rounded-lg flex items-center justify-center text-white font-bold text-xl shadow-lg">
            IT
@@ -49,8 +67,10 @@ export default async function Navbar() {
          <span className="font-bold text-xl tracking-tight hidden sm:block text-gray-900 dark:text-white">TECH<span className="text-red-600">BOARD</span></span>
       </Link>
       
+      {/* Search Bar */}
       <SearchInput />
 
+      {/* Menu Icons */}
       <nav className="flex gap-3 items-center">
         
         <ThemeToggle />
@@ -58,14 +78,13 @@ export default async function Navbar() {
         {user ? (
           <div className="flex items-center gap-4">
               
-              {/* ✅ 1. ส่ง user.id ไปให้ NotificationBell เพื่อใช้กับ Pusher */}
               <NotificationBell 
                 count={unreadCount} 
                 notifications={notifications} 
                 currentUserId={user.id} 
               />
 
-              {/* ✅ 2. อนุญาตให้ทั้ง admin และ super_admin เห็นปุ่มนี้ */}
+              {/* ปุ่ม Admin (เฉพาะแอดมิน) */}
               {(user.role === 'admin' || user.role === 'super_admin') && (
                 <Link 
                   href="/admin" 
@@ -75,6 +94,7 @@ export default async function Navbar() {
                 </Link>
               )}
 
+              {/* ปุ่มสร้างกระทู้ */}
               <Link 
                 href="/create" 
                 className="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-bold shadow-md transition-all transform hover:scale-105 active:scale-95 text-sm"
@@ -82,11 +102,13 @@ export default async function Navbar() {
                 <span>+</span> <span className="hidden sm:inline">สร้างกระทู้</span>
               </Link>
 
+              {/* ชื่อ User */}
               <Link href="/profile" className="text-right hidden sm:block cursor-pointer hover:opacity-80 transition-opacity group">
                  <p className="text-xs text-gray-400 font-medium group-hover:text-red-500 transition-colors">ยินดีต้อนรับ,</p>
                  <p className="text-sm font-bold text-gray-800 group-hover:text-red-600 transition-colors dark:text-gray-200">{user.username}</p>
               </Link>
               
+              {/* รูป Profile */}
               <Link href="/profile">
                 <div className="w-10 h-10 rounded-full overflow-hidden border border-red-200 cursor-pointer hover:shadow-md transition-all bg-gray-100 flex items-center justify-center dark:bg-neutral-800 dark:border-neutral-700">
                    {user.avatar_url ? (
@@ -97,14 +119,12 @@ export default async function Navbar() {
                 </div>
               </Link>
               
-              <form action={logout}>
-                 <button className="text-sm text-gray-500 hover:text-red-600 border border-gray-300 hover:border-red-600 px-3 py-2 rounded-lg transition-all bg-white dark:bg-neutral-900 dark:text-gray-400 dark:border-neutral-700 dark:hover:text-red-500 dark:hover:border-red-500" title="ออกจากระบบ">
-                   <span className="sm:hidden">Exit</span>
-                   <span className="hidden sm:inline">Logout</span>
-                 </button>
-              </form>
+              {/* ✅ ใส่ปุ่ม Logout แบบใหม่ตรงนี้ */}
+              <LogoutButton />
+
           </div>
         ) : (
+          /* กรณีไม่ได้ Login */
           <>
             <Link href="/register" className="text-gray-600 hover:text-red-600 font-medium px-3 py-2 transition-colors dark:text-gray-300">Register</Link>
             <Link href="/login" className="bg-red-600 hover:bg-red-700 text-white px-5 py-2 rounded-md font-medium shadow-md transition-all hover:shadow-red-500/30">Login</Link>
