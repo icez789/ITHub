@@ -1,11 +1,11 @@
 import React from 'react';
-// import Navbar from '../../../components/Navbar'; <-- ลบออก (Layout จัดการให้แล้ว)
-// import Sidebar from '../../../components/Sidebar'; <-- ลบออก
 import db from '../../../lib/db';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
 import { cookies } from 'next/headers';
+
+// Components
 import UserBadge from '../../../components/UserBadge';
 import TopicCard from '../../../components/TopicCard';
 import Editor from '../../../components/Editor'; 
@@ -13,7 +13,12 @@ import CommentItem from '../../../components/CommentItem';
 import RippleButton from '../../../components/RippleButton'; 
 import ReportButton from '../../../components/ReportButton';
 import ViewCounter from '../../../components/ViewCounter';
-import { pusherServer } from '../../../lib/pusher'; // ✅ 1. Import Pusher
+import PollUI from '../../../components/PollUI'; // ✅ Import โพล
+
+// Libs & Styles
+import { pusherServer } from '../../../lib/pusher'; 
+import 'highlight.js/styles/atom-one-dark.css'; 
+import { increaseXp } from '../../../lib/actions'; // ✅ Import ฟังก์ชันแจก XP
 
 export async function generateMetadata({ params }) {
   const { id } = await params;
@@ -36,20 +41,27 @@ export default async function TopicDetailPage({ params }) {
 
   const isAdmin = currentUser?.role === 'admin';
 
+  // --- 1. เตรียม Queries ทั้งหมด ---
+  
+  // Query กระทู้ (ดึง XP มาด้วย)
   const topicQuery = db.query(`
-    SELECT topics.*, users.username, users.role, users.post_count 
+    SELECT topics.*, users.username, users.role, users.post_count, users.xp 
     FROM topics 
     LEFT JOIN users ON topics.user_id = users.id 
     WHERE topics.id = ?
   `, [id]);
 
+  // Query คอมเมนต์ (ดึง XP มาด้วย)
   const commentsQuery = db.query(`
-    SELECT comments.*, users.username, users.role, users.post_count 
+    SELECT comments.*, users.username, users.role, users.post_count, users.xp 
     FROM comments 
     LEFT JOIN users ON comments.user_id = users.id 
     WHERE topic_id = ? 
     ORDER BY created_at ASC
   `, [id]);
+
+  // Query โพล (ถ้ามี)
+  const pollQuery = db.query('SELECT * FROM polls WHERE topic_id = ?', [id]);
 
   const likeCountQuery = db.query('SELECT COUNT(*) as count FROM likes WHERE topic_id = ?', [id]);
 
@@ -61,15 +73,18 @@ export default async function TopicDetailPage({ params }) {
     ? db.query('SELECT * FROM bookmarks WHERE topic_id = ? AND user_id = ?', [id, currentUser.id])
     : Promise.resolve([[]]);
 
+  // --- 2. รัน Query พร้อมกัน (Parallel Fetching) ---
   const [
     [topics], 
     [allComments], 
+    [polls], 
     [likeCountResult], 
     [userLike], 
     [bookmark]
   ] = await Promise.all([
     topicQuery, 
     commentsQuery, 
+    pollQuery,
     likeCountQuery, 
     userLikeQuery, 
     bookmarkQuery
@@ -79,6 +94,24 @@ export default async function TopicDetailPage({ params }) {
 
   if (!topic) return <div className="p-10 text-center dark:text-white">ไม่พบกระทู้นี้...</div>;
 
+  // --- 3. จัดการข้อมูล Poll (ถ้ามี) ---
+  const poll = polls[0] || null;
+  let pollOptions = [];
+  let userVote = null;
+
+  if (poll) {
+      // ดึงตัวเลือกโพล
+      const [options] = await db.query('SELECT * FROM poll_options WHERE poll_id = ?', [poll.id]);
+      pollOptions = options;
+
+      // เช็คว่า User เคยโหวตไหม
+      if (currentUser) {
+          const [votes] = await db.query('SELECT option_id FROM poll_votes WHERE poll_id = ? AND user_id = ?', [poll.id, currentUser.id]);
+          userVote = votes[0]?.option_id || null;
+      }
+  }
+
+  // --- 4. ดึงกระทู้ที่เกี่ยวข้อง ---
   const [relatedTopics] = await db.query(`
     SELECT topics.*, users.username 
     FROM topics 
@@ -88,6 +121,7 @@ export default async function TopicDetailPage({ params }) {
     LIMIT 4
   `, [topic.category, id]);
 
+  // จัดระเบียบ Comment (Parent/Child)
   const commentMap = {};
   const rootComments = [];
   allComments.forEach(c => { c.children = []; commentMap[c.id] = c; });
@@ -98,23 +132,29 @@ export default async function TopicDetailPage({ params }) {
   const isBookmarked = bookmark.length > 0;
   const isOwner = currentUser && (currentUser.id === topic.user_id);
 
+  // --- Server Actions ---
+
   async function deleteTopic() { 'use server'; await db.query('DELETE FROM topics WHERE id = ?', [id]); redirect('/?notify=delete_success'); }
   
   async function addComment(formData) { 
     'use server'; 
     const content = formData.get('content'); 
     const parentId = formData.get('parentId') || null;
+    
     if (currentUser) { 
+      // 1. บันทึกคอมเมนต์
       await db.query('INSERT INTO comments (topic_id, content, user_id, parent_id) VALUES (?, ?, ?, ?)', [id, content, currentUser.id, parentId]); 
       
-      // ถ้าไม่ได้ตอบโพสต์ตัวเอง ให้แจ้งเตือนเจ้าของกระทู้
+      // 2. แจก XP +2
+      await increaseXp(currentUser.id, 2);
+
+      // 3. แจ้งเตือนเจ้าของกระทู้ (ถ้าไม่ได้ตอบตัวเอง)
       if (!parentId && topic.user_id !== currentUser.id) {
           await db.query('INSERT INTO notifications (user_id, actor_id, topic_id, type, message) VALUES (?, ?, ?, ?, ?)', [topic.user_id, currentUser.id, id, 'comment', `${currentUser.username} แสดงความคิดเห็นในกระทู้ของคุณ`]);
           
-          // ✅ 2. สั่งยิง Real-time Notification ไปหาเจ้าของกระทู้
           try {
             await pusherServer.trigger(
-              `user-${topic.user_id}`, // ส่งเข้าช่องส่วนตัวของเจ้าของกระทู้
+              `user-${topic.user_id}`,
               'new-notification', 
               {
                 message: `${currentUser.username} แสดงความคิดเห็นในกระทู้ของคุณ`,
@@ -135,11 +175,27 @@ export default async function TopicDetailPage({ params }) {
   async function deleteComment(formData) { 'use server'; const commentId = formData.get('commentId'); await db.query('DELETE FROM comments WHERE id = ?', [commentId]); revalidatePath(`/topic/${id}`); }
   async function submitReport(formData) { 'use server'; if (!currentUser) return; const targetId = formData.get('targetId'); const type = formData.get('type'); const reason = formData.get('reason'); if (type === 'topic') { await db.query('INSERT INTO reports (reporter_id, topic_id, reason) VALUES (?, ?, ?)', [currentUser.id, targetId, reason]); } else if (type === 'comment') { await db.query('INSERT INTO reports (reporter_id, comment_id, reason) VALUES (?, ?, ?)', [currentUser.id, targetId, reason]); } }
 
+  // --- Render UI ---
   return (
     <div className="p-8 pl-6 md:pl-8 max-w-7xl mx-auto">
-          
+          {/* CSS สำหรับ Syntax Highlighter */}
+          <style dangerouslySetInnerHTML={{__html: `
+            .view-ql-editor pre.ql-syntax {
+                background-color: #282c34 !important;
+                color: #abb2bf !important;
+                padding: 1rem;
+                border-radius: 0.5rem;
+                overflow-x: auto;
+                font-family: monospace;
+                margin-top: 1em;
+                margin-bottom: 1em;
+                border: 1px solid #3e4451;
+            }
+          `}} />
+
           <ViewCounter topicId={id} />
 
+          {/* Header Navigation */}
           <div className="flex justify-between items-center mb-6">
             <Link href="/" className="inline-flex items-center gap-2 text-gray-500 hover:text-red-600 transition-colors dark:text-gray-400 dark:hover:text-red-400">&larr; กลับหน้าหลัก</Link>
             <div className="flex gap-3 items-center">
@@ -149,8 +205,9 @@ export default async function TopicDetailPage({ params }) {
             </div>
           </div>
 
-          {/* Topic Content */}
+          {/* Topic Card Container */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden mb-8 relative dark:bg-neutral-900 dark:border-neutral-800">
+            {/* Topic Header Area */}
             <div className="bg-gray-900 p-8 text-white relative overflow-hidden dark:bg-black">
                <div className="absolute top-0 right-0 w-32 h-32 bg-red-600 rounded-full blur-[80px] opacity-50"></div>
                <span className="inline-block bg-red-600 text-xs font-bold px-2 py-1 rounded mb-4">{topic.category}</span>
@@ -158,21 +215,41 @@ export default async function TopicDetailPage({ params }) {
                <div className="flex flex-wrap items-center gap-6 text-gray-400 text-sm mt-4 dark:text-gray-500">
                  <span className="flex items-center gap-1 bg-white/10 px-3 py-1 rounded-full text-white">
                    👤 {topic.username || 'ไม่ระบุ'}
-                   <UserBadge role={topic.role} postCount={topic.post_count} />
+                   {/* แสดงยศตาม XP */}
+                   <UserBadge role={topic.role} xp={topic.xp} />
                  </span>
                  <span className="flex items-center gap-1">📅 {new Date(topic.created_at).toLocaleDateString('th-TH')}</span>
                  <span className="flex items-center gap-1 font-bold text-yellow-400">👁️ {topic.views.toLocaleString()} ครั้ง</span>
                </div>
             </div>
 
+            {/* Topic Content Body */}
             <div className="p-8 min-h-[200px] border-b border-gray-100 dark:border-neutral-800">
               {topic.image_url && (
                 <div className="mb-6 rounded-lg overflow-hidden border border-gray-200 shadow-sm inline-block max-w-full dark:border-neutral-700">
                    <img src={topic.image_url} alt="Topic Image" className="max-h-[500px] w-auto object-contain bg-gray-50 dark:bg-black" />
                 </div>
               )}
-              <div className="text-lg leading-relaxed text-gray-700 prose max-w-none dark:text-gray-300 dark:prose-invert" dangerouslySetInnerHTML={{ __html: topic.content }} />
               
+              {/* Content with Syntax Highlighting */}
+              <div 
+                className="view-ql-editor text-lg leading-relaxed text-gray-700 prose max-w-none dark:text-gray-300 dark:prose-invert" 
+                dangerouslySetInnerHTML={{ __html: topic.content }} 
+              />
+              
+              {/* ✅ แสดงโพล (ถ้ากระทู้นี้มีโพล) */}
+              {poll && (
+                 <div className="mt-8">
+                    <PollUI 
+                        poll={poll} 
+                        options={pollOptions} 
+                        userVote={userVote} 
+                        currentUser={currentUser} 
+                    />
+                 </div>
+              )}
+
+              {/* Action Buttons (Like / Bookmark) */}
               <div className="mt-8 flex items-center gap-4">
                 <form action={toggleLike}>
                   <button type="submit" disabled={!currentUser} className={`flex items-center gap-2 px-6 py-3 rounded-full font-bold transition-all shadow-sm border ${isLiked ? 'bg-pink-100 text-pink-600 border-pink-200 hover:bg-pink-200 dark:bg-pink-900/30 dark:text-pink-400 dark:border-pink-800' : 'bg-gray-100 text-gray-600 border-gray-200 hover:bg-gray-200 dark:bg-neutral-800 dark:text-gray-400 dark:border-neutral-700 dark:hover:bg-neutral-700'} ${!currentUser ? 'opacity-50 cursor-not-allowed' : 'hover:scale-105 active:scale-95'}`}>
@@ -192,6 +269,7 @@ export default async function TopicDetailPage({ params }) {
             </div>
           </div>
 
+          {/* Comments Section */}
           <div className="mb-8">
             <h3 className="text-xl font-bold text-gray-700 mb-4 flex items-center gap-2 dark:text-gray-200">💬 ความคิดเห็น ({allComments.length})</h3>
             <div className="flex flex-col gap-4">
@@ -216,6 +294,7 @@ export default async function TopicDetailPage({ params }) {
             </div>
           </div>
 
+          {/* Comment Form */}
           <div className="bg-white p-6 rounded-xl shadow-lg border-t-4 border-red-600 dark:bg-neutral-900 dark:border-red-700">
             <h3 className="font-bold text-lg mb-4 dark:text-gray-200">แสดงความคิดเห็น</h3>
             {currentUser ? (
@@ -233,6 +312,7 @@ export default async function TopicDetailPage({ params }) {
             )}
           </div>
 
+          {/* Related Topics */}
           {relatedTopics.length > 0 && (
             <div className="mt-16 pt-8 border-t border-gray-200 dark:border-neutral-800">
               <h3 className="text-xl font-bold text-gray-800 dark:text-white mb-6 flex items-center gap-2">

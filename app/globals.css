@@ -44,15 +44,14 @@
 }
 
 /* ตกแต่งกล่องโค้ด (Syntax Highlight) */
-.ql-syntax {
-  background-color: #282c34;
-  color: #abb2bf;
-  padding: 1rem;
-  border-radius: 0.5rem;
-  overflow-x: auto;
-  font-family: 'Courier New', Courier, monospace;
-  margin: 1rem 0;
-  border: 1px solid #3e4451;
+.view-ql-editor pre.ql-syntax {
+    background-color: #282c34; /* สีพื้นหลังเดียวกับ atom-one-dark */
+    color: #abb2bf;
+    padding: 1rem;
+    border-radius: 0.5rem;
+    overflow-x: auto; /* ให้เลื่อนซ้ายขวาได้ถ้ายาวเกิน */
+    font-family: monospace;
+    margin-bottom: 1rem;
 }
 
 /* --- 🌑 DARK MODE CONFIGURATION (ใช้ html.dark body เพื่อความชัวร์) --- */

@@ -1,79 +1,82 @@
-import React from 'react';
-// import Navbar from '../../components/Navbar'; <-- ลบออก (Layout จัดการให้แล้ว)
-import { redirect } from 'next/navigation';
-import db from '../../lib/db';
-import { cookies } from 'next/headers';
-import fs from 'node:fs/promises';
-import path from 'node:path';
+'use client'; // ✅ เปลี่ยนเป็น Client Component เพื่อใช้ State
+
+import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { createTopicWithPoll } from '../../lib/actions'; // เดี๋ยวเราไปสร้างฟังก์ชันนี้กัน
 import Editor from '../../components/Editor'; 
+import Swal from 'sweetalert2';
 
-export default async function CreateTopicPage() {
-  const cookieStore = await cookies();
-  const session = cookieStore.get('user_session');
+export default function CreateTopicPage() {
+  const router = useRouter();
   
-  // 1. ถ้าไม่มี Session ดีดไปหน้า Login ทันที
-  if (!session) {
-    redirect('/login');
-  }
+  // State สำหรับจัดการโพล
+  const [hasPoll, setHasPoll] = useState(false);
+  const [pollQuestion, setPollQuestion] = useState('');
+  const [pollOptions, setPollOptions] = useState(['', '']); // เริ่มต้น 2 ตัวเลือก
 
-  // 2. ป้องกัน error กรณีคุกกี้พัง (Invalid JSON)
-  let user;
-  try {
-    user = JSON.parse(session.value);
-  } catch (error) {
-    redirect('/login'); // ถ้าแกะข้อมูลไม่ได้ ให้ไป login ใหม่
-  }
+  // ฟังก์ชันจัดการตัวเลือกโพล
+  const handleOptionChange = (index, value) => {
+    const newOptions = [...pollOptions];
+    newOptions[index] = value;
+    setPollOptions(newOptions);
+  };
 
-  async function createTopic(formData) {
-    'use server';
+  const addOption = () => {
+    if (pollOptions.length < 10) setPollOptions([...pollOptions, '']);
+  };
 
-    const title = formData.get('title');
-    const category = formData.get('category');
-    const content = formData.get('content');
-    const imageFile = formData.get('image');
+  const removeOption = (index) => {
+    if (pollOptions.length > 2) {
+      const newOptions = pollOptions.filter((_, i) => i !== index);
+      setPollOptions(newOptions);
+    }
+  };
 
-    let imageUrl = null;
+  // ฟังก์ชัน Submit Form
+  const handleSubmit = async (formData) => {
+    // เพิ่มข้อมูลโพลเข้าไปใน formData (ถ้ามี)
+    if (hasPoll) {
+        if (!pollQuestion.trim()) {
+            Swal.fire({ icon: 'error', title: 'กรุณากรอกคำถามโพล' });
+            return;
+        }
+        // กรองตัวเลือกที่ว่างออก
+        const validOptions = pollOptions.filter(opt => opt.trim() !== '');
+        if (validOptions.length < 2) {
+            Swal.fire({ icon: 'error', title: 'ต้องมีตัวเลือกโพลอย่างน้อย 2 ข้อ' });
+            return;
+        }
 
-    // Logic อัปโหลดรูปภาพ (สำหรับ Local Server)
-    if (imageFile && imageFile.size > 0) {
-      const fileName = Date.now() + '_' + imageFile.name.replaceAll(" ", "_");
-      const arrayBuffer = await imageFile.arrayBuffer();
-      const buffer = Buffer.from(arrayBuffer);
-      
-      const uploadDir = path.join(process.cwd(), 'public/uploads');
-      try { await fs.mkdir(uploadDir, { recursive: true }); } catch (e) {}
-
-      const savePath = path.join(uploadDir, fileName);
-      await fs.writeFile(savePath, buffer);
-      imageUrl = `/uploads/${fileName}`;
+        formData.append('pollQuestion', pollQuestion);
+        formData.append('pollOptions', JSON.stringify(validOptions)); // ส่งเป็น JSON array
     }
 
-    // บันทึกลงฐานข้อมูล
-    await db.query(
-      'INSERT INTO topics (title, category, content, user_id, image_url) VALUES (?, ?, ?, ?, ?)', 
-      [title, category, content, user.id, imageUrl]
-    );
+    // เรียก Server Action
+    const result = await createTopicWithPoll(formData);
 
-    // เพิ่มแต้ม Post Count ให้ User
-    await db.query('UPDATE users SET post_count = post_count + 1 WHERE id = ?', [user.id]);
-
-    redirect('/?notify=create_success');
-  }
+    if (result.success) {
+        Swal.fire({
+            icon: 'success',
+            title: 'ตั้งกระทู้สำเร็จ!',
+            text: 'ระบบกำลังพาคุณไปหน้ากระทู้ (+10 XP)',
+            timer: 1500,
+            showConfirmButton: false
+        }).then(() => {
+            router.push('/'); // หรือจะพาไปหน้ากระทู้ใหม่เลยก็ได้: router.push(`/topic/${result.topicId}`)
+        });
+    } else {
+        Swal.fire({ icon: 'error', title: 'เกิดข้อผิดพลาด', text: result.message });
+    }
+  };
 
   return (
-    // เอา min-h-screen ออก เพราะ parent layout มี scroll ให้แล้ว
     <div className="container mx-auto p-6 max-w-3xl">
-      
       <div className="bg-white p-8 rounded-xl shadow-lg border-t-4 border-red-600 dark:bg-neutral-900 dark:border-red-700">
         <h1 className="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-2 dark:text-white">
           <span className="text-red-600 text-3xl">+</span> ตั้งกระทู้ใหม่
         </h1>
         
-        <p className="text-sm text-gray-500 mb-4 dark:text-gray-400">
-          โพสต์โดย: <span className="font-bold text-black dark:text-white">{user.username}</span>
-        </p>
-
-        <form action={createTopic} className="flex flex-col gap-6">
+        <form action={handleSubmit} className="flex flex-col gap-6">
           
           <div>
             <label className="block text-gray-700 font-bold mb-2 dark:text-gray-200">หัวข้อกระทู้ <span className="text-red-500">*</span></label>
@@ -103,8 +106,62 @@ export default async function CreateTopicPage() {
             <input name="image" type="file" accept="image/*" className="w-full bg-gray-50 border border-gray-300 rounded-lg p-2 text-sm file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-red-50 file:text-red-700 hover:file:bg-red-100 dark:bg-black dark:border-neutral-700 dark:text-gray-300 dark:file:bg-red-900/30 dark:file:text-red-400 cursor-pointer" />
           </div>
 
+          {/* ✅ ส่วนเพิ่มโพล (Poll Toggle) */}
+          <div className="border-t border-gray-200 pt-6 dark:border-neutral-700">
+             <div className="flex items-center justify-between mb-4">
+                <label className="text-gray-800 font-bold dark:text-white flex items-center gap-2 cursor-pointer">
+                    <input 
+                        type="checkbox" 
+                        checked={hasPoll} 
+                        onChange={(e) => setHasPoll(e.target.checked)} 
+                        className="w-5 h-5 text-red-600 rounded focus:ring-red-500"
+                    />
+                    📊 เพิ่มโพลสำรวจ
+                </label>
+             </div>
+
+             {hasPoll && (
+                 <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 dark:bg-neutral-800 dark:border-neutral-700 animate-in fade-in slide-in-from-top-2">
+                    <div className="mb-4">
+                        <label className="block text-sm font-bold text-gray-700 mb-1 dark:text-gray-300">คำถามโพล</label>
+                        <input 
+                            type="text" 
+                            value={pollQuestion}
+                            onChange={(e) => setPollQuestion(e.target.value)}
+                            placeholder="เช่น คุณชอบ Framework ตัวไหน?" 
+                            className="w-full bg-white border border-gray-300 rounded p-2 text-sm dark:bg-black dark:border-neutral-600 dark:text-white"
+                        />
+                    </div>
+                    
+                    <div className="space-y-2">
+                        <label className="block text-sm font-bold text-gray-700 dark:text-gray-300">ตัวเลือกคำตอบ</label>
+                        {pollOptions.map((opt, idx) => (
+                            <div key={idx} className="flex gap-2">
+                                <input 
+                                    type="text" 
+                                    value={opt}
+                                    onChange={(e) => handleOptionChange(idx, e.target.value)}
+                                    placeholder={`ตัวเลือกที่ ${idx + 1}`}
+                                    className="flex-1 bg-white border border-gray-300 rounded p-2 text-sm dark:bg-black dark:border-neutral-600 dark:text-white"
+                                />
+                                {pollOptions.length > 2 && (
+                                    <button type="button" onClick={() => removeOption(idx)} className="text-red-500 hover:text-red-700 px-2">✕</button>
+                                )}
+                            </div>
+                        ))}
+                    </div>
+
+                    {pollOptions.length < 10 && (
+                        <button type="button" onClick={addOption} className="mt-3 text-sm text-red-600 hover:text-red-700 font-bold flex items-center gap-1">
+                            + เพิ่มตัวเลือก
+                        </button>
+                    )}
+                 </div>
+             )}
+          </div>
+
           <button type="submit" className="bg-red-600 hover:bg-red-700 text-white font-bold py-4 rounded-lg shadow-md transition-all mt-2 transform hover:scale-[1.01] active:scale-95 dark:bg-red-700 dark:hover:bg-red-600">
-             โพสต์กระทู้ทันที 🚀
+              โพสต์กระทู้ทันที 🚀
           </button>
         </form>
       </div>

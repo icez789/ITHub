@@ -1,10 +1,13 @@
 import React from 'react';
-// import Navbar from '../../../components/Navbar'; <-- ลบออก
 import db from '../../../lib/db';
 import { redirect } from 'next/navigation';
 import { cookies } from 'next/headers';
-import bcrypt from 'bcryptjs';
+import bcrypt from 'bcryptjs'; // ✅ อย่าลืม install: npm install bcryptjs
 import Link from 'next/link';
+
+export const metadata = {
+  title: 'แก้ไขข้อมูลส่วนตัว | IT Techboard',
+};
 
 export default async function EditProfilePage({ searchParams }) {
   const cookieStore = await cookies();
@@ -20,14 +23,14 @@ export default async function EditProfilePage({ searchParams }) {
     redirect('/login');
   }
 
-  // 2. ดึงข้อมูล User ล่าสุดจาก DB (เผื่อมีการแก้ไขไปแล้ว)
+  // 2. ดึงข้อมูล User ล่าสุดจาก DB
   const [users] = await db.query('SELECT * FROM users WHERE id = ?', [userSession.id]);
   const currentUser = users[0];
 
   if (!currentUser) redirect('/login');
 
   // รับค่า Notify เพื่อแจ้งเตือน
-  const params = await searchParams;
+  const params = await searchParams; // Next.js 15+ ต้อง await searchParams
   const notify = params?.notify;
 
   // --- Server Action ---
@@ -35,7 +38,7 @@ export default async function EditProfilePage({ searchParams }) {
     'use server';
     
     const username = formData.get('username');
-    const bio = formData.get('bio'); // *ต้องมีคอลัมน์ bio ใน DB หรือถ้าไม่มีให้ลบส่วนนี้ออก
+    const bio = formData.get('bio'); 
     
     const oldPassword = formData.get('oldPassword');
     const newPassword = formData.get('newPassword');
@@ -43,12 +46,11 @@ export default async function EditProfilePage({ searchParams }) {
 
     // 1. อัปเดตข้อมูลทั่วไป (Username, Bio)
     try {
-        // เช็คก่อนว่า column bio มีไหม ถ้าไม่มีให้ลบ bio ออกจาก query นี้นะครับ
         await db.query('UPDATE users SET username = ?, bio = ? WHERE id = ?', [username, bio, userSession.id]);
     } catch (error) {
-        console.error(error);
-        // กรณีไม่มี column bio ให้ใช้บรรทัดนี้แทน:
-        // await db.query('UPDATE users SET username = ? WHERE id = ?', [username, userSession.id]);
+        console.error("Update Error:", error);
+        // กรณีชื่อซ้ำ (ถ้าตั้ง unique ไว้ที่ username) อาจจะต้อง catch error นี้
+        return redirect('/profile/edit?notify=error_username');
     }
 
     // 2. Logic เปลี่ยนรหัสผ่าน (ถ้ามีการกรอก)
@@ -72,19 +74,22 @@ export default async function EditProfilePage({ searchParams }) {
         await db.query('UPDATE users SET password = ? WHERE id = ?', [hashedPassword, userSession.id]);
     }
 
-    // อัปเดต Session Cookie (เพราะ Username อาจเปลี่ยน)
-    const newSessionData = JSON.stringify({
+    // 3. อัปเดต Session Cookie (สำคัญมาก เพราะ Username เปลี่ยน)
+    // เราต้องสร้างก้อนข้อมูลใหม่ โดยอิงจากข้อมูลล่าสุดใน DB (ไม่งั้นข้อมูลใน Cookie จะไม่อัปเดต)
+    const updatedSessionData = {
         ...userSession,
-        username: username
-    });
+        username: username, // อัปเดตชื่อใหม่
+        // ถ้ามี avatar หรือ role เปลี่ยน ก็ควรอัปเดตตรงนี้ด้วย
+    };
     
-    const cookieStore = await cookies();
-    cookieStore.set('user_session', newSessionData, { 
+    // ตั้งค่า Cookie ใหม่ทับอันเดิม
+    const newCookieStore = await cookies();
+    newCookieStore.set('user_session', JSON.stringify(updatedSessionData), { 
         httpOnly: true, 
         secure: process.env.NODE_ENV === 'production', 
         sameSite: 'lax', 
         path: '/',
-        maxAge: 60 * 60 * 24 
+        maxAge: 60 * 60 * 24 * 7 // 7 วัน
     });
 
     redirect('/profile?notify=profile_updated');
@@ -103,20 +108,25 @@ export default async function EditProfilePage({ searchParams }) {
         </h1>
       </div>
 
-      {/* แจ้งเตือน Error */}
+      {/* แจ้งเตือน Error (Alerts) */}
       {notify === 'wrong_old_password' && (
-          <div className="mb-6 p-4 bg-red-50 text-red-600 border border-red-200 rounded-lg text-center font-bold">
-              รหัสผ่านเดิมไม่ถูกต้อง
+          <div className="mb-6 p-4 bg-red-50 text-red-600 border border-red-200 rounded-lg text-center font-bold flex items-center justify-center gap-2">
+              ❌ รหัสผ่านเดิมไม่ถูกต้อง
           </div>
       )}
       {notify === 'password_mismatch' && (
-          <div className="mb-6 p-4 bg-red-50 text-red-600 border border-red-200 rounded-lg text-center font-bold">
-              รหัสผ่านใหม่ไม่ตรงกัน
+          <div className="mb-6 p-4 bg-red-50 text-red-600 border border-red-200 rounded-lg text-center font-bold flex items-center justify-center gap-2">
+              ❌ รหัสผ่านใหม่ไม่ตรงกัน
           </div>
       )}
       {notify === 'missing_password' && (
-          <div className="mb-6 p-4 bg-yellow-50 text-yellow-700 border border-yellow-200 rounded-lg text-center">
-              กรุณากรอกรหัสผ่านเดิม และรหัสผ่านใหม่ให้ครบถ้วน
+          <div className="mb-6 p-4 bg-yellow-50 text-yellow-700 border border-yellow-200 rounded-lg text-center flex items-center justify-center gap-2">
+              ⚠️ กรุณากรอกรหัสผ่านให้ครบถ้วน
+          </div>
+      )}
+      {notify === 'error_username' && (
+          <div className="mb-6 p-4 bg-red-50 text-red-600 border border-red-200 rounded-lg text-center font-bold">
+              ❌ ชื่อผู้ใช้นี้ถูกใช้งานแล้ว หรือเกิดข้อผิดพลาด
           </div>
       )}
 

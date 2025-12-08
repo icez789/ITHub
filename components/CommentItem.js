@@ -1,12 +1,32 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import UserBadge from './UserBadge';
-import ReportButton from './ReportButton'; // 1. เรียกใช้
+import ReportButton from './ReportButton';
+import { markAsSolution } from '../lib/actions';
+import Editor from './Editor'; 
 
-// รับ reportAction เข้ามาด้วย
-export default function CommentItem({ comment, currentUser, isAdmin, topicUserId, deleteAction, replyAction, reportAction }) {
+// SweetAlert2
+import Swal from 'sweetalert2';
+import withReactContent from 'sweetalert2-react-content';
+
+const MySwal = withReactContent(Swal);
+
+export default function CommentItem({ 
+  comment, 
+  currentUser, 
+  isAdmin, 
+  topicUserId, 
+  deleteAction, 
+  replyAction, 
+  reportAction 
+}) {
+  const router = useRouter();
   const [isReplying, setIsReplying] = useState(false);
+
+  const isOwnerOfTopic = currentUser?.id === topicUserId; 
+  const isSolved = comment.is_solution === 1; 
 
   const canDelete = currentUser && (
     currentUser.id === comment.user_id || 
@@ -14,11 +34,52 @@ export default function CommentItem({ comment, currentUser, isAdmin, topicUserId
     isAdmin
   );
 
+  const handleMarkAsSolution = () => {
+    MySwal.fire({
+        title: 'ยืนยันการเลือกคำตอบ?',
+        text: "คุณต้องการเลือกความคิดเห็นนี้เป็นคำตอบที่ถูกต้องใช่หรือไม่?",
+        icon: 'question', 
+        showCancelButton: true,
+        confirmButtonColor: '#16a34a', 
+        cancelButtonColor: '#d33',     
+        confirmButtonText: 'ใช่, เลือกเลย!',
+        cancelButtonText: 'ยกเลิก',
+        background: document.documentElement.classList.contains('dark') ? '#1f1f1f' : '#ffffff', 
+        color: document.documentElement.classList.contains('dark') ? '#ffffff' : '#000000', 
+    }).then(async (result) => {
+        if (result.isConfirmed) {
+            await markAsSolution(comment.id, comment.topic_id, currentUser.id);
+            router.refresh();
+            
+            MySwal.fire({
+                title: 'เรียบร้อย!',
+                text: 'เลือกคำตอบสำเร็จแล้ว (+20 XP)',
+                icon: 'success',
+                confirmButtonColor: '#16a34a',
+                timer: 1500, 
+                showConfirmButton: false,
+                background: document.documentElement.classList.contains('dark') ? '#1f1f1f' : '#ffffff',
+                color: document.documentElement.classList.contains('dark') ? '#ffffff' : '#000000',
+            });
+        }
+    });
+  };
+
   return (
     <div className="flex flex-col">
-      <div className={`bg-white p-4 rounded-xl border border-gray-200 shadow-sm flex gap-4 group relative dark:bg-neutral-900 dark:border-neutral-800 ${comment.parent_id ? 'ml-8 md:ml-12 border-l-4 border-l-gray-300 dark:border-l-neutral-700' : ''}`}>
+      <div className={`p-4 rounded-xl border shadow-sm flex gap-4 group relative transition-all duration-500
+          ${isSolved 
+            ? 'bg-green-50 border-green-500 ring-1 ring-green-500 dark:bg-green-900/20 dark:border-green-500' 
+            : 'bg-white border-gray-200 dark:bg-neutral-900 dark:border-neutral-800'
+          }
+          ${comment.parent_id ? 'ml-8 md:ml-12 border-l-4 border-l-gray-300 dark:border-l-neutral-700' : ''}
+      `}>
         
-        <div className="w-10 h-10 bg-gray-100 rounded-full flex-shrink-0 flex items-center justify-center font-bold text-red-600 border border-gray-300 dark:bg-neutral-800 dark:border-neutral-700 dark:text-red-400">
+        <div className={`w-10 h-10 rounded-full flex-shrink-0 flex items-center justify-center font-bold border 
+            ${isSolved 
+                ? 'bg-green-100 text-green-700 border-green-500 dark:bg-green-900 dark:text-green-300' 
+                : 'bg-gray-100 text-red-600 border-gray-300 dark:bg-neutral-800 dark:border-neutral-700 dark:text-red-400'
+            }`}>
           {(comment.username || '?').charAt(0).toUpperCase()}
         </div>
 
@@ -26,13 +87,21 @@ export default function CommentItem({ comment, currentUser, isAdmin, topicUserId
           <div className="flex flex-wrap justify-between items-center mb-2 gap-2">
              <div className="flex items-center gap-2 flex-wrap">
                 <span className="font-bold text-gray-800 dark:text-gray-200">{comment.username || 'ผู้เยี่ยมชม'}</span>
-                <UserBadge role={comment.role} postCount={comment.post_count} />
+                
+                {/* ✅ แก้ไขตรงนี้: ส่งค่า xp แทน postCount */}
+                <UserBadge role={comment.role} xp={comment.xp} />
+                
+                {isSolved && (
+                    <span className="flex items-center gap-1 text-[10px] font-bold bg-green-600 text-white px-2 py-0.5 rounded-full shadow-sm animate-in fade-in zoom-in duration-300">
+                        ✅ คำตอบที่ใช่
+                    </span>
+                )}
+                
                 {comment.parent_id && <span className="text-xs text-gray-400">ตอบกลับความคิดเห็น</span>}
              </div>
              <div className="flex items-center gap-2">
                 <span className="text-xs text-gray-400 dark:text-gray-500">{new Date(comment.created_at).toLocaleString('th-TH')}</span>
                 
-                {/* 2. เพิ่มปุ่ม Report ตรงนี้ (แสดงถ้าไม่ใช่คอมเมนต์เราเอง) */}
                 {currentUser && currentUser.id !== comment.user_id && (
                    <ReportButton targetId={comment.id} type="comment" reportAction={reportAction} />
                 )}
@@ -44,7 +113,7 @@ export default function CommentItem({ comment, currentUser, isAdmin, topicUserId
             dangerouslySetInnerHTML={{ __html: comment.content }} 
           />
 
-          <div className="mt-3 flex gap-3 items-center">
+          <div className="mt-3 flex gap-3 items-center flex-wrap">
             {currentUser && (
                 <button 
                     onClick={() => setIsReplying(!isReplying)}
@@ -53,11 +122,22 @@ export default function CommentItem({ comment, currentUser, isAdmin, topicUserId
                     💬 ตอบกลับ
                 </button>
             )}
+
+            {isOwnerOfTopic && !isSolved && (
+                <button 
+                    onClick={handleMarkAsSolution} 
+                    className="text-xs font-bold text-green-600 hover:text-green-700 hover:bg-green-50 px-2 py-1 rounded transition-colors border border-green-200 dark:border-green-800 dark:hover:bg-green-900/30 ml-auto"
+                >
+                    ✅ เลือกเป็นคำตอบ
+                </button>
+            )}
           </div>
         </div>
 
         {canDelete && (
-          <form action={deleteAction} className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
+          <form action={async (formData) => {
+              await deleteAction(formData);
+          }} className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
              <input type="hidden" name="commentId" value={comment.id} />
              <button type="submit" className="text-gray-400 hover:text-red-600 p-1 rounded-md hover:bg-red-50 transition-colors dark:hover:bg-neutral-800" title="ลบคอมเมนต์นี้">🗑️</button>
           </form>
@@ -66,22 +146,16 @@ export default function CommentItem({ comment, currentUser, isAdmin, topicUserId
 
       {isReplying && (
         <div className={`mt-2 mb-4 ${comment.parent_id ? 'ml-12 md:ml-16' : 'ml-12 md:ml-16'}`}>
-            <form action={(formData) => {
-                replyAction(formData);
-                setIsReplying(false); 
+            <form action={async (formData) => {
+                await replyAction(formData);
+                setIsReplying(false);
             }} className="flex gap-2 items-start">
-                <div className="flex-1">
-                    <textarea 
-                        name="content" 
-                        required 
-                        rows="2" 
-                        placeholder={`ตอบกลับคุณ ${comment.username}...`} 
-                        className="w-full bg-gray-50 border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm dark:bg-black dark:border-neutral-700 dark:text-white"
-                    ></textarea>
+                <div className="flex-1 bg-white dark:bg-black rounded-lg border border-gray-300 dark:border-neutral-700 overflow-hidden">
+                    <Editor className="h-24 bg-white dark:bg-black text-black dark:text-white" />
                     <input type="hidden" name="parentId" value={comment.id} />
                 </div>
-                <button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold py-2 px-4 rounded-lg shadow-md transition-all dark:bg-blue-700 dark:hover:bg-blue-600 whitespace-nowrap">
-                   ส่ง
+                <button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold py-2 px-4 rounded-lg shadow-md transition-all dark:bg-blue-700 dark:hover:bg-blue-600 whitespace-nowrap mt-1">
+                    ส่ง
                 </button>
             </form>
         </div>
@@ -98,7 +172,7 @@ export default function CommentItem({ comment, currentUser, isAdmin, topicUserId
                     topicUserId={topicUserId}
                     deleteAction={deleteAction}
                     replyAction={replyAction}
-                    reportAction={reportAction} // อย่าลืมส่งต่อให้ลูกๆ ด้วย
+                    reportAction={reportAction} 
                 />
             ))}
         </div>

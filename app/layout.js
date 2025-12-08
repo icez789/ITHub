@@ -6,6 +6,7 @@ import BottomNav from "../components/BottomNav";
 import Navbar from "../components/Navbar"; 
 import Sidebar from "../components/Sidebar"; 
 import NextTopLoader from 'nextjs-toploader'; // ✅ 1. Import เข้ามา
+import 'highlight.js/styles/atom-one-dark.css';
 
 export const metadata = {
   title: "IT Techboard",
