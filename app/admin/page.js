@@ -239,65 +239,72 @@ export default async function AdminDashboard() {
             <div className="lg:col-span-2 space-y-8">
                 
                 {/* --- Reports Section --- */}
-                {reports.length > 0 && (
-                <div className="bg-white dark:bg-neutral-900 border border-red-200 dark:border-red-900/50 rounded-xl overflow-hidden shadow-lg shadow-red-500/5">
+                <div className="bg-white dark:bg-neutral-900 border border-red-200 dark:border-red-900/50 rounded-xl overflow-hidden shadow-lg shadow-red-500/5 mb-8">
                     <div className="px-6 py-4 border-b border-red-100 dark:border-red-900/30 flex justify-between items-center bg-red-50 dark:bg-red-900/10">
                         <h3 className="font-bold text-red-600 dark:text-red-400 flex items-center gap-2">
                             🚨 Pending Reports <span className="px-2 py-0.5 bg-red-600 text-white text-xs rounded-full">{reports.length}</span>
                         </h3>
                     </div>
                     <div className="overflow-x-auto">
-                        <table className="w-full text-left text-sm text-gray-600 dark:text-gray-300">
-                            <thead className="bg-red-50 dark:bg-neutral-800 text-red-700 dark:text-red-400 uppercase font-bold text-xs">
-                            <tr>
-                                <th className="px-6 py-3">Type</th>
-                                <th className="px-6 py-3">Content</th>
-                                <th className="px-6 py-3">Reason</th>
-                                <th className="px-6 py-3">Reporter</th>
-                                <th className="px-6 py-3 text-center">Action</th>
-                            </tr>
-                            </thead>
-                            <tbody className="divide-y divide-red-100 dark:divide-neutral-800">
-                            {reports.map((r) => (
-                                <tr key={r.id} className="hover:bg-red-50/50 dark:hover:bg-neutral-800 transition">
-                                <td className="px-6 py-4 text-xs font-mono font-bold">{r.topic_id ? 'TOPIC' : 'COMMENT'}</td>
-                                <td className="px-6 py-4 max-w-xs truncate font-medium">{r.topic_title || r.comment_content}</td>
-                                <td className="px-6 py-4 text-red-600 dark:text-red-400">{r.reason}</td>
-                                <td className="px-6 py-4">{r.reporter_name}</td>
-                                <td className="px-6 py-4 flex justify-center gap-2">
-                                    <form action={resolveReport}>
-                                        <input type="hidden" name="reportId" value={r.id} />
-                                        <button className="p-2 rounded-lg bg-gray-100 hover:bg-gray-200 dark:bg-neutral-700 dark:hover:bg-neutral-600 text-gray-600 dark:text-gray-300 transition" title="Dismiss">👁️</button>
-                                    </form>
-                                    {r.topic_id ? (
-                                        <DeleteButton 
-                                            action={deleteTopic} 
-                                            id={r.topic_id} 
-                                            idName="topicId" 
-                                            reportId={r.id}
-                                            className="p-2 rounded-lg bg-red-100 hover:bg-red-600 text-red-600 hover:text-white dark:bg-red-900/30 dark:hover:bg-red-600 dark:text-red-400 dark:hover:text-white transition"
-                                        >
-                                            🗑️
-                                        </DeleteButton>
-                                    ) : (
-                                        <DeleteButton 
-                                            action={deleteComment} 
-                                            id={r.comment_id} 
-                                            idName="commentId" 
-                                            reportId={r.id}
-                                            className="p-2 rounded-lg bg-orange-100 hover:bg-orange-600 text-orange-600 hover:text-white dark:bg-orange-900/30 dark:hover:bg-orange-600 dark:text-orange-400 dark:hover:text-white transition"
-                                        >
-                                            🔥
-                                        </DeleteButton>
-                                    )}
-                                </td>
+                        {reports.length > 0 ? (
+                            <table className="w-full text-left text-sm text-gray-600 dark:text-gray-300">
+                                <thead className="bg-red-50 dark:bg-neutral-800 text-red-700 dark:text-red-400 uppercase font-bold text-xs">
+                                <tr>
+                                    <th className="px-6 py-3">Type</th>
+                                    <th className="px-6 py-3">Content</th>
+                                    <th className="px-6 py-3">Reason</th>
+                                    <th className="px-6 py-3">Reporter</th>
+                                    <th className="px-6 py-3 text-center">Action</th>
                                 </tr>
-                            ))}
-                            </tbody>
-                        </table>
+                                </thead>
+                                <tbody className="divide-y divide-red-100 dark:divide-neutral-800">
+                                {reports.map((r) => (
+                                    <tr key={r.id} className="hover:bg-red-50/50 dark:hover:bg-neutral-800 transition">
+                                    <td className="px-6 py-4 text-xs font-mono font-bold">{r.topic_id ? 'TOPIC' : 'COMMENT'}</td>
+                                    <td className="px-6 py-4 max-w-xs truncate font-medium">{r.topic_title || r.comment_content}</td>
+                                    <td className="px-6 py-4 text-red-600 dark:text-red-400">{r.reason}</td>
+                                    <td className="px-6 py-4">{r.reporter_name}</td>
+                                    <td className="px-6 py-4 flex justify-center gap-2">
+                                        <form action={resolveReport}>
+                                            <input type="hidden" name="reportId" value={r.id} />
+                                            <button className="p-2 rounded-lg bg-gray-100 hover:bg-gray-200 dark:bg-neutral-700 dark:hover:bg-neutral-600 text-gray-600 dark:text-gray-300 transition" title="Dismiss">👁️</button>
+                                        </form>
+                                        {r.topic_id ? (
+                                            <DeleteButton 
+                                                action={deleteTopic} 
+                                                id={r.topic_id} 
+                                                idName="topicId" 
+                                                reportId={r.id}
+                                                className="p-2 rounded-lg bg-red-100 hover:bg-red-600 text-red-600 hover:text-white dark:bg-red-900/30 dark:hover:bg-red-600 dark:text-red-400 dark:hover:text-white transition"
+                                            >
+                                                🗑️
+                                            </DeleteButton>
+                                        ) : (
+                                            <DeleteButton 
+                                                action={deleteComment} 
+                                                id={r.comment_id} 
+                                                idName="commentId" 
+                                                reportId={r.id}
+                                                className="p-2 rounded-lg bg-orange-100 hover:bg-orange-600 text-orange-600 hover:text-white dark:bg-orange-900/30 dark:hover:bg-orange-600 dark:text-orange-400 dark:hover:text-white transition"
+                                            >
+                                                🔥
+                                            </DeleteButton>
+                                        )}
+                                    </td>
+                                    </tr>
+                                ))}
+                                </tbody>
+                            </table>
+                        ) : (
+                            <div className="p-8 flex flex-col items-center justify-center text-gray-500 dark:text-gray-400 bg-white dark:bg-neutral-900">
+                                <span className="text-4xl mb-3">✅</span>
+                                <p className="text-lg font-bold">All Clear!</p>
+                                <p className="text-sm">ไม่มีรายการร้องเรียนที่รอตรวจสอบในขณะนี้</p>
+                            </div>
+                        )}
                     </div>
                 </div>
-                )}
+                
 
                 {/* --- Recent Topics Table --- */}
                 <div className="bg-white dark:bg-neutral-900 border border-gray-200 dark:border-neutral-800 rounded-xl overflow-hidden shadow-sm">

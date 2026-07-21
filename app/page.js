@@ -60,9 +60,10 @@ export default async function HomePage({ searchParams }) {
   if (sort === 'popular') {
     orderBy = 'topics.views DESC, topics.created_at DESC';
   } else if (sort === 'likes') {
-    selectLikeCount = ', COUNT(likes.user_id) as like_count';
-    joinLikes = 'LEFT JOIN likes ON topics.id = likes.topic_id';
-    groupBy = 'GROUP BY topics.id';
+    // ✅ ใช้วิธี Subquery แทนการ JOIN เพื่อหลีกเลี่ยงกฎ GROUP BY
+    selectLikeCount = ', (SELECT COUNT(*) FROM likes WHERE likes.topic_id = topics.id) as like_count';
+    joinLikes = ''; // ปล่อยว่างไว้ ไม่ต้อง JOIN
+    groupBy = '';   // ปล่อยว่างไว้ ไม่ต้องใช้ GROUP BY แล้ว
     orderBy = 'like_count DESC, topics.created_at DESC';
   }
 

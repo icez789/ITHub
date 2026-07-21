@@ -170,11 +170,67 @@ export default async function TopicDetailPage({ params }) {
     } 
   }
 
-  async function toggleLike() { 'use server'; if (!currentUser) return; const [existing] = await db.query('SELECT * FROM likes WHERE user_id = ? AND topic_id = ?', [currentUser.id, id]); if (existing.length > 0) { await db.query('DELETE FROM likes WHERE user_id = ? AND topic_id = ?', [currentUser.id, id]); } else { await db.query('INSERT INTO likes (user_id, topic_id) VALUES (?, ?)', [currentUser.id, id]); if (topic.user_id !== currentUser.id) { await db.query('INSERT INTO notifications (user_id, actor_id, topic_id, type, message) VALUES (?, ?, ?, ?, ?)', [topic.user_id, currentUser.id, id, 'like', `${currentUser.username} ถูกใจกระทู้ของคุณ`]); } } revalidatePath(`/topic/${id}`); }
+  async function toggleLike() { 
+    'use server'; 
+    if (!currentUser) return; 
+    
+    const [existing] = await db.query('SELECT * FROM likes WHERE user_id = ? AND topic_id = ?', [currentUser.id, id]); 
+    
+    if (existing.length > 0) { 
+      await db.query('DELETE FROM likes WHERE user_id = ? AND topic_id = ?', [currentUser.id, id]); 
+    } else { 
+      await db.query('INSERT INTO likes (user_id, topic_id) VALUES (?, ?)', [currentUser.id, id]); 
+      
+      if (topic.user_id !== currentUser.id) { 
+        const message = `${currentUser.username} ถูกใจกระทู้ของคุณ`;
+        
+        // 1. เซฟลง Database
+        await db.query('INSERT INTO notifications (user_id, actor_id, topic_id, type, message) VALUES (?, ?, ?, ?, ?)', [topic.user_id, currentUser.id, id, 'like', message]); 
+        
+        // 2. 🚀 ยิง Pusher แจ้งเตือนแบบ Real-time ทันที
+        try {
+          await pusherServer.trigger(`user-${topic.user_id}`, 'new-notification', {
+            message: message,
+            link: `/topic/${id}`,
+            created_at: new Date().toISOString()
+          });
+        } catch (error) {
+          console.error("Pusher Like Error:", error);
+        }
+      } 
+    } 
+    revalidatePath(`/topic/${id}`); 
+  }
   async function toggleBookmark() { 'use server'; if (!currentUser) return; const [existing] = await db.query('SELECT * FROM bookmarks WHERE user_id = ? AND topic_id = ?', [currentUser.id, id]); if (existing.length > 0) { await db.query('DELETE FROM bookmarks WHERE user_id = ? AND topic_id = ?', [currentUser.id, id]); } else { await db.query('INSERT INTO bookmarks (user_id, topic_id) VALUES (?, ?)', [currentUser.id, id]); } revalidatePath(`/topic/${id}`); }
   async function deleteComment(formData) { 'use server'; const commentId = formData.get('commentId'); await db.query('DELETE FROM comments WHERE id = ?', [commentId]); revalidatePath(`/topic/${id}`); }
-  async function submitReport(formData) { 'use server'; if (!currentUser) return; const targetId = formData.get('targetId'); const type = formData.get('type'); const reason = formData.get('reason'); if (type === 'topic') { await db.query('INSERT INTO reports (reporter_id, topic_id, reason) VALUES (?, ?, ?)', [currentUser.id, targetId, reason]); } else if (type === 'comment') { await db.query('INSERT INTO reports (reporter_id, comment_id, reason) VALUES (?, ?, ?)', [currentUser.id, targetId, reason]); } }
+  async function submitReport(formData) { 
+    'use server'; 
+    if (!currentUser) return; 
+    
+    const targetId = formData.get('targetId'); 
+    const type = formData.get('type'); 
+    const reason = formData.get('reason'); 
+    
+    if (type === 'topic') { 
+      await db.query('INSERT INTO reports (reporter_id, topic_id, reason) VALUES (?, ?, ?)', [currentUser.id, targetId, reason]); 
+    } else if (type === 'comment') { 
+      await db.query('INSERT INTO reports (reporter_id, comment_id, reason) VALUES (?, ?, ?)', [currentUser.id, targetId, reason]); 
+    }
 
+    // 🚀 ยิง Pusher แจ้งเตือน Admin/Super Admin ทุกคนแบบ Real-time
+    try {
+      const [admins] = await db.query("SELECT id FROM users WHERE role IN ('admin', 'super_admin')");
+      for (const admin of admins) {
+         await pusherServer.trigger(`user-${admin.id}`, 'new-notification', {
+            message: `🚨 มีรายการ Report ใหม่รอตรวจสอบ: ${reason}`,
+            link: '/admin', // กดที่กระดิ่งแล้วเด้งไปหน้าแอดมินเลย
+            created_at: new Date().toISOString()
+         });
+      }
+    } catch (error) {
+      console.error("Pusher Report Error:", error);
+    }
+  }
   // --- Render UI ---
   return (
     <div className="p-8 pl-6 md:pl-8 max-w-7xl mx-auto">

@@ -2,7 +2,11 @@
 
 import { createContext, useContext, useEffect, useState } from 'react';
 
-const ThemeContext = createContext();
+// 1. ✅ ใส่ค่า Default ป้องกันอาการจอแดง (Undefined Error)
+const ThemeContext = createContext({
+  theme: 'light',
+  toggleTheme: () => {}, 
+});
 
 export function ThemeProvider({ children }) {
   const [theme, setTheme] = useState('light');
@@ -38,4 +42,11 @@ export function ThemeProvider({ children }) {
   );
 }
 
-export const useTheme = () => useContext(ThemeContext);
+// 2. ✅ เพิ่มตัวเช็คความปลอดภัย (Safety Check)
+export const useTheme = () => {
+  const context = useContext(ThemeContext);
+  if (context === undefined) {
+    throw new Error('useTheme ต้องถูกเรียกใช้ภายใต้ ThemeProvider เท่านั้นครับ!');
+  }
+  return context;
+};

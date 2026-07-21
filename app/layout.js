@@ -5,7 +5,8 @@ import GlobalClickEffect from "../components/GlobalClickEffect";
 import BottomNav from "../components/BottomNav";
 import Navbar from "../components/Navbar"; 
 import Sidebar from "../components/Sidebar"; 
-import NextTopLoader from 'nextjs-toploader'; // ✅ 1. Import เข้ามา
+import NextTopLoader from 'nextjs-toploader'; 
+import FloatingChat from "../components/FloatingChat"; // ✅ 1. Import แชทบอทเข้ามา
 import 'highlight.js/styles/atom-one-dark.css';
 
 export const metadata = {
@@ -18,17 +19,16 @@ export default function RootLayout({ children }) {
     <html lang="en" suppressHydrationWarning>
       <body className="bg-gray-50 text-gray-900 dark:bg-black dark:text-gray-100 transition-colors duration-300 min-h-screen relative">
         
-        {/* ✅ 2. วางไว้ตรงนี้เลย (บนสุดใน body) */}
         <NextTopLoader 
-          color="#dc2626"   // สีแดง (ตรงกับ theme เว็บ)
+          color="#dc2626"   
           initialPosition={0.08}
           crawlSpeed={200}
-          height={3}        // ความหนาของเส้น
+          height={3}        
           crawl={true}
-          showSpinner={false} // ปิดวงกลมหมุนๆ (เอาแค่เส้นวิ่งๆ พอ ดูแพงกว่า)
+          showSpinner={false} 
           easing="ease"
           speed={200}
-          shadow="0 0 10px #dc2626,0 0 5px #dc2626" // ใส่เงาให้เส้นดูเรืองแสงนิดๆ
+          shadow="0 0 10px #dc2626,0 0 5px #dc2626" 
         />
 
         <ThemeProvider>
@@ -51,6 +51,9 @@ export default function RootLayout({ children }) {
            </div>
 
            <BottomNav />
+
+           {/* ✅ 2. ฝัง FloatingChat ไว้ตรงนี้ เพื่อให้ลอยอยู่เหนือทุกสิ่ง และเปลี่ยนสีตาม Theme ได้ */}
+           <FloatingChat />
 
         </ThemeProvider>
       </body>

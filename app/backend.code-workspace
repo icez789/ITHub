@@ -1,0 +1,25 @@
+{
+	"folders": [
+		{
+			"path": "../../backend"
+		},
+		{
+			"path": ".."
+		},
+		{
+			"path": "../../lab1"
+		},
+		{
+			"path": "../../my_storage"
+		},
+		{
+			"path": "../../my-food-app"
+		},
+		{
+			"path": "../../finaltest"
+		}
+	],
+	"settings": {
+		"postman.settings.dotenv-detection-notification-visibility": false
+	}
+}
