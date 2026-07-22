@@ -6,7 +6,10 @@ import UserBadge from './UserBadge';
 import ReportButton from './ReportButton';
 import { markAsSolution } from '../lib/actions';
 import Editor from './Editor'; 
-
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
 // SweetAlert2
 import Swal from 'sweetalert2';
 import withReactContent from 'sweetalert2-react-content';
@@ -27,6 +30,9 @@ export default function CommentItem({
 
   const isOwnerOfTopic = currentUser?.id === topicUserId; 
   const isSolved = comment.is_solution === 1; 
+  
+  // 🚀 เช็คว่าเป็นบอทหรือไม่
+  const isBot = comment.username === 'ITHub Bot 🤖';
 
   const canDelete = currentUser && (
     currentUser.id === comment.user_id || 
@@ -88,7 +94,6 @@ export default function CommentItem({
              <div className="flex items-center gap-2 flex-wrap">
                 <span className="font-bold text-gray-800 dark:text-gray-200">{comment.username || 'ผู้เยี่ยมชม'}</span>
                 
-                {/* ✅ แก้ไขตรงนี้: ส่งค่า xp แทน postCount */}
                 <UserBadge role={comment.role} xp={comment.xp} />
                 
                 {isSolved && (
@@ -108,10 +113,41 @@ export default function CommentItem({
              </div>
           </div>
           
-          <div 
-            className="text-gray-700 whitespace-pre-wrap leading-relaxed dark:text-gray-300 prose max-w-none dark:prose-invert text-sm" 
-            dangerouslySetInnerHTML={{ __html: comment.content }} 
-          />
+          {/* 🚀 แยกการเรนเดอร์ระหว่างบอท (Markdown) กับคนปกติ (HTML) */}
+          {isBot ? (
+            <div className="markdown-body text-gray-800 dark:text-gray-200 [&_p]:mb-2 [&_p:last-child]:mb-0 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_strong]:font-semibold text-sm">
+              <ReactMarkdown
+                remarkPlugins={[remarkGfm]}
+                components={{
+                  code({ inline, className, children, ...props }) {
+                    const match = /language-(\w+)/.exec(className || '');
+                    return !inline && match ? (
+                      <SyntaxHighlighter
+                        style={oneDark}
+                        language={match[1]}
+                        PreTag="div"
+                        customStyle={{ borderRadius: '0.5rem', fontSize: '0.75rem', margin: '0.5rem 0' }}
+                        {...props}
+                      >
+                        {String(children).replace(/\n$/, '')}
+                      </SyntaxHighlighter>
+                    ) : (
+                      <code className="bg-gray-200 dark:bg-neutral-700 text-red-600 dark:text-red-400 px-1 py-0.5 rounded text-xs font-mono" {...props}>
+                        {children}
+                      </code>
+                    );
+                  }
+                }}
+              >
+                {comment.content}
+              </ReactMarkdown>
+            </div>
+          ) : (
+            <div 
+              className="text-gray-700 whitespace-pre-wrap leading-relaxed dark:text-gray-300 prose max-w-none dark:prose-invert text-sm" 
+              dangerouslySetInnerHTML={{ __html: comment.content }} 
+            />
+          )}
 
           <div className="mt-3 flex gap-3 items-center flex-wrap">
             {currentUser && (
