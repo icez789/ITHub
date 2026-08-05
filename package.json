@@ -13,6 +13,7 @@
     "@vercel/og": "^0.8.5",
     "axios": "^1.13.2",
     "bcryptjs": "^3.0.3",
+    "cloudinary": "^2.10.0",
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",
     "express": "^5.2.1",
@@ -35,7 +36,9 @@
     "sweetalert2-react-content": "^5.1.0"
   },
   "devDependencies": {
+    "@playwright/test": "^1.62.1",
     "@tailwindcss/postcss": "^4.1.17",
+    "@types/node": "^26.1.2",
     "autoprefixer": "^10.4.22",
     "eslint": "^9",
     "eslint-config-next": "16.0.3",
