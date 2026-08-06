@@ -10,7 +10,7 @@ import FloatingChat from "../components/FloatingChat"; // ✅ 1. Import แช�
 import 'highlight.js/styles/atom-one-dark.css';
 
 export const metadata = {
-  title: "IT Techboard",
+  title: "IT Hub",
   description: "ชุมชนไอที วิทยาลัยเทคนิคเชียงใหม่",
 };
 
