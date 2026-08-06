@@ -64,7 +64,7 @@ export default async function Navbar() {
          <div className="w-12 h-12 bg-gradient-to-br from-red-600 to-red-800 rounded-lg flex items-center justify-center text-white font-bold text-xl shadow-lg">
            IT
          </div>
-         <span className="font-bold text-xl tracking-tight hidden sm:block text-gray-900 dark:text-white">TECH<span className="text-red-600">BOARD</span></span>
+         <span className="font-bold text-xl tracking-tight hidden sm:block text-gray-900 dark:text-white">IT<span className="text-red-600">Hub</span></span>
       </Link>
       
       {/* Search Bar */}
