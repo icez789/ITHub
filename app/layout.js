@@ -8,6 +8,7 @@ import Sidebar from "../components/Sidebar";
 import NextTopLoader from 'nextjs-toploader'; 
 import FloatingChat from "../components/FloatingChat"; // ✅ 1. Import แชทบอทเข้ามา
 import 'highlight.js/styles/atom-one-dark.css';
+import { Analytics } from '@vercel/analytics/react';
 
 export const metadata = {
   title: "IT Hub",
@@ -56,6 +57,7 @@ export default function RootLayout({ children }) {
            <FloatingChat />
 
         </ThemeProvider>
+        <Analytics />
       </body>
     </html>
   );

@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
+    "@vercel/analytics": "^2.0.1",
     "@vercel/og": "^0.8.5",
     "axios": "^1.13.2",
     "bcryptjs": "^3.0.3",
