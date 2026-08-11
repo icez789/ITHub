@@ -1,5 +1,6 @@
 import React from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import db from '../lib/db'; 
 import { getCurrentUser } from '../lib/auth';
 import ThemeToggle from './ThemeToggle'; 
@@ -60,7 +61,7 @@ export default async function Navbar() {
                   href="/admin" 
                   className="hidden md:flex items-center gap-1 text-sm font-bold text-gray-700 hover:text-black border border-gray-300 px-3 py-2 rounded-lg transition bg-white shadow-sm dark:bg-neutral-900 dark:text-gray-200 dark:border-neutral-700 dark:hover:bg-neutral-800"
                 >
-                  🛡️ Admin
+                  🛡️ ผู้ดูแล
                 </Link>
               )}
 
@@ -80,9 +81,9 @@ export default async function Navbar() {
               
               {/* รูป Profile */}
               <Link href="/profile">
-                <div className="w-10 h-10 rounded-full overflow-hidden border border-red-200 cursor-pointer hover:shadow-md transition-all bg-gray-100 flex items-center justify-center dark:bg-neutral-800 dark:border-neutral-700">
+                <div className="relative w-10 h-10 rounded-full overflow-hidden border border-red-200 cursor-pointer hover:shadow-md transition-all bg-gray-100 flex items-center justify-center dark:bg-neutral-800 dark:border-neutral-700">
                    {user.avatar_url ? (
-                     <img src={user.avatar_url} alt="avatar" className="w-full h-full object-cover" />
+                     <Image src={user.avatar_url} alt={`รูปโปรไฟล์ของ ${user.username}`} fill sizes="40px" className="object-cover" />
                    ) : (
                      <span className="font-bold text-red-600">{user.username.charAt(0).toUpperCase()}</span>
                    )}
@@ -96,8 +97,8 @@ export default async function Navbar() {
         ) : (
           /* กรณีไม่ได้ Login */
           <>
-            <Link href="/register" className="text-gray-600 hover:text-red-600 font-medium px-3 py-2 transition-colors dark:text-gray-300">Register</Link>
-            <Link href="/login" className="bg-red-600 hover:bg-red-700 text-white px-5 py-2 rounded-md font-medium shadow-md transition-all hover:shadow-red-500/30">Login</Link>
+            <Link href="/register" className="text-gray-600 hover:text-red-600 font-medium px-3 py-2 transition-colors dark:text-gray-300">สมัครสมาชิก</Link>
+            <Link href="/login" className="bg-red-600 hover:bg-red-700 text-white px-5 py-2 rounded-md font-medium shadow-md transition-all hover:shadow-red-500/30">เข้าสู่ระบบ</Link>
           </>
         )}
       </nav>

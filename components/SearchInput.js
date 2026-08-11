@@ -1,58 +1,70 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { useRouter, useSearchParams, usePathname } from 'next/navigation';
+import React, { useEffect, useRef, useState } from 'react';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 
 export default function SearchInput() {
-  const router = useRouter();
-  const searchParams = useSearchParams();
   const pathname = usePathname();
-  
-  const [text, setText] = useState(searchParams.get('search') || '');
+  const searchParams = useSearchParams();
+  const currentSearch = searchParams.get('search') || '';
+
+  // A pathname change must create a fresh debounce controller. Shared layouts
+  // stay mounted during client navigation, which otherwise lets an old search
+  // timer send the user back after they have opened a topic.
+  return (
+    <SearchInputForRoute
+      key={`${pathname}\n${currentSearch}`}
+      pathname={pathname}
+      queryString={searchParams.toString()}
+      initialSearch={currentSearch}
+    />
+  );
+}
+
+function SearchInputForRoute({ pathname, queryString, initialSearch }) {
+  const router = useRouter();
+  const [text, setText] = useState(initialSearch);
+  const hasUserEdited = useRef(false);
 
   useEffect(() => {
-    // ✨ Logic ใหม่: เช็คก่อนว่าค่าที่พิมพ์ กับ ค่าใน URL มันต่างกันจริงไหม?
-    // ถ้าค่าเหมือนเดิม (เช่น เราแค่กด Sort แต่ไม่ได้พิมพ์ค้นหาใหม่) ก็ไม่ต้องทำอะไร
-    const currentSearch = searchParams.get('search') || '';
-    if (text === currentSearch) {
-        return; 
+    if (!hasUserEdited.current || text === initialSearch) {
+      hasUserEdited.current = false;
+      return;
     }
 
     const timer = setTimeout(() => {
-      // ถ้าไม่ได้อยู่หน้าแรก และไม่ได้พิมพ์อะไร ก็ไม่ต้องทำอะไร
-      if (!text && pathname !== '/') {
-        return; 
-      }
+      const params = pathname === '/'
+        ? new URLSearchParams(queryString)
+        : new URLSearchParams();
 
-      const params = new URLSearchParams(searchParams.toString());
-      
       if (text) {
         params.set('search', text);
       } else {
         params.delete('search');
       }
-      
-      // เมื่อมีการค้นหา ให้รีเซ็ตไปหน้า 1
-      if (text !== currentSearch) {
-          params.delete('page');
-      }
+      params.delete('page');
 
-      // 🚀 สั่งเปลี่ยน URL โดยเพิ่ม { scroll: false } เพื่อไม่ให้ดีดกลับขึ้นบน
-      router.push(`/?${params.toString()}`, { scroll: false });
-
+      // Mark the edit as handled before navigation updates the shared layout.
+      hasUserEdited.current = false;
+      const query = params.toString();
+      router.replace(query ? `/?${query}` : '/', { scroll: false });
     }, 500);
 
     return () => clearTimeout(timer);
-  }, [text, router, searchParams, pathname]);
+  }, [initialSearch, pathname, queryString, router, text]);
 
   return (
     <div className="flex-1 max-w-xl relative hidden md:block">
-      <input 
-        type="text" 
+      <input
+        type="search"
         value={text}
-        onChange={(e) => setText(e.target.value)}
-        placeholder="🔍 พิมพ์เพื่อค้นหาทันที..." 
-        className="w-full bg-gray-100 border border-gray-300 text-gray-700 rounded-full py-2 px-6 focus:outline-none focus:ring-2 focus:ring-red-500 focus:bg-white transition-all dark:bg-neutral-900 dark:border-neutral-700 dark:text-gray-100 dark:focus:bg-black dark:focus:border-red-600" 
+        onChange={(event) => {
+          hasUserEdited.current = true;
+          setText(event.target.value);
+        }}
+        aria-label="ค้นหากระทู้"
+        placeholder="🔍 พิมพ์เพื่อค้นหาทันที..."
+        className="w-full bg-gray-100 border border-gray-300 text-gray-700 rounded-full py-2 px-6 focus:outline-none focus:ring-2 focus:ring-red-500 focus:bg-white transition-all dark:bg-neutral-900 dark:border-neutral-700 dark:text-gray-100 dark:focus:bg-black dark:focus:border-red-600"
       />
     </div>
   );

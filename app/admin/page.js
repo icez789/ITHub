@@ -4,6 +4,7 @@ import db from '../../lib/db';
 import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
 import Link from 'next/link';
+import Image from 'next/image';
 import DeleteButton from './DeleteButton'; // 👈 นำเข้าปุ่มที่เราเพิ่งสร้าง
 import { getCurrentUser, requireAdmin } from '../../lib/auth';
 import { optionalPositiveInteger, positiveInteger } from '../../lib/validation';
@@ -360,8 +361,8 @@ export default async function AdminDashboard() {
                                     <td className="px-4 py-3">
                                         <div className="flex items-center gap-3">
                                             <div className="relative">
-                                                <div className="w-10 h-10 rounded-full bg-gray-200 dark:bg-neutral-700 flex items-center justify-center text-sm font-bold text-gray-700 dark:text-white overflow-hidden ring-2 ring-transparent group-hover:ring-red-500 transition">
-                                                    {u.avatar_url ? <img src={u.avatar_url} alt={`${u.username} avatar`} className="w-full h-full object-cover"/> : u.username.charAt(0).toUpperCase()}
+                                                <div className="relative w-10 h-10 rounded-full bg-gray-200 dark:bg-neutral-700 flex items-center justify-center text-sm font-bold text-gray-700 dark:text-white overflow-hidden ring-2 ring-transparent group-hover:ring-red-500 transition">
+                                                    {u.avatar_url ? <Image src={u.avatar_url} alt={`รูปโปรไฟล์ของ ${u.username}`} fill sizes="40px" className="object-cover" /> : u.username.charAt(0).toUpperCase()}
                                                 </div>
                                                 <div className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-white dark:border-neutral-900 ${u.is_banned ? 'bg-red-500' : 'bg-green-500'}`}></div>
                                             </div>

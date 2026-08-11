@@ -1,6 +1,5 @@
 import React from 'react';
 // import Navbar from '../../../components/Navbar'; <-- ลบออกตามสูตร
-import Footer from '../../../components/Footer';
 import db from '../../../lib/db';
 import { redirect } from 'next/navigation';
 import { getCurrentUser } from '../../../lib/auth';
@@ -59,7 +58,6 @@ export default async function SavedTopicsPage() {
             )}
         </div>
 
-        <Footer />
     </div>
   );
 }

@@ -1,6 +1,7 @@
 import React from 'react';
 import db from '../../../lib/db';
 import Link from 'next/link';
+import Image from 'next/image';
 import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
 
@@ -340,7 +341,7 @@ export default async function TopicDetailPage({ params }) {
             <div className="p-8 min-h-[200px] border-b border-gray-100 dark:border-neutral-800">
               {topic.image_url && (
                 <div className="mb-6 rounded-lg overflow-hidden border border-gray-200 shadow-sm inline-block max-w-full dark:border-neutral-700">
-                   <img src={topic.image_url} alt="Topic Image" className="max-h-[500px] w-auto object-contain bg-gray-50 dark:bg-black" />
+                   <Image src={topic.image_url} alt={`ภาพประกอบกระทู้ ${topic.title}`} width={1200} height={800} sizes="(max-width: 1024px) 100vw, 900px" className="max-h-[500px] w-auto h-auto object-contain bg-gray-50 dark:bg-black" />
                 </div>
               )}
               

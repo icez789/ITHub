@@ -3,7 +3,6 @@ import db from '../../lib/db';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import ProfileAvatar from '../../components/ProfileAvatar'; 
-import Footer from '../../components/Footer';
 import UserBadge from '../../components/UserBadge'; // ✅ 1. เพิ่ม UserBadge
 import { getCurrentUser } from '../../lib/auth';
 import { updateAvatar } from '../../lib/actions';
@@ -160,9 +159,6 @@ export default async function ProfilePage() {
 
         </div>
 
-        <div className="mt-12 border-t border-gray-200 pt-8 dark:border-neutral-800">
-            <Footer />
-        </div>
     </div>
   );
 }

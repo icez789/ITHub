@@ -3,6 +3,7 @@ import db from '../../../lib/db';
 import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
 import Link from 'next/link';
+import Image from 'next/image';
 import DeleteButton from '../DeleteButton';
 import { getCurrentUser, requireAdmin } from '../../../lib/auth';
 import { positiveInteger } from '../../../lib/validation';
@@ -56,8 +57,8 @@ export default async function CommentsManagementPage({ searchParams }) {
                 {comments.map((c) => (
                     <div key={c.id} className="p-6 hover:bg-gray-50 dark:hover:bg-neutral-800/30 transition flex gap-4">
                         <div className="flex-shrink-0">
-                            <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden">
-                                {c.avatar_url ? <img src={c.avatar_url} alt="" className="w-full h-full object-cover"/> : c.username.charAt(0)}
+                            <div className="relative w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden">
+                                {c.avatar_url ? <Image src={c.avatar_url} alt={`รูปโปรไฟล์ของ ${c.username}`} fill sizes="40px" className="object-cover" /> : c.username.charAt(0)}
                             </div>
                         </div>
                         <div className="flex-1">

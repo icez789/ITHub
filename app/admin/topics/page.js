@@ -3,6 +3,7 @@ import db from '../../../lib/db';
 import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
 import Link from 'next/link';
+import Image from 'next/image';
 import DeleteButton from '../DeleteButton'; // ดึงปุ่มจากโฟลเดอร์ admin แม่
 import { getCurrentUser, requireAdmin } from '../../../lib/auth';
 import { positiveInteger } from '../../../lib/validation';
@@ -62,8 +63,8 @@ export default async function TopicsManagementPage({ searchParams }) {
                         
                         <div className="flex items-center gap-4 text-xs text-gray-400 font-mono">
                             <span className="flex items-center gap-1 text-gray-600 dark:text-gray-300">
-                                <span className="w-5 h-5 rounded-full bg-gray-200 flex items-center justify-center text-[10px] overflow-hidden">
-                                    {t.avatar_url ? <img src={t.avatar_url} alt="" className="w-full h-full object-cover"/> : t.username.charAt(0)}
+                                <span className="relative w-5 h-5 rounded-full bg-gray-200 flex items-center justify-center text-[10px] overflow-hidden">
+                                    {t.avatar_url ? <Image src={t.avatar_url} alt={`รูปโปรไฟล์ของ ${t.username}`} fill sizes="20px" className="object-cover" /> : t.username.charAt(0)}
                                 </span>
                                 {t.username}
                             </span>

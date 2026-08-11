@@ -2,6 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 
 export default function ProfileAvatar({ user, updateAvatar, myTopicsCount }) {
   return (
@@ -11,7 +12,7 @@ export default function ProfileAvatar({ user, updateAvatar, myTopicsCount }) {
       <div className="relative w-32 h-32 mx-auto mb-4 group">
         <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-white shadow-lg bg-gray-200 flex items-center justify-center relative dark:border-neutral-700 dark:bg-neutral-800">
            {user.avatar_url ? (
-             <img src={user.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
+             <Image src={user.avatar_url} alt={`รูปโปรไฟล์ของ ${user.username}`} fill sizes="128px" className="object-cover" />
            ) : (
              <span className="text-6xl font-bold text-gray-400">{user.username.charAt(0).toUpperCase()}</span>
            )}

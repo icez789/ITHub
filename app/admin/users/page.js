@@ -3,6 +3,7 @@ import db from '../../../lib/db'; // ถอยกลับ 3 ชั้นเพ�
 import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
 import Link from 'next/link';
+import Image from 'next/image';
 import { getCurrentUser, requireAdmin } from '../../../lib/auth';
 import { positiveInteger } from '../../../lib/validation';
 
@@ -94,8 +95,8 @@ export default async function UsersManagementPage({ searchParams }) {
                             return (
                                 <tr key={u.id} className="hover:bg-gray-50 dark:hover:bg-neutral-800/50 transition">
                                     <td className="px-6 py-4 flex items-center gap-3">
-                                        <div className="w-10 h-10 rounded-full bg-gray-200 dark:bg-neutral-800 flex items-center justify-center font-bold text-gray-600 dark:text-gray-300 overflow-hidden">
-                                            {u.avatar_url ? <img src={u.avatar_url} alt="" className="w-full h-full object-cover"/> : u.username.charAt(0).toUpperCase()}
+                                        <div className="relative w-10 h-10 rounded-full bg-gray-200 dark:bg-neutral-800 flex items-center justify-center font-bold text-gray-600 dark:text-gray-300 overflow-hidden">
+                                            {u.avatar_url ? <Image src={u.avatar_url} alt={`รูปโปรไฟล์ของ ${u.username}`} fill sizes="40px" className="object-cover" /> : u.username.charAt(0).toUpperCase()}
                                         </div>
                                         <div>
                                             <div className="font-bold text-gray-900 dark:text-white">{u.username}</div>

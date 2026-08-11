@@ -2,6 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { motion } from 'framer-motion';
 
 export default function TopicCard({ id, title, username, created_at, image_url, index }) {
@@ -39,7 +40,7 @@ export default function TopicCard({ id, title, username, created_at, image_url, 
           {/* รูปภาพ */}
           <div className="h-52 bg-gray-100 rounded-lg mb-4 flex items-center justify-center text-gray-400 overflow-hidden relative dark:bg-black">
                {image_url ? (
-                 <img src={image_url} alt="cover" className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-500" />
+                 <Image src={image_url} alt={`ภาพประกอบกระทู้ ${title}`} fill sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw" loading={index < 3 ? 'eager' : 'lazy'} className="object-cover transform group-hover:scale-110 transition-transform duration-500" />
                ) : (
                  <span className="text-5xl group-hover:text-red-500 transition-colors">⚡</span>
                )}

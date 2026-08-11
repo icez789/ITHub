@@ -19,7 +19,6 @@ export default function NotificationBell({ count: initialCount, notifications: i
     });
     const channel = pusher.subscribe(`user-${currentUserId}`);
     channel.bind('new-notification', (data) => {
-      console.log("🔔 New Notification!", data);
       setUnreadCount((prev) => prev + 1);
       setNotifications((prev) => [data, ...prev]);
     });
@@ -46,7 +45,7 @@ export default function NotificationBell({ count: initialCount, notifications: i
   return (
      <div className="relative">
         {/* 3. ✅ เปลี่ยน onClick ให้มาใช้ฟังก์ชันใหม่ของเรา */}
-        <button onClick={handleBellClick} className="relative p-2 text-gray-600 hover:text-red-600 transition-colors dark:text-gray-300 dark:hover:text-red-400">
+        <button type="button" onClick={handleBellClick} aria-label="เปิดการแจ้งเตือน" aria-expanded={isOpen} className="relative p-2 text-gray-600 hover:text-red-600 transition-colors dark:text-gray-300 dark:hover:text-red-400">
            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
            
            {unreadCount > 0 && (
@@ -64,7 +63,7 @@ export default function NotificationBell({ count: initialCount, notifications: i
               <div className="max-h-80 overflow-y-auto">
                  {notifications.length > 0 ? (
                     notifications.map((n, i) => (
-                       <Link key={i} href={n.link || '#'} onClick={() => setIsOpen(false)} className="block p-4 hover:bg-gray-50 border-b last:border-0 transition-colors dark:hover:bg-neutral-800 dark:border-neutral-700">
+                       <Link key={n.id || `${n.created_at}-${i}`} href={n.link || (n.topic_id ? `/topic/${n.topic_id}` : '/notifications')} onClick={() => setIsOpen(false)} className="block p-4 hover:bg-gray-50 border-b last:border-0 transition-colors dark:hover:bg-neutral-800 dark:border-neutral-700">
                           <p className="text-sm text-gray-800 font-medium dark:text-gray-300 line-clamp-2">{n.message}</p>
                           <span className="text-xs text-gray-400 mt-1 block">{new Date(n.created_at).toLocaleTimeString('th-TH', {hour: '2-digit', minute:'2-digit'})}</span>
                        </Link>
@@ -76,6 +75,9 @@ export default function NotificationBell({ count: initialCount, notifications: i
                     </div>
                  )}
               </div>
+              <Link href="/notifications" onClick={() => setIsOpen(false)} className="block p-3 text-center text-sm font-bold text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20 border-t dark:border-neutral-700">
+                ดูการแจ้งเตือนทั้งหมด
+              </Link>
            </div>
         )}
      </div>

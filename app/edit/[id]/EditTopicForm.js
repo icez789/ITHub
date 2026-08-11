@@ -6,6 +6,7 @@ import { updateTopic } from '../../../lib/actions';
 import Editor from '../../../components/Editor';
 import Swal from 'sweetalert2';
 import Link from 'next/link';
+import Image from 'next/image';
 
 export default function EditTopicForm({ topic }) {
   const router = useRouter();
@@ -85,7 +86,7 @@ export default function EditTopicForm({ topic }) {
                 // 🅰️ กรณีมีรูปโชว์อยู่
                 <div className="flex flex-col gap-3">
                     <div className="relative inline-block w-fit group">
-                        <img src={imagePreview} alt="Preview" className="h-48 w-auto rounded-lg border border-gray-300 object-cover bg-white" />
+                        <Image src={imagePreview} alt="ตัวอย่างรูปภาพกระทู้" width={320} height={192} unoptimized className="h-48 w-auto rounded-lg border border-gray-300 object-cover bg-white" />
                         <button type="button" onClick={handleRemoveImage} className="absolute -top-2 -right-2 bg-red-600 text-white rounded-full p-1.5 shadow-md hover:bg-red-700 transition-transform hover:scale-110" title="ลบรูปนี้">
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
                         </button>

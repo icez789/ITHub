@@ -7,6 +7,8 @@ import Navbar from "../components/Navbar";
 import Sidebar from "../components/Sidebar"; 
 import NextTopLoader from 'nextjs-toploader'; 
 import FloatingChat from "../components/FloatingChat"; // ✅ 1. Import แชทบอทเข้ามา
+import Footer from "../components/Footer";
+import { Suspense } from "react";
 import 'highlight.js/styles/atom-one-dark.css';
 import { Analytics } from '@vercel/analytics/react';
 
@@ -17,7 +19,7 @@ export const metadata = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="th" suppressHydrationWarning>
       <body className="bg-gray-50 text-gray-900 dark:bg-black dark:text-gray-100 transition-colors duration-300 min-h-screen relative">
         
         <NextTopLoader 
@@ -38,7 +40,7 @@ export default function RootLayout({ children }) {
            
            <div className="flex min-h-screen bg-gray-100 dark:bg-black transition-colors duration-300">
               
-              <Sidebar />
+              <Suspense fallback={null}><Sidebar /></Suspense>
 
               <main className="flex-1 flex flex-col h-screen overflow-hidden">
                   
@@ -46,12 +48,13 @@ export default function RootLayout({ children }) {
                   
                   <div className="flex-1 overflow-y-auto bg-gray-50 dark:bg-black p-0">
                       {children}
+                      <Footer />
                   </div>
 
               </main>
            </div>
 
-           <BottomNav />
+           <Suspense fallback={null}><BottomNav /></Suspense>
 
            {/* ✅ 2. ฝัง FloatingChat ไว้ตรงนี้ เพื่อให้ลอยอยู่เหนือทุกสิ่ง และเปลี่ยนสีตาม Theme ได้ */}
            <FloatingChat />

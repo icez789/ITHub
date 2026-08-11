@@ -2,7 +2,6 @@ import Link from 'next/link';
 import React from 'react';
 import db from '../lib/db'; 
 import TopicCard from '../components/TopicCard'; 
-import Footer from '../components/Footer';
 
 export default async function HomePage({ searchParams }) {
   const params = await searchParams;
@@ -89,8 +88,25 @@ export default async function HomePage({ searchParams }) {
   
   const queryParams = [...sqlParams, pageSize, offset];
   const [topics] = await db.query(sql, queryParams);
-
-  const hotTags = ['#AI', '#NVIDIA', '#React', '#CyberSecurity'];
+  const [siteStatsResult, popularCategoriesResult] = await Promise.all([
+    db.query(`
+      SELECT
+        (SELECT COUNT(*) FROM topics) AS total_topics,
+        (SELECT COUNT(*) FROM users WHERE is_banned = 0) AS total_members,
+        (SELECT COUNT(*) FROM users WHERE is_banned = 0 AND created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)) AS new_members
+    `),
+    db.query(`
+      SELECT category, COUNT(*) AS topic_count
+      FROM topics
+      WHERE category IN ('Hardware', 'Software', 'Network', 'AI & Data', 'General')
+      GROUP BY category
+      ORDER BY topic_count DESC, category ASC
+      LIMIT 5
+    `),
+  ]);
+  const siteStats = siteStatsResult[0][0] || {};
+  const popularCategories = popularCategoriesResult[0] || [];
+  const numberFormat = new Intl.NumberFormat('th-TH');
 
   return (
     <div className="p-8 pl-6 md:pl-8 max-w-7xl mx-auto"> 
@@ -212,41 +228,43 @@ export default async function HomePage({ searchParams }) {
               <div className="space-y-3 text-sm">
                 <div className="flex justify-between">
                   <span className="text-gray-500 dark:text-gray-400">กระทู้ทั้งหมด</span>
-                  <span className="font-bold text-gray-800 dark:text-gray-200">{totalTopics}</span>
+                  <span className="font-bold text-gray-800 dark:text-gray-200">{numberFormat.format(Number(siteStats.total_topics || 0))}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-500 dark:text-gray-400">สมาชิก</span>
-                  <span className="font-bold text-gray-800 dark:text-gray-200">99+</span>
+                  <span className="font-bold text-gray-800 dark:text-gray-200">{numberFormat.format(Number(siteStats.total_members || 0))}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-500 dark:text-gray-400">ออนไลน์</span>
-                  <span className="font-bold text-green-500">● 5</span>
+                  <span className="text-gray-500 dark:text-gray-400">สมาชิกใหม่ 7 วัน</span>
+                  <span className="font-bold text-green-600 dark:text-green-400">+{numberFormat.format(Number(siteStats.new_members || 0))}</span>
                 </div>
               </div>
             </div>
 
             <div className="bg-gray-900 p-6 rounded-xl shadow-md text-white dark:bg-neutral-800">
-              <h3 className="font-bold mb-4 flex items-center gap-2">🔥 แท็กมาแรง</h3>
+              <h3 className="font-bold mb-4 flex items-center gap-2">🔥 หมวดหมู่ยอดนิยม</h3>
               <div className="flex flex-wrap gap-2">
-                {hotTags.map(tag => (
-                  <span key={tag} className="bg-gray-700 hover:bg-red-600 px-3 py-1 rounded-full text-xs cursor-pointer transition-colors dark:bg-neutral-700 dark:hover:bg-red-600">
-                    {tag}
-                  </span>
-                ))}
+                {popularCategories.length > 0 ? popularCategories.map((item) => (
+                  <Link
+                    key={item.category}
+                    href={{ pathname: '/', query: { category: item.category } }}
+                    className="bg-gray-700 hover:bg-red-600 px-3 py-1 rounded-full text-xs transition-colors dark:bg-neutral-700 dark:hover:bg-red-600"
+                  >
+                    {item.category} · {numberFormat.format(Number(item.topic_count))}
+                  </Link>
+                )) : <span className="text-sm text-gray-300">ยังไม่มีข้อมูลหมวดหมู่</span>}
               </div>
             </div>
 
               <div className="bg-gradient-to-br from-red-500 to-orange-500 p-6 rounded-xl shadow-md text-white text-center">
-                <h3 className="font-bold text-lg mb-2">กิจกรรมใหม่!</h3>
-                <p className="text-sm mb-4 opacity-90">ประกวดจัดสเปคคอมชิงรางวัล</p>
-                <button className="bg-white text-red-600 px-4 py-2 rounded-lg text-sm font-bold w-full hover:bg-gray-100 transition">คลิกเลย</button>
+                <h3 className="font-bold text-lg mb-2">มีเรื่องไอทีอยากแบ่งปัน?</h3>
+                <p className="text-sm mb-4 opacity-90">เริ่มกระทู้ใหม่เพื่อถาม ตอบ หรือส่งต่อความรู้ให้ชุมชน</p>
+                <Link href="/create" className="block bg-white text-red-600 px-4 py-2 rounded-lg text-sm font-bold w-full hover:bg-gray-100 transition">สร้างกระทู้</Link>
               </div>
           </div>
         </div>
 
       </div>
-
-      <Footer />
 
     </div>
   );
