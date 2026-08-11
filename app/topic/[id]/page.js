@@ -14,6 +14,7 @@ import RippleButton from '../../../components/RippleButton';
 import ReportButton from '../../../components/ReportButton';
 import ViewCounter from '../../../components/ViewCounter';
 import PollUI from '../../../components/PollUI'; // ✅ Import โพล
+import TopicEngagementActions from '../../../components/TopicEngagementActions';
 
 // Libs & Styles
 import { pusherServer } from '../../../lib/pusher'; 
@@ -203,49 +204,109 @@ export default async function TopicDetailPage({ params }) {
   }
 
   async function toggleLike() { 
-    'use server'; 
-    const actor = await requireUser();
-    const topicId = positiveInteger(id, 'topic id');
-    const [freshTopics] = await db.query('SELECT user_id FROM topics WHERE id = ?', [topicId]);
-    if (!freshTopics[0]) throw new Error('Topic not found');
-    const [existing] = await db.query('SELECT id FROM likes WHERE user_id = ? AND topic_id = ?', [actor.id, topicId]);
-    
-    if (existing.length > 0) { 
-      await db.query('DELETE FROM likes WHERE user_id = ? AND topic_id = ?', [actor.id, topicId]);
-    } else { 
-      await db.query('INSERT INTO likes (user_id, topic_id) VALUES (?, ?)', [actor.id, topicId]);
-      
-      if (freshTopics[0].user_id !== actor.id) {
-        const message = `${actor.username} ถูกใจกระทู้ของคุณ`;
-        
-        // 1. เซฟลง Database
-        await db.query('INSERT INTO notifications (user_id, actor_id, topic_id, type, message) VALUES (?, ?, ?, ?, ?)', [freshTopics[0].user_id, actor.id, topicId, 'like', message]);
-        
-        // 2. 🚀 ยิง Pusher แจ้งเตือนแบบ Real-time ทันที
-        try {
-          await pusherServer.trigger(`user-${freshTopics[0].user_id}`, 'new-notification', {
-            message: message,
-            link: `/topic/${topicId}`,
-            created_at: new Date().toISOString()
-          });
-        } catch (error) {
-          console.error("Pusher Like Error:", error);
+    'use server';
+    let actor;
+    let topicId;
+    try {
+      actor = await requireUser();
+      topicId = positiveInteger(id, 'topic id');
+    } catch {
+      return { success: false, message: 'กรุณาเข้าสู่ระบบอีกครั้ง' };
+    }
+
+    let connection;
+    let added = false;
+    let topicOwnerId = null;
+    try {
+      connection = await db.getConnection();
+      await connection.beginTransaction();
+      const [freshTopics] = await connection.query('SELECT user_id FROM topics WHERE id = ? FOR UPDATE', [topicId]);
+      if (!freshTopics[0]) throw new Error('Topic not found');
+      topicOwnerId = freshTopics[0].user_id;
+
+      const [existing] = await connection.query(
+        'SELECT 1 AS found FROM likes WHERE user_id = ? AND topic_id = ? LIMIT 1 FOR UPDATE',
+        [actor.id, topicId],
+      );
+      if (existing.length > 0) {
+        await connection.query('DELETE FROM likes WHERE user_id = ? AND topic_id = ?', [actor.id, topicId]);
+      } else {
+        added = true;
+        await connection.query('INSERT INTO likes (user_id, topic_id) VALUES (?, ?)', [actor.id, topicId]);
+        if (topicOwnerId !== actor.id) {
+          await connection.query(
+            'INSERT INTO notifications (user_id, actor_id, topic_id, type, message) VALUES (?, ?, ?, ?, ?)',
+            [topicOwnerId, actor.id, topicId, 'like', `${actor.username} ถูกใจกระทู้ของคุณ`],
+          );
         }
-      } 
-    } 
+      }
+      await connection.commit();
+    } catch (error) {
+      if (connection) await connection.rollback().catch(() => {});
+      console.error('Toggle Like Error:', error);
+      return { success: false, message: 'บันทึกการถูกใจไม่สำเร็จ กรุณาลองใหม่' };
+    } finally {
+      connection?.release();
+    }
+
+    if (added && topicOwnerId !== actor.id) {
+      try {
+        await pusherServer.trigger(`user-${topicOwnerId}`, 'new-notification', {
+          message: `${actor.username} ถูกใจกระทู้ของคุณ`,
+          link: `/topic/${topicId}`,
+          created_at: new Date().toISOString(),
+        });
+      } catch (error) {
+        console.error('Pusher Like Error:', error);
+      }
+    }
+
     revalidatePath(`/topic/${topicId}`);
+    revalidatePath('/');
+    return { success: true, message: added ? 'ถูกใจกระทู้แล้ว' : 'ยกเลิกถูกใจแล้ว' };
   }
+
   async function toggleBookmark() {
     'use server';
-    const actor = await requireUser();
-    const topicId = positiveInteger(id, 'topic id');
-    const [existing] = await db.query('SELECT id FROM bookmarks WHERE user_id = ? AND topic_id = ?', [actor.id, topicId]);
-    if (existing.length > 0) {
-      await db.query('DELETE FROM bookmarks WHERE user_id = ? AND topic_id = ?', [actor.id, topicId]);
-    } else {
-      await db.query('INSERT INTO bookmarks (user_id, topic_id) VALUES (?, ?)', [actor.id, topicId]);
+    let actor;
+    let topicId;
+    try {
+      actor = await requireUser();
+      topicId = positiveInteger(id, 'topic id');
+    } catch {
+      return { success: false, message: 'กรุณาเข้าสู่ระบบอีกครั้ง' };
     }
+
+    let connection;
+    let added = false;
+    try {
+      connection = await db.getConnection();
+      await connection.beginTransaction();
+      const [topics] = await connection.query('SELECT id FROM topics WHERE id = ? FOR UPDATE', [topicId]);
+      if (!topics[0]) throw new Error('Topic not found');
+
+      const [existing] = await connection.query(
+        'SELECT 1 AS found FROM bookmarks WHERE user_id = ? AND topic_id = ? LIMIT 1 FOR UPDATE',
+        [actor.id, topicId],
+      );
+      if (existing.length > 0) {
+        await connection.query('DELETE FROM bookmarks WHERE user_id = ? AND topic_id = ?', [actor.id, topicId]);
+      } else {
+        added = true;
+        await connection.query('INSERT INTO bookmarks (user_id, topic_id) VALUES (?, ?)', [actor.id, topicId]);
+      }
+      await connection.commit();
+    } catch (error) {
+      if (connection) await connection.rollback().catch(() => {});
+      console.error('Toggle Bookmark Error:', error);
+      return { success: false, message: 'บันทึกกระทู้ไม่สำเร็จ กรุณาลองใหม่' };
+    } finally {
+      connection?.release();
+    }
+
     revalidatePath(`/topic/${topicId}`);
+    revalidatePath('/profile/saved');
+    return { success: true, message: added ? 'บันทึกกระทู้แล้ว' : 'นำออกจากรายการบันทึกแล้ว' };
   }
   async function deleteComment(formData) {
     'use server';
@@ -364,22 +425,14 @@ export default async function TopicDetailPage({ params }) {
               )}
 
               {/* Action Buttons (Like / Bookmark) */}
-              <div className="mt-8 flex items-center gap-4">
-                <form action={toggleLike}>
-                  <button type="submit" disabled={!currentUser} className={`flex items-center gap-2 px-6 py-3 rounded-full font-bold transition-all shadow-sm border ${isLiked ? 'bg-pink-100 text-pink-600 border-pink-200 hover:bg-pink-200 dark:bg-pink-900/30 dark:text-pink-400 dark:border-pink-800' : 'bg-gray-100 text-gray-600 border-gray-200 hover:bg-gray-200 dark:bg-neutral-800 dark:text-gray-400 dark:border-neutral-700 dark:hover:bg-neutral-700'} ${!currentUser ? 'opacity-50 cursor-not-allowed' : 'hover:scale-105 active:scale-95'}`}>
-                    <span className="text-2xl">{isLiked ? '❤️' : '🤍'}</span>
-                    <span>{isLiked ? 'ถูกใจแล้ว' : 'ถูกใจ'}</span>
-                    <span className="bg-white/50 px-2 py-0.5 rounded-full text-sm ml-1 border border-black/5 dark:bg-black/30 dark:border-white/10">{likeCount}</span>
-                  </button>
-                </form>
-                <form action={toggleBookmark}>
-                  <button type="submit" disabled={!currentUser} className={`flex items-center gap-2 px-4 py-3 rounded-full font-bold transition-all shadow-sm border ${isBookmarked ? 'bg-blue-100 text-blue-600 border-blue-200 hover:bg-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-800' : 'bg-gray-100 text-gray-600 border-gray-200 hover:bg-gray-200 dark:bg-neutral-800 dark:text-gray-400 dark:border-neutral-700 dark:hover:bg-neutral-700'} ${!currentUser ? 'opacity-50 cursor-not-allowed' : 'hover:scale-105 active:scale-95'}`} title="บันทึกไว้อ่านทีหลัง">
-                    <span className="text-2xl">{isBookmarked ? '🔖' : '🏷️'}</span>
-                    <span className="hidden sm:inline">{isBookmarked ? 'บันทึกแล้ว' : 'บันทึก'}</span>
-                  </button>
-                </form>
-                {!currentUser && <span className="text-sm text-gray-400">(เข้าสู่ระบบเพื่อใช้งาน)</span>}
-              </div>
+              <TopicEngagementActions
+                isAuthenticated={Boolean(currentUser)}
+                isLiked={isLiked}
+                isBookmarked={isBookmarked}
+                likeCount={likeCount}
+                likeAction={toggleLike}
+                bookmarkAction={toggleBookmark}
+              />
             </div>
           </div>
 

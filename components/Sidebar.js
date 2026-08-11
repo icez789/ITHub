@@ -1,7 +1,12 @@
 'use client';
 
 import Link from 'next/link';
+import { useSyncExternalStore } from 'react';
 import { usePathname, useSearchParams } from 'next/navigation';
+
+const subscribeToHydration = () => () => {};
+const getClientHydrationSnapshot = () => true;
+const getServerHydrationSnapshot = () => false;
 
 function SidebarItem({ href, icon, label, active }) {
   return (
@@ -26,6 +31,11 @@ function SidebarItem({ href, icon, label, active }) {
 }
 
 export default function Sidebar() {
+  const isHydrated = useSyncExternalStore(
+    subscribeToHydration,
+    getClientHydrationSnapshot,
+    getServerHydrationSnapshot,
+  );
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const currentSort = searchParams.get('sort');
@@ -36,21 +46,21 @@ export default function Sidebar() {
       label: 'หน้าแรก',
       href: '/',
       icon: '🏠',
-      active: pathname === '/' && !currentSort && !currentCategory,
+      active: isHydrated && pathname === '/' && !currentSort && !currentCategory,
     },
     {
       label: 'มาแรง',
       href: { pathname: '/', query: { sort: 'likes' } },
       icon: '🔥',
-      active: pathname === '/' && currentSort === 'likes',
+      active: isHydrated && pathname === '/' && currentSort === 'likes',
     },
-    { label: 'จัดอันดับ', href: '/leaderboard', icon: '🏆', active: pathname === '/leaderboard' },
+    { label: 'จัดอันดับ', href: '/leaderboard', icon: '🏆', active: isHydrated && pathname === '/leaderboard' },
   ];
 
   const personalMenus = [
-    { label: 'โปรไฟล์', href: '/profile', icon: '👤', active: pathname === '/profile' },
-    { label: 'บันทึกไว้', href: '/profile/saved', icon: '🔖', active: pathname === '/profile/saved' },
-    { label: 'การแจ้งเตือน', href: '/notifications', icon: '🔔', active: pathname === '/notifications' },
+    { label: 'โปรไฟล์', href: '/profile', icon: '👤', active: isHydrated && pathname === '/profile' },
+    { label: 'บันทึกไว้', href: '/profile/saved', icon: '🔖', active: isHydrated && pathname === '/profile/saved' },
+    { label: 'การแจ้งเตือน', href: '/notifications', icon: '🔔', active: isHydrated && pathname === '/notifications' },
   ];
 
   const categoryMenus = [
@@ -88,7 +98,7 @@ export default function Sidebar() {
               label={item.label}
               icon={item.icon}
               href={{ pathname: '/', query: { category: item.value } }}
-              active={pathname === '/' && currentCategory === item.value}
+              active={isHydrated && pathname === '/' && currentCategory === item.value}
             />
           ))}
         </nav>

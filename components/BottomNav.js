@@ -1,24 +1,35 @@
 'use client';
 
 import Link from 'next/link';
+import { useSyncExternalStore } from 'react';
 import { usePathname, useSearchParams } from 'next/navigation';
 
+const subscribeToHydration = () => () => {};
+const getClientHydrationSnapshot = () => true;
+const getServerHydrationSnapshot = () => false;
+
 export default function BottomNav() {
+  const isHydrated = useSyncExternalStore(
+    subscribeToHydration,
+    getClientHydrationSnapshot,
+    getServerHydrationSnapshot,
+  );
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const currentSort = searchParams.get('sort');
+  const currentCategory = searchParams.get('category');
 
   const menus = [
-    { label: 'หน้าแรก', href: '/', icon: '🏠', active: pathname === '/' && !currentSort },
+    { label: 'หน้าแรก', href: '/', icon: '🏠', active: isHydrated && pathname === '/' && !currentSort && !currentCategory },
     {
       label: 'มาแรง',
       href: { pathname: '/', query: { sort: 'likes' } },
       icon: '🔥',
-      active: pathname === '/' && currentSort === 'likes',
+      active: isHydrated && pathname === '/' && currentSort === 'likes',
     },
-    { label: 'สร้าง', href: '/create', icon: '➕', active: pathname === '/create', isSpecial: true },
-    { label: 'แจ้งเตือน', href: '/notifications', icon: '🔔', active: pathname === '/notifications' },
-    { label: 'ฉัน', href: '/profile', icon: '👤', active: pathname.startsWith('/profile') },
+    { label: 'สร้าง', href: '/create', icon: '➕', active: isHydrated && pathname === '/create', isSpecial: true },
+    { label: 'แจ้งเตือน', href: '/notifications', icon: '🔔', active: isHydrated && pathname === '/notifications' },
+    { label: 'ฉัน', href: '/profile', icon: '👤', active: isHydrated && pathname.startsWith('/profile') },
   ];
 
   return (

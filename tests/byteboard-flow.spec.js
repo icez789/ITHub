@@ -117,4 +117,51 @@ test.describe('ByteBoard critical flows', () => {
     await chatButton.click();
     await expect(page.getByRole('dialog', { name: 'ITHub Bot' })).toBeVisible();
   });
+
+  test('keeps engagement controls disabled for signed-out users', async ({ page }) => {
+    await page.goto('/');
+    const firstTopic = page.locator('section a[href^="/topic/"]').first();
+    test.skip(await firstTopic.count() === 0, 'The test database has no topics');
+    await firstTopic.click();
+
+    const likeButton = page.getByRole('button', { name: /ถูกใจกระทู้|ยกเลิกถูกใจ/ });
+    const bookmarkButton = page.getByRole('button', { name: /บันทึกกระทู้|นำกระทู้ออก/ });
+    await expect(likeButton).toBeDisabled();
+    await expect(bookmarkButton).toBeDisabled();
+
+    // Simulate a session expiring after the page rendered. The action should
+    // report a local error instead of replacing the whole route with error.js.
+    await likeButton.evaluate((button) => { button.disabled = false; });
+    await likeButton.click();
+    await expect(page.getByRole('alert').filter({ hasText: 'กรุณาเข้าสู่ระบบอีกครั้ง' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'โหลดข้อมูลไม่สำเร็จ' })).toHaveCount(0);
+  });
+
+  test('toggles likes and bookmarks without leaving the topic', async ({ page }) => {
+    test.skip(!email || !password, 'Set BYTEBOARD_E2E_EMAIL and BYTEBOARD_E2E_PASSWORD');
+    await login(page);
+    const firstTopic = page.locator('section a[href^="/topic/"]').first();
+    test.skip(await firstTopic.count() === 0, 'The test database has no topics');
+    const topicPath = await firstTopic.getAttribute('href');
+    await firstTopic.click();
+
+    const likeButton = page.getByRole('button', { name: /ถูกใจกระทู้|ยกเลิกถูกใจ/ });
+    const bookmarkButton = page.getByRole('button', { name: /บันทึกกระทู้|นำกระทู้ออก/ });
+    const initialLike = await likeButton.getAttribute('aria-pressed');
+    const initialBookmark = await bookmarkButton.getAttribute('aria-pressed');
+
+    try {
+      await likeButton.click();
+      await expect(likeButton).toHaveAttribute('aria-pressed', initialLike === 'true' ? 'false' : 'true');
+      await expect(page).toHaveURL((url) => url.pathname === topicPath);
+
+      await bookmarkButton.click();
+      await expect(bookmarkButton).toHaveAttribute('aria-pressed', initialBookmark === 'true' ? 'false' : 'true');
+      await expect(page).toHaveURL((url) => url.pathname === topicPath);
+      await expect(page.getByRole('heading', { name: 'โหลดข้อมูลไม่สำเร็จ' })).toHaveCount(0);
+    } finally {
+      if (await likeButton.getAttribute('aria-pressed') !== initialLike) await likeButton.click();
+      if (await bookmarkButton.getAttribute('aria-pressed') !== initialBookmark) await bookmarkButton.click();
+    }
+  });
 });
