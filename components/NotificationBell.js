@@ -11,11 +11,13 @@ export default function NotificationBell({ count: initialCount, notifications: i
   const [notifications, setNotifications] = useState(initialNotifications);
   const [isOpen, setIsOpen] = useState(false);
 
-  // ... (ส่วน useEffect ของ Pusher ปล่อยไว้เหมือนเดิม ไม่ต้องแก้) ...
+  // Subscribe only when realtime notification settings are available.
   useEffect(() => {
-    if (!currentUserId) return;
-    const pusher = new Pusher(process.env.NEXT_PUBLIC_PUSHER_KEY, {
-      cluster: process.env.NEXT_PUBLIC_PUSHER_CLUSTER,
+    const key = process.env.NEXT_PUBLIC_PUSHER_KEY;
+    const cluster = process.env.NEXT_PUBLIC_PUSHER_CLUSTER;
+    if (!currentUserId || !key || !cluster) return;
+    const pusher = new Pusher(key, {
+      cluster,
     });
     const channel = pusher.subscribe(`user-${currentUserId}`);
     channel.bind('new-notification', (data) => {
@@ -24,6 +26,7 @@ export default function NotificationBell({ count: initialCount, notifications: i
     });
     return () => {
       pusher.unsubscribe(`user-${currentUserId}`);
+      pusher.disconnect();
     };
   }, [currentUserId]);
 

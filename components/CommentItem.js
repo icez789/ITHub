@@ -149,6 +149,7 @@ export default function CommentItem({
           <div className="mt-3 flex gap-3 items-center flex-wrap">
             {currentUser && (
                 <button 
+                    type="button"
                     onClick={() => setIsReplying(!isReplying)}
                     className="text-xs font-bold text-gray-500 hover:text-blue-600 dark:text-gray-400 dark:hover:text-blue-400 transition-colors flex items-center gap-1"
                 >
@@ -158,6 +159,7 @@ export default function CommentItem({
 
             {isOwnerOfTopic && !isSolved && (
                 <button 
+                    type="button"
                     onClick={handleMarkAsSolution} 
                     className="text-xs font-bold text-green-600 hover:text-green-700 hover:bg-green-50 px-2 py-1 rounded transition-colors border border-green-200 dark:border-green-800 dark:hover:bg-green-900/30 ml-auto"
                 >
@@ -170,9 +172,9 @@ export default function CommentItem({
         {canDelete && (
           <form action={async (formData) => {
               await deleteAction(formData);
-          }} className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
+          }} className="absolute top-4 right-4 opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100">
              <input type="hidden" name="commentId" value={comment.id} />
-             <button type="submit" className="text-gray-400 hover:text-red-600 p-1 rounded-md hover:bg-red-50 transition-colors dark:hover:bg-neutral-800" title="ลบคอมเมนต์นี้">🗑️</button>
+             <button type="submit" aria-label="ลบคอมเมนต์นี้" className="text-gray-400 hover:text-red-600 p-1 rounded-md hover:bg-red-50 transition-colors dark:hover:bg-neutral-800" title="ลบคอมเมนต์นี้">🗑️</button>
           </form>
         )}
       </div>

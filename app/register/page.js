@@ -71,7 +71,7 @@ export default async function RegisterPage({ searchParams }) {
         
         <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-red-600 to-red-800"></div>
         
-        <h2 className="text-3xl font-bold text-center mb-2 text-gray-800 dark:text-white">สมัครสมาชิก</h2>
+        <h1 className="text-3xl font-bold text-center mb-2 text-gray-800 dark:text-white">สมัครสมาชิก</h1>
         <p className="text-center text-gray-500 mb-8 dark:text-gray-400">เข้าร่วมชุมชน IT Techboard วันนี้!</p>
 
         {/* --- ส่วนแสดง Error Message --- */}
@@ -94,23 +94,23 @@ export default async function RegisterPage({ searchParams }) {
         <form action={registerUser} className="flex flex-col gap-4">
           
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1 dark:text-gray-300">ชื่อผู้ใช้ (Username)</label>
-            <input name="username" type="text" required placeholder="เช่น Somchai IT" className="w-full bg-gray-50 border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-red-500 focus:outline-none dark:bg-black dark:border-neutral-700 dark:text-white dark:placeholder-gray-600" />
+            <label htmlFor="register-username" className="block text-sm font-medium text-gray-700 mb-1 dark:text-gray-300">ชื่อผู้ใช้ (Username)</label>
+            <input id="register-username" name="username" type="text" required minLength={3} maxLength={40} autoComplete="username" placeholder="เช่น Somchai IT" className="w-full bg-gray-50 border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-red-500 focus:outline-none dark:bg-black dark:border-neutral-700 dark:text-white dark:placeholder-gray-600" />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1 dark:text-gray-300">อีเมล</label>
-            <input name="email" type="email" required placeholder="name@example.com" className="w-full bg-gray-50 border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-red-500 focus:outline-none dark:bg-black dark:border-neutral-700 dark:text-white dark:placeholder-gray-600" />
+            <label htmlFor="register-email" className="block text-sm font-medium text-gray-700 mb-1 dark:text-gray-300">อีเมล</label>
+            <input id="register-email" name="email" type="email" required autoComplete="email" placeholder="name@example.com" className="w-full bg-gray-50 border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-red-500 focus:outline-none dark:bg-black dark:border-neutral-700 dark:text-white dark:placeholder-gray-600" />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1 dark:text-gray-300">รหัสผ่าน</label>
-            <input name="password" type="password" required placeholder="••••••••" className="w-full bg-gray-50 border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-red-500 focus:outline-none dark:bg-black dark:border-neutral-700 dark:text-white dark:placeholder-gray-600" />
+            <label htmlFor="register-password" className="block text-sm font-medium text-gray-700 mb-1 dark:text-gray-300">รหัสผ่าน</label>
+            <input id="register-password" name="password" type="password" required minLength={8} maxLength={128} autoComplete="new-password" placeholder="อย่างน้อย 8 ตัวอักษร" className="w-full bg-gray-50 border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-red-500 focus:outline-none dark:bg-black dark:border-neutral-700 dark:text-white dark:placeholder-gray-600" />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1 dark:text-gray-300">ยืนยันรหัสผ่าน</label>
-            <input name="confirmPassword" type="password" required placeholder="••••••••" className="w-full bg-gray-50 border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-red-500 focus:outline-none dark:bg-black dark:border-neutral-700 dark:text-white dark:placeholder-gray-600" />
+            <label htmlFor="register-confirm-password" className="block text-sm font-medium text-gray-700 mb-1 dark:text-gray-300">ยืนยันรหัสผ่าน</label>
+            <input id="register-confirm-password" name="confirmPassword" type="password" required minLength={8} maxLength={128} autoComplete="new-password" placeholder="กรอกรหัสผ่านอีกครั้ง" className="w-full bg-gray-50 border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-red-500 focus:outline-none dark:bg-black dark:border-neutral-700 dark:text-white dark:placeholder-gray-600" />
           </div>
 
           {/* ปุ่ม Submit */}

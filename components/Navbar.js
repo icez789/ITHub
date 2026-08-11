@@ -28,10 +28,10 @@ export default async function Navbar() {
   }
 
   return (
-    <header className="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between gap-6 shadow-sm z-50 sticky top-0 dark:bg-black dark:border-neutral-800 transition-colors duration-300">
+    <header className="bg-white border-b border-gray-200 px-3 sm:px-6 py-3 md:py-4 flex flex-wrap items-center gap-3 md:gap-6 shadow-sm z-50 sticky top-0 dark:bg-black dark:border-neutral-800 transition-colors duration-300">
       
       {/* LOGO */}
-      <Link href="/" className="flex items-center gap-3">
+      <Link href="/" className="flex shrink-0 items-center gap-3" aria-label="ITHub หน้าแรก">
          <div className="w-12 h-12 bg-gradient-to-br from-red-600 to-red-800 rounded-lg flex items-center justify-center text-white font-bold text-xl shadow-lg">
            IT
          </div>
@@ -39,15 +39,15 @@ export default async function Navbar() {
       </Link>
       
       {/* Search Bar */}
-      <SearchInput />
+      <SearchInput className="hidden md:block flex-1 max-w-xl" />
 
       {/* Menu Icons */}
-      <nav className="flex gap-3 items-center">
+      <nav aria-label="บัญชีผู้ใช้" className="ml-auto flex gap-2 sm:gap-3 items-center">
         
         <ThemeToggle />
 
         {user ? (
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 sm:gap-4">
               
               <NotificationBell 
                 count={unreadCount} 
@@ -68,7 +68,7 @@ export default async function Navbar() {
               {/* ปุ่มสร้างกระทู้ */}
               <Link 
                 href="/create" 
-                className="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-bold shadow-md transition-all transform hover:scale-105 active:scale-95 text-sm"
+                className="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white px-3 sm:px-4 py-2 rounded-lg font-bold shadow-md transition-all transform hover:scale-105 active:scale-95 text-sm"
               >
                 <span>+</span> <span className="hidden sm:inline">สร้างกระทู้</span>
               </Link>
@@ -97,11 +97,13 @@ export default async function Navbar() {
         ) : (
           /* กรณีไม่ได้ Login */
           <>
-            <Link href="/register" className="text-gray-600 hover:text-red-600 font-medium px-3 py-2 transition-colors dark:text-gray-300">สมัครสมาชิก</Link>
-            <Link href="/login" className="bg-red-600 hover:bg-red-700 text-white px-5 py-2 rounded-md font-medium shadow-md transition-all hover:shadow-red-500/30">เข้าสู่ระบบ</Link>
+            <Link href="/register" className="hidden sm:inline-flex text-gray-600 hover:text-red-600 font-medium px-3 py-2 transition-colors dark:text-gray-300">สมัครสมาชิก</Link>
+            <Link href="/login" className="whitespace-nowrap bg-red-600 hover:bg-red-700 text-white px-3 sm:px-5 py-2 rounded-md text-sm font-medium shadow-md transition-all hover:shadow-red-500/30">เข้าสู่ระบบ</Link>
           </>
         )}
       </nav>
+
+      <SearchInput className="order-last block w-full max-w-none md:hidden" />
     </header>
   );
 }

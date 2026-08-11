@@ -7,6 +7,8 @@ import remarkGfm from 'remark-gfm';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
 
+const INITIAL_MESSAGES = [{ role: 'bot', text: 'สวัสดีครับ! ITHub Bot 🤖 พร้อมช่วยเหลือ มีอะไรให้ผมรับใช้ครับ?' }];
+
 export default function FloatingChat() {
   const [isOpen, setIsOpen] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false); // 🚀 เพิ่ม State สำหรับขยายหน้าต่าง
@@ -18,10 +20,12 @@ export default function FloatingChat() {
   // 🚀 1. ตอนเปิดเว็บ ให้ดึงประวัติแชทเก่าจาก LocalStorage มาโชว์
   useEffect(() => {
     const savedChat = localStorage.getItem('ithub_bot_chat');
-    if (savedChat) {
-      setMessages(JSON.parse(savedChat));
-    } else {
-      setMessages([{ role: 'bot', text: 'สวัสดีครับ! ITHub Bot 🤖 พร้อมช่วยเหลือ มีอะไรให้ผมรับใช้ครับ?' }]);
+    try {
+      const parsed = savedChat ? JSON.parse(savedChat) : INITIAL_MESSAGES;
+      setMessages(Array.isArray(parsed) ? parsed : INITIAL_MESSAGES);
+    } catch {
+      localStorage.removeItem('ithub_bot_chat');
+      setMessages(INITIAL_MESSAGES);
     }
   }, []);
 
@@ -66,28 +70,33 @@ export default function FloatingChat() {
   };
 
   return (
-    <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end">
+    <div className="fixed bottom-20 right-4 z-50 flex flex-col items-end md:bottom-6 md:right-6">
       
       {isOpen && (
-        <div className={`mb-4 bg-white dark:bg-neutral-900 border border-gray-200 dark:border-neutral-700 rounded-2xl shadow-2xl overflow-hidden flex flex-col transition-all duration-300 transform origin-bottom-right ${
-          isExpanded ? 'w-[90vw] md:w-[800px] h-[80vh]' : 'w-80 sm:w-96 h-[500px]' // 🚀 สลับคลาส CSS เพื่อยืด/หดหน้าจอ
-        }`}>
+        <div
+          role="dialog"
+          aria-modal="false"
+          aria-labelledby="ithub-chat-title"
+          className={`mb-2 bg-white dark:bg-neutral-900 border border-gray-200 dark:border-neutral-700 rounded-2xl shadow-2xl overflow-hidden flex flex-col transition-all duration-300 transform origin-bottom-right ${
+            isExpanded ? 'w-[calc(100vw-2rem)] md:w-[800px] h-[calc(100vh-7rem)] md:h-[80vh]' : 'w-[calc(100vw-2rem)] max-w-96 h-[min(500px,calc(100vh-7rem))]'
+          }`}
+        >
           
           {/* Header */}
           <div className="bg-red-600 dark:bg-red-700 p-3 sm:p-4 flex justify-between items-center text-white">
-            <div className="flex items-center gap-2 font-bold">
+            <div id="ithub-chat-title" className="flex items-center gap-2 font-bold">
               <span className="text-xl">🤖</span>
               ITHub Bot
             </div>
             
             <div className="flex items-center gap-1">
               {/* ปุ่มล้างแชท */}
-              <button onClick={clearChat} title="ล้างแชท" className="hover:bg-red-800 p-2 rounded-lg transition">
+              <button type="button" onClick={clearChat} title="ล้างแชท" aria-label="ล้างประวัติแชท" className="hover:bg-red-800 p-2 rounded-lg transition">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
               </button>
               
               {/* ปุ่มขยายหน้าจอ */}
-              <button onClick={() => setIsExpanded(!isExpanded)} title={isExpanded ? "ย่อหน้าจอ" : "ขยายหน้าจอ"} className="hover:bg-red-800 p-2 rounded-lg transition hidden sm:block">
+              <button type="button" onClick={() => setIsExpanded(!isExpanded)} title={isExpanded ? "ย่อหน้าจอ" : "ขยายหน้าจอ"} aria-label={isExpanded ? "ย่อหน้าต่างแชท" : "ขยายหน้าต่างแชท"} className="hover:bg-red-800 p-2 rounded-lg transition hidden sm:block">
                 {isExpanded ? (
                   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M8 3v3a2 2 0 0 1-2 2H3"/><path d="M21 8h-3a2 2 0 0 1-2-2V3"/><path d="M3 16h3a2 2 0 0 1 2 2v3"/><path d="M16 21v-3a2 2 0 0 1 2-2h3"/></svg>
                 ) : (
@@ -96,7 +105,7 @@ export default function FloatingChat() {
               </button>
 
               {/* ปุ่มปิด */}
-              <button onClick={() => setIsOpen(false)} title="ซ่อนแชท" className="hover:bg-red-800 p-2 rounded-lg transition">
+              <button type="button" onClick={() => setIsOpen(false)} title="ซ่อนแชท" aria-label="ปิดหน้าต่างแชท" className="hover:bg-red-800 p-2 rounded-lg transition">
                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
               </button>
             </div>
@@ -169,11 +178,13 @@ export default function FloatingChat() {
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 placeholder="พิมพ์ข้อความที่นี่..." 
+                aria-label="ข้อความถึง ITHub Bot"
                 className="flex-1 px-4 py-2 bg-gray-100 dark:bg-neutral-800 border-transparent focus:border-red-500 focus:bg-white dark:focus:bg-neutral-900 rounded-full text-sm outline-none transition dark:text-white"
                 disabled={isLoading}
               />
               <button 
                 type="submit" 
+                aria-label="ส่งข้อความ"
                 disabled={isLoading || !input.trim()}
                 className="bg-red-600 hover:bg-red-700 text-white p-2.5 rounded-full transition disabled:opacity-50"
               >
@@ -187,6 +198,7 @@ export default function FloatingChat() {
       {/* ปุ่มกดเปิดแชท */}
       {!isOpen && (
         <button 
+          type="button"
           onClick={() => setIsOpen(true)}
           aria-label="Open AI chat"
           className="bg-red-600 hover:bg-red-700 text-white p-4 rounded-full shadow-[0_0_15px_rgba(220,38,38,0.5)] hover:shadow-[0_0_25px_rgba(220,38,38,0.7)] transition-all transform hover:scale-110 flex items-center justify-center"

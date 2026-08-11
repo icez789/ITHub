@@ -123,23 +123,29 @@ export default async function EditProfilePage({ searchParams }) {
                 <h2 className="text-xl font-bold text-gray-800 border-b pb-2 mb-4 dark:text-gray-200">ข้อมูลทั่วไป</h2>
                 
                 <div className="mb-4">
-                    <label className="block text-sm font-bold text-gray-700 mb-1 dark:text-gray-300">ชื่อผู้ใช้ (Username)</label>
+                    <label htmlFor="profile-username" className="block text-sm font-bold text-gray-700 mb-1 dark:text-gray-300">ชื่อผู้ใช้ (Username)</label>
                     <input 
+                        id="profile-username"
                         name="username" 
                         type="text" 
                         defaultValue={currentUser.username}
                         required 
+                        minLength={3}
+                        maxLength={40}
+                        autoComplete="username"
                         className="w-full bg-gray-50 border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-red-500 dark:bg-black dark:border-neutral-700 dark:text-white" 
                     />
                 </div>
 
                 <div className="mb-4">
-                    <label className="block text-sm font-bold text-gray-700 mb-1 dark:text-gray-300">คำแนะนำตัว (Bio)</label>
+                    <label htmlFor="profile-bio" className="block text-sm font-bold text-gray-700 mb-1 dark:text-gray-300">คำแนะนำตัว (Bio)</label>
                     <textarea 
+                        id="profile-bio"
                         name="bio" 
                         defaultValue={currentUser.bio || ''}
                         placeholder="เขียนอะไรสักหน่อยเกี่ยวกับตัวคุณ..."
                         rows="3"
+                        maxLength={500}
                         className="w-full bg-gray-50 border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-red-500 dark:bg-black dark:border-neutral-700 dark:text-white" 
                     ></textarea>
                 </div>
@@ -152,10 +158,13 @@ export default async function EditProfilePage({ searchParams }) {
                 </h2>
 
                 <div className="mb-4">
-                    <label className="block text-sm font-medium text-gray-600 mb-1 dark:text-gray-400">รหัสผ่านเดิม</label>
+                    <label htmlFor="profile-old-password" className="block text-sm font-medium text-gray-600 mb-1 dark:text-gray-400">รหัสผ่านเดิม</label>
                     <input 
+                        id="profile-old-password"
                         name="oldPassword" 
                         type="password" 
+                        maxLength={128}
+                        autoComplete="current-password"
                         placeholder="กรอกเพื่อยืนยันการเปลี่ยนรหัส"
                         className="w-full bg-white border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-red-500 dark:bg-black dark:border-neutral-600 dark:text-white" 
                     />
@@ -163,18 +172,26 @@ export default async function EditProfilePage({ searchParams }) {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                        <label className="block text-sm font-medium text-gray-600 mb-1 dark:text-gray-400">รหัสผ่านใหม่</label>
+                        <label htmlFor="profile-new-password" className="block text-sm font-medium text-gray-600 mb-1 dark:text-gray-400">รหัสผ่านใหม่</label>
                         <input 
+                            id="profile-new-password"
                             name="newPassword" 
                             type="password" 
+                            minLength={8}
+                            maxLength={128}
+                            autoComplete="new-password"
                             className="w-full bg-white border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-red-500 dark:bg-black dark:border-neutral-600 dark:text-white" 
                         />
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-gray-600 mb-1 dark:text-gray-400">ยืนยันรหัสใหม่</label>
+                        <label htmlFor="profile-confirm-password" className="block text-sm font-medium text-gray-600 mb-1 dark:text-gray-400">ยืนยันรหัสใหม่</label>
                         <input 
+                            id="profile-confirm-password"
                             name="confirmNewPassword" 
                             type="password" 
+                            minLength={8}
+                            maxLength={128}
+                            autoComplete="new-password"
                             className="w-full bg-white border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-red-500 dark:bg-black dark:border-neutral-600 dark:text-white" 
                         />
                     </div>

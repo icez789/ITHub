@@ -8,6 +8,7 @@ import Swal from 'sweetalert2';
 
 export default function CreateTopicPage() {
   const router = useRouter();
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
   // State สำหรับจัดการโพล
   const [hasPoll, setHasPoll] = useState(false);
@@ -22,7 +23,7 @@ export default function CreateTopicPage() {
   };
 
   const addOption = () => {
-    if (pollOptions.length < 10) setPollOptions([...pollOptions, '']);
+    if (pollOptions.length < 8) setPollOptions([...pollOptions, '']);
   };
 
   const removeOption = (index) => {
@@ -34,6 +35,13 @@ export default function CreateTopicPage() {
 
   // ฟังก์ชัน Submit Form
   const handleSubmit = async (formData) => {
+    const content = String(formData.get('content') || '');
+    const plainContent = new DOMParser().parseFromString(content, 'text/html').body.textContent?.trim() || '';
+    if (plainContent.length < 5) {
+      await Swal.fire({ icon: 'error', title: 'กรุณาใส่รายละเอียดอย่างน้อย 5 ตัวอักษร' });
+      return;
+    }
+
     // เพิ่มข้อมูลโพลเข้าไปใน formData (ถ้ามี)
     if (hasPoll) {
         if (!pollQuestion.trim()) {
@@ -52,7 +60,15 @@ export default function CreateTopicPage() {
     }
 
     // เรียก Server Action
-    const result = await createTopicWithPoll(formData);
+    setIsSubmitting(true);
+    let result;
+    try {
+      result = await createTopicWithPoll(formData);
+    } catch {
+      setIsSubmitting(false);
+      await Swal.fire({ icon: 'error', title: 'ส่งกระทู้ไม่สำเร็จ', text: 'การเชื่อมต่อขัดข้อง กรุณาลองใหม่อีกครั้ง' });
+      return;
+    }
 
     if (result.success) {
         Swal.fire({
@@ -62,9 +78,10 @@ export default function CreateTopicPage() {
             timer: 1500,
             showConfirmButton: false
         }).then(() => {
-            router.push('/'); // หรือจะพาไปหน้ากระทู้ใหม่เลยก็ได้: router.push(`/topic/${result.topicId}`)
+            router.push(`/topic/${result.topicId}`);
         });
     } else {
+        setIsSubmitting(false);
         Swal.fire({ icon: 'error', title: 'เกิดข้อผิดพลาด', text: result.message });
     }
   };
@@ -79,13 +96,13 @@ export default function CreateTopicPage() {
         <form action={handleSubmit} className="flex flex-col gap-6">
           
           <div>
-            <label className="block text-gray-700 font-bold mb-2 dark:text-gray-200">หัวข้อกระทู้ <span className="text-red-500">*</span></label>
-            <input name="title" type="text" required placeholder="เช่น สอบถามเรื่องการประกอบคอม..." className="w-full bg-gray-50 border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-red-500 dark:bg-black dark:border-neutral-700 dark:text-white dark:placeholder-gray-500" />
+            <label htmlFor="topic-title" className="block text-gray-700 font-bold mb-2 dark:text-gray-200">หัวข้อกระทู้ <span className="text-red-500">*</span></label>
+            <input id="topic-title" name="title" type="text" required minLength={5} maxLength={160} placeholder="เช่น สอบถามเรื่องการประกอบคอม..." className="w-full bg-gray-50 border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-red-500 dark:bg-black dark:border-neutral-700 dark:text-white dark:placeholder-gray-500" />
           </div>
 
           <div>
-            <label className="block text-gray-700 font-bold mb-2 dark:text-gray-200">หมวดหมู่ <span className="text-red-500">*</span></label>
-            <select name="category" className="w-full bg-gray-50 border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-red-500 dark:bg-black dark:border-neutral-700 dark:text-white cursor-pointer">
+            <label htmlFor="topic-category" className="block text-gray-700 font-bold mb-2 dark:text-gray-200">หมวดหมู่ <span className="text-red-500">*</span></label>
+            <select id="topic-category" name="category" required className="w-full bg-gray-50 border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-red-500 dark:bg-black dark:border-neutral-700 dark:text-white cursor-pointer">
               <option value="Hardware">Hardware (อุปกรณ์คอมพิวเตอร์)</option>
               <option value="Software">Software (โปรแกรม & OS)</option>
               <option value="Network">Network (เครือข่าย & Internet)</option>
@@ -95,15 +112,15 @@ export default function CreateTopicPage() {
           </div>
 
           <div>
-            <label className="block text-gray-700 font-bold mb-2 dark:text-gray-200">รายละเอียด</label>
-            <div className="border border-gray-300 rounded-lg overflow-hidden dark:border-neutral-700">
+            <label id="topic-content-label" className="block text-gray-700 font-bold mb-2 dark:text-gray-200">รายละเอียด <span className="text-red-500">*</span></label>
+            <div role="group" aria-labelledby="topic-content-label" className="border border-gray-300 rounded-lg overflow-hidden dark:border-neutral-700">
                <Editor /> 
             </div>
           </div>
 
           <div>
-            <label className="block text-gray-700 font-bold mb-2 dark:text-gray-200">รูปภาพประกอบ (ถ้ามี)</label>
-            <input name="image" type="file" accept="image/*" className="w-full bg-gray-50 border border-gray-300 rounded-lg p-2 text-sm file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-red-50 file:text-red-700 hover:file:bg-red-100 dark:bg-black dark:border-neutral-700 dark:text-gray-300 dark:file:bg-red-900/30 dark:file:text-red-400 cursor-pointer" />
+            <label htmlFor="topic-image" className="block text-gray-700 font-bold mb-2 dark:text-gray-200">รูปภาพประกอบ (ถ้ามี)</label>
+            <input id="topic-image" name="image" type="file" accept="image/*" className="w-full bg-gray-50 border border-gray-300 rounded-lg p-2 text-sm file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-red-50 file:text-red-700 hover:file:bg-red-100 dark:bg-black dark:border-neutral-700 dark:text-gray-300 dark:file:bg-red-900/30 dark:file:text-red-400 cursor-pointer" />
           </div>
 
           {/* ✅ ส่วนเพิ่มโพล (Poll Toggle) */}
@@ -123,8 +140,9 @@ export default function CreateTopicPage() {
              {hasPoll && (
                  <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 dark:bg-neutral-800 dark:border-neutral-700 animate-in fade-in slide-in-from-top-2">
                     <div className="mb-4">
-                        <label className="block text-sm font-bold text-gray-700 mb-1 dark:text-gray-300">คำถามโพล</label>
+                        <label htmlFor="poll-question" className="block text-sm font-bold text-gray-700 mb-1 dark:text-gray-300">คำถามโพล</label>
                         <input 
+                            id="poll-question"
                             type="text" 
                             value={pollQuestion}
                             onChange={(e) => setPollQuestion(e.target.value)}
@@ -137,7 +155,8 @@ export default function CreateTopicPage() {
                         <label className="block text-sm font-bold text-gray-700 dark:text-gray-300">ตัวเลือกคำตอบ</label>
                         {pollOptions.map((opt, idx) => (
                             <div key={idx} className="flex gap-2">
-                                <input 
+                                <input
+                                    aria-label={`ตัวเลือกโพลที่ ${idx + 1}`}
                                     type="text" 
                                     value={opt}
                                     onChange={(e) => handleOptionChange(idx, e.target.value)}
@@ -145,13 +164,13 @@ export default function CreateTopicPage() {
                                     className="flex-1 bg-white border border-gray-300 rounded p-2 text-sm dark:bg-black dark:border-neutral-600 dark:text-white"
                                 />
                                 {pollOptions.length > 2 && (
-                                    <button type="button" onClick={() => removeOption(idx)} className="text-red-500 hover:text-red-700 px-2">✕</button>
+                                    <button type="button" aria-label={`ลบตัวเลือกโพลที่ ${idx + 1}`} onClick={() => removeOption(idx)} className="text-red-500 hover:text-red-700 px-2">✕</button>
                                 )}
                             </div>
                         ))}
                     </div>
 
-                    {pollOptions.length < 10 && (
+                    {pollOptions.length < 8 && (
                         <button type="button" onClick={addOption} className="mt-3 text-sm text-red-600 hover:text-red-700 font-bold flex items-center gap-1">
                             + เพิ่มตัวเลือก
                         </button>
@@ -160,8 +179,8 @@ export default function CreateTopicPage() {
              )}
           </div>
 
-          <button type="submit" className="bg-red-600 hover:bg-red-700 text-white font-bold py-4 rounded-lg shadow-md transition-all mt-2 transform hover:scale-[1.01] active:scale-95 dark:bg-red-700 dark:hover:bg-red-600">
-              โพสต์กระทู้ทันที 🚀
+          <button type="submit" disabled={isSubmitting} className="bg-red-600 hover:bg-red-700 text-white font-bold py-4 rounded-lg shadow-md transition-all mt-2 transform hover:scale-[1.01] active:scale-95 disabled:cursor-wait disabled:opacity-60 dark:bg-red-700 dark:hover:bg-red-600">
+              {isSubmitting ? 'กำลังโพสต์...' : 'โพสต์กระทู้ทันที 🚀'}
           </button>
         </form>
       </div>

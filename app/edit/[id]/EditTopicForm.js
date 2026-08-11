@@ -54,13 +54,13 @@ export default function EditTopicForm({ topic }) {
         <input type="hidden" name="topicId" value={topic.id} />
 
         <div>
-            <label className="block text-gray-700 font-bold mb-2 dark:text-gray-200">หัวข้อกระทู้ <span className="text-red-500">*</span></label>
-            <input name="title" type="text" required defaultValue={topic.title} className="w-full bg-gray-50 border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-yellow-500 dark:bg-black dark:border-neutral-700 dark:text-white" />
+            <label htmlFor="edit-topic-title" className="block text-gray-700 font-bold mb-2 dark:text-gray-200">หัวข้อกระทู้ <span className="text-red-500">*</span></label>
+            <input id="edit-topic-title" name="title" type="text" required minLength={5} maxLength={160} defaultValue={topic.title} className="w-full bg-gray-50 border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-yellow-500 dark:bg-black dark:border-neutral-700 dark:text-white" />
         </div>
 
         <div>
-            <label className="block text-gray-700 font-bold mb-2 dark:text-gray-200">หมวดหมู่ <span className="text-red-500">*</span></label>
-            <select name="category" defaultValue={topic.category} className="w-full bg-gray-50 border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-yellow-500 dark:bg-black dark:border-neutral-700 dark:text-white cursor-pointer">
+            <label htmlFor="edit-topic-category" className="block text-gray-700 font-bold mb-2 dark:text-gray-200">หมวดหมู่ <span className="text-red-500">*</span></label>
+            <select id="edit-topic-category" name="category" required defaultValue={topic.category} className="w-full bg-gray-50 border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-yellow-500 dark:bg-black dark:border-neutral-700 dark:text-white cursor-pointer">
                 <option value="Hardware">Hardware (อุปกรณ์คอมพิวเตอร์)</option>
                 <option value="Software">Software (โปรแกรม & OS)</option>
                 <option value="Network">Network (เครือข่าย & Internet)</option>
@@ -70,8 +70,8 @@ export default function EditTopicForm({ topic }) {
         </div>
 
         <div>
-            <label className="block text-gray-700 font-bold mb-2 dark:text-gray-200">รายละเอียด</label>
-            <div className="border border-gray-300 rounded-lg overflow-hidden dark:border-neutral-700">
+            <label id="edit-topic-content-label" className="block text-gray-700 font-bold mb-2 dark:text-gray-200">รายละเอียด <span className="text-red-500">*</span></label>
+            <div role="group" aria-labelledby="edit-topic-content-label" className="border border-gray-300 rounded-lg overflow-hidden dark:border-neutral-700">
                 <Editor defaultValue={topic.content} /> 
             </div>
             {/* ✅ Tip: บอกวิธีลบรูปใน Editor ให้ User รู้ */}
@@ -87,7 +87,7 @@ export default function EditTopicForm({ topic }) {
                 <div className="flex flex-col gap-3">
                     <div className="relative inline-block w-fit group">
                         <Image src={imagePreview} alt="ตัวอย่างรูปภาพกระทู้" width={320} height={192} unoptimized className="h-48 w-auto rounded-lg border border-gray-300 object-cover bg-white" />
-                        <button type="button" onClick={handleRemoveImage} className="absolute -top-2 -right-2 bg-red-600 text-white rounded-full p-1.5 shadow-md hover:bg-red-700 transition-transform hover:scale-110" title="ลบรูปนี้">
+                        <button type="button" onClick={handleRemoveImage} aria-label="ลบรูปปกกระทู้" className="absolute -top-2 -right-2 bg-red-600 text-white rounded-full p-1.5 shadow-md hover:bg-red-700 transition-transform hover:scale-110" title="ลบรูปนี้">
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
                         </button>
                     </div>

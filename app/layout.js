@@ -21,6 +21,9 @@ export default function RootLayout({ children }) {
   return (
     <html lang="th" suppressHydrationWarning>
       <body className="bg-gray-50 text-gray-900 dark:bg-black dark:text-gray-100 transition-colors duration-300 min-h-screen relative">
+        <a href="#main-content" className="fixed left-3 top-3 z-[100] -translate-y-24 rounded-lg bg-red-600 px-4 py-2 font-bold text-white shadow-lg transition-transform focus:translate-y-0">
+          ข้ามไปยังเนื้อหา
+        </a>
         
         <NextTopLoader 
           color="#dc2626"   
@@ -42,16 +45,16 @@ export default function RootLayout({ children }) {
               
               <Suspense fallback={null}><Sidebar /></Suspense>
 
-              <main className="flex-1 flex flex-col h-screen overflow-hidden">
+              <div className="flex-1 flex flex-col h-screen overflow-hidden">
                   
                   <Navbar />
                   
-                  <div className="flex-1 overflow-y-auto bg-gray-50 dark:bg-black p-0">
+                  <div id="main-content" tabIndex={-1} className="flex-1 overflow-y-auto bg-gray-50 dark:bg-black p-0 focus:outline-none">
                       {children}
                       <Footer />
                   </div>
 
-              </main>
+              </div>
            </div>
 
            <Suspense fallback={null}><BottomNav /></Suspense>
