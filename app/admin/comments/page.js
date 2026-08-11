@@ -1,21 +1,20 @@
 import React from 'react';
 import db from '../../../lib/db';
 import { redirect } from 'next/navigation';
-import { cookies } from 'next/headers';
 import { revalidatePath } from 'next/cache';
 import Link from 'next/link';
 import DeleteButton from '../DeleteButton';
+import { getCurrentUser, requireAdmin } from '../../../lib/auth';
+import { positiveInteger } from '../../../lib/validation';
+import { deleteCommentCascade } from '../../../lib/moderation';
 
 export default async function CommentsManagementPage({ searchParams }) {
-  const cookieStore = await cookies();
-  const session = cookieStore.get('user_session');
-  if (!session) redirect('/login');
-  
-  const currentUser = JSON.parse(session.value);
-  const [userCheck] = await db.query('SELECT role FROM users WHERE id = ?', [currentUser.id]);
-  if (userCheck[0]?.role !== 'admin' && userCheck[0]?.role !== 'super_admin') redirect('/');
+  const currentUser = await getCurrentUser();
+  if (!currentUser) redirect('/login');
+  if (!['admin', 'super_admin'].includes(currentUser.role)) redirect('/');
 
-  const q = searchParams?.q || '';
+  const params = await searchParams;
+  const q = String(params?.q || '').slice(0, 100);
   const querySQL = `
     SELECT c.*, u.username, u.avatar_url, t.title as topic_title
     FROM comments c
@@ -30,8 +29,9 @@ export default async function CommentsManagementPage({ searchParams }) {
 
   async function deleteComment(formData) {
     'use server';
-    const commentId = formData.get('commentId');
-    await db.query('DELETE FROM comments WHERE id = ?', [commentId]);
+    await requireAdmin();
+    const commentId = positiveInteger(formData.get('commentId'), 'comment id');
+    await deleteCommentCascade(commentId);
     revalidatePath('/admin/comments');
   }
 
@@ -57,7 +57,7 @@ export default async function CommentsManagementPage({ searchParams }) {
                     <div key={c.id} className="p-6 hover:bg-gray-50 dark:hover:bg-neutral-800/30 transition flex gap-4">
                         <div className="flex-shrink-0">
                             <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden">
-                                {c.avatar_url ? <img src={c.avatar_url} className="w-full h-full object-cover"/> : c.username.charAt(0)}
+                                {c.avatar_url ? <img src={c.avatar_url} alt="" className="w-full h-full object-cover"/> : c.username.charAt(0)}
                             </div>
                         </div>
                         <div className="flex-1">

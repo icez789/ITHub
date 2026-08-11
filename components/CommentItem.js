@@ -12,9 +12,6 @@ import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
 // SweetAlert2
 import Swal from 'sweetalert2';
-import withReactContent from 'sweetalert2-react-content';
-
-const MySwal = withReactContent(Swal);
 
 export default function CommentItem({ 
   comment, 
@@ -41,7 +38,7 @@ export default function CommentItem({
   );
 
   const handleMarkAsSolution = () => {
-    MySwal.fire({
+    Swal.fire({
         title: 'ยืนยันการเลือกคำตอบ?',
         text: "คุณต้องการเลือกความคิดเห็นนี้เป็นคำตอบที่ถูกต้องใช่หรือไม่?",
         icon: 'question', 
@@ -54,10 +51,10 @@ export default function CommentItem({
         color: document.documentElement.classList.contains('dark') ? '#ffffff' : '#000000', 
     }).then(async (result) => {
         if (result.isConfirmed) {
-            await markAsSolution(comment.id, comment.topic_id, currentUser.id);
+            await markAsSolution(comment.id, comment.topic_id);
             router.refresh();
             
-            MySwal.fire({
+            Swal.fire({
                 title: 'เรียบร้อย!',
                 text: 'เลือกคำตอบสำเร็จแล้ว (+20 XP)',
                 icon: 'success',

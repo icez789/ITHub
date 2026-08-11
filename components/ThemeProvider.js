@@ -15,10 +15,11 @@ export function ThemeProvider({ children }) {
     // โหลดค่าเดิมจาก LocalStorage
     const storedTheme = localStorage.getItem('theme');
     if (storedTheme) {
-      setTheme(storedTheme);
       if (storedTheme === 'dark') {
         document.documentElement.classList.add('dark');
       }
+      const frame = requestAnimationFrame(() => setTheme(storedTheme));
+      return () => cancelAnimationFrame(frame);
     }
   }, []);
 

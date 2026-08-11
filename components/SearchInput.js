@@ -9,15 +9,8 @@ export default function SearchInput() {
   const pathname = usePathname();
   
   const [text, setText] = useState(searchParams.get('search') || '');
-  const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
-    setIsMounted(true);
-  }, []);
-
-  useEffect(() => {
-    if (!isMounted) return;
-
     // ✨ Logic ใหม่: เช็คก่อนว่าค่าที่พิมพ์ กับ ค่าใน URL มันต่างกันจริงไหม?
     // ถ้าค่าเหมือนเดิม (เช่น เราแค่กด Sort แต่ไม่ได้พิมพ์ค้นหาใหม่) ก็ไม่ต้องทำอะไร
     const currentSearch = searchParams.get('search') || '';
@@ -50,7 +43,7 @@ export default function SearchInput() {
     }, 500);
 
     return () => clearTimeout(timer);
-  }, [text, router, searchParams, pathname, isMounted]);
+  }, [text, router, searchParams, pathname]);
 
   return (
     <div className="flex-1 max-w-xl relative hidden md:block">

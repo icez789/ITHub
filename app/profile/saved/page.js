@@ -3,24 +3,13 @@ import React from 'react';
 import Footer from '../../../components/Footer';
 import db from '../../../lib/db';
 import { redirect } from 'next/navigation';
-import { cookies } from 'next/headers';
+import { getCurrentUser } from '../../../lib/auth';
 import Link from 'next/link';
 import TopicCard from '../../../components/TopicCard';
 
 export default async function SavedTopicsPage() {
-  const cookieStore = await cookies();
-  const session = cookieStore.get('user_session');
-  
-  // 1. เช็ค Session
-  if (!session) redirect('/login');
-  
-  // 2. ป้องกัน Error กรณีคุกกี้พัง
-  let user;
-  try {
-    user = JSON.parse(session.value);
-  } catch (error) {
-    redirect('/login');
-  }
+  const user = await getCurrentUser();
+  if (!user) redirect('/login');
 
   // 3. ดึงข้อมูลกระทู้ที่ User นี้กด Bookmark ไว้
   // (ต้อง JOIN ตาราง topics กับ bookmarks เพื่อเอาข้อมูลกระทู้มาโชว์)

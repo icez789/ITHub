@@ -39,7 +39,7 @@ export default function NotificationBell({ count: initialCount, notifications: i
       setUnreadCount(0);
       
       // 2.2 สั่ง Database ให้เคลียร์ค่าจริงๆ (Server Action)
-      await markNotificationsAsRead(currentUserId);
+      await markNotificationsAsRead();
     }
   };
 

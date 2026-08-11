@@ -3,7 +3,6 @@ import db from '../../../lib/db';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
-import { cookies } from 'next/headers';
 
 // Components
 import UserBadge from '../../../components/UserBadge';
@@ -18,7 +17,11 @@ import PollUI from '../../../components/PollUI'; // ✅ Import โพล
 // Libs & Styles
 import { pusherServer } from '../../../lib/pusher'; 
 import 'highlight.js/styles/atom-one-dark.css'; 
-import { increaseXp } from '../../../lib/actions'; // ✅ Import ฟังก์ชันแจก XP
+import { getCurrentUser, isAdmin as isAdminUser, requireUser } from '../../../lib/auth';
+import { plainText, sanitizeRichText } from '../../../lib/content';
+import { enforceRateLimit } from '../../../lib/rateLimit';
+import { optionalPositiveInteger, positiveInteger, requiredText } from '../../../lib/validation';
+import { deleteCommentCascade, deleteTopicCascade } from '../../../lib/moderation';
 
 export async function generateMetadata({ params }) {
   const { id } = await params;
@@ -34,12 +37,8 @@ export async function generateMetadata({ params }) {
 export default async function TopicDetailPage({ params }) {
   const { id } = await params;
   
-  const cookieStore = await cookies();
-  const session = cookieStore.get('user_session');
-  let currentUser = null;
-  if (session) currentUser = JSON.parse(session.value);
-
-  const isAdmin = currentUser?.role === 'admin';
+  const currentUser = await getCurrentUser();
+  const isAdmin = isAdminUser(currentUser);
 
   // --- 1. เตรียม Queries ทั้งหมด ---
   
@@ -93,6 +92,10 @@ export default async function TopicDetailPage({ params }) {
   const topic = topics[0];
 
   if (!topic) return <div className="p-10 text-center dark:text-white">ไม่พบกระทู้นี้...</div>;
+  topic.content = sanitizeRichText(topic.content);
+  allComments.forEach((comment) => {
+    comment.content = sanitizeRichText(comment.content);
+  });
 
   // --- 3. จัดการข้อมูล Poll (ถ้ามี) ---
   const poll = polls[0] || null;
@@ -134,64 +137,94 @@ export default async function TopicDetailPage({ params }) {
 
   // --- Server Actions ---
 
-  async function deleteTopic() { 'use server'; await db.query('DELETE FROM topics WHERE id = ?', [id]); redirect('/?notify=delete_success'); }
+  async function deleteTopic() {
+    'use server';
+    const actor = await requireUser();
+    const topicId = positiveInteger(id, 'topic id');
+    const [freshTopics] = await db.query('SELECT user_id FROM topics WHERE id = ?', [topicId]);
+    if (!freshTopics[0] || (freshTopics[0].user_id !== actor.id && !isAdminUser(actor))) throw new Error('Forbidden');
+
+    await deleteTopicCascade(topicId);
+    redirect('/?notify=delete_success');
+  }
   
   async function addComment(formData) { 
     'use server'; 
-    const content = formData.get('content'); 
-    const parentId = formData.get('parentId') || null;
-    
-    if (currentUser) { 
-      // 1. บันทึกคอมเมนต์
-      await db.query('INSERT INTO comments (topic_id, content, user_id, parent_id) VALUES (?, ?, ?, ?)', [id, content, currentUser.id, parentId]); 
-      
-      // 2. แจก XP +2
-      await increaseXp(currentUser.id, 2);
+    const actor = await requireUser();
+    enforceRateLimit(`comment:${actor.id}`, { limit: 12, windowMs: 60 * 1000 });
+    const topicId = positiveInteger(id, 'topic id');
+    const parentId = optionalPositiveInteger(formData.get('parentId'), 'parent comment id');
+    const content = sanitizeRichText(formData.get('content'));
+    if (plainText(content).length < 1 || content.length > 20_000) throw new Error('Invalid comment');
 
-      // 3. แจ้งเตือนเจ้าของกระทู้ (ถ้าไม่ได้ตอบตัวเอง)
-      if (!parentId && topic.user_id !== currentUser.id) {
-          await db.query('INSERT INTO notifications (user_id, actor_id, topic_id, type, message) VALUES (?, ?, ?, ?, ?)', [topic.user_id, currentUser.id, id, 'comment', `${currentUser.username} แสดงความคิดเห็นในกระทู้ของคุณ`]);
-          
-          try {
-            await pusherServer.trigger(
-              `user-${topic.user_id}`,
-              'new-notification', 
-              {
-                message: `${currentUser.username} แสดงความคิดเห็นในกระทู้ของคุณ`,
-                link: `/topic/${id}`,
-                created_at: new Date()
-              }
-            );
-          } catch (error) {
-            console.error("Pusher Error:", error);
-          }
+    const [freshTopics] = await db.query('SELECT user_id FROM topics WHERE id = ?', [topicId]);
+    const freshTopic = freshTopics[0];
+    if (!freshTopic) throw new Error('Topic not found');
+    if (parentId) {
+      const [parents] = await db.query('SELECT id FROM comments WHERE id = ? AND topic_id = ?', [parentId, topicId]);
+      if (!parents[0]) throw new Error('Invalid parent comment');
+    }
+
+    const connection = await db.getConnection();
+    try {
+      await connection.beginTransaction();
+      await connection.query(
+        'INSERT INTO comments (topic_id, content, user_id, parent_id) VALUES (?, ?, ?, ?)',
+        [topicId, content, actor.id, parentId],
+      );
+      await connection.query('UPDATE users SET xp = COALESCE(xp, 0) + 2 WHERE id = ?', [actor.id]);
+      if (!parentId && freshTopic.user_id !== actor.id) {
+        await connection.query(
+          'INSERT INTO notifications (user_id, actor_id, topic_id, type, message) VALUES (?, ?, ?, ?, ?)',
+          [freshTopic.user_id, actor.id, topicId, 'comment', `${actor.username} แสดงความคิดเห็นในกระทู้ของคุณ`],
+        );
       }
-      revalidatePath(`/topic/${id}`); 
-    } 
+      await connection.commit();
+    } catch (error) {
+      await connection.rollback();
+      throw error;
+    } finally {
+      connection.release();
+    }
+
+    if (!parentId && freshTopic.user_id !== actor.id) {
+      try {
+        await pusherServer.trigger(`user-${freshTopic.user_id}`, 'new-notification', {
+          message: `${actor.username} แสดงความคิดเห็นในกระทู้ของคุณ`,
+          link: `/topic/${topicId}`,
+          created_at: new Date().toISOString(),
+        });
+      } catch (error) {
+        console.error('Pusher Error:', error);
+      }
+    }
+    revalidatePath(`/topic/${topicId}`);
   }
 
   async function toggleLike() { 
     'use server'; 
-    if (!currentUser) return; 
-    
-    const [existing] = await db.query('SELECT * FROM likes WHERE user_id = ? AND topic_id = ?', [currentUser.id, id]); 
+    const actor = await requireUser();
+    const topicId = positiveInteger(id, 'topic id');
+    const [freshTopics] = await db.query('SELECT user_id FROM topics WHERE id = ?', [topicId]);
+    if (!freshTopics[0]) throw new Error('Topic not found');
+    const [existing] = await db.query('SELECT id FROM likes WHERE user_id = ? AND topic_id = ?', [actor.id, topicId]);
     
     if (existing.length > 0) { 
-      await db.query('DELETE FROM likes WHERE user_id = ? AND topic_id = ?', [currentUser.id, id]); 
+      await db.query('DELETE FROM likes WHERE user_id = ? AND topic_id = ?', [actor.id, topicId]);
     } else { 
-      await db.query('INSERT INTO likes (user_id, topic_id) VALUES (?, ?)', [currentUser.id, id]); 
+      await db.query('INSERT INTO likes (user_id, topic_id) VALUES (?, ?)', [actor.id, topicId]);
       
-      if (topic.user_id !== currentUser.id) { 
-        const message = `${currentUser.username} ถูกใจกระทู้ของคุณ`;
+      if (freshTopics[0].user_id !== actor.id) {
+        const message = `${actor.username} ถูกใจกระทู้ของคุณ`;
         
         // 1. เซฟลง Database
-        await db.query('INSERT INTO notifications (user_id, actor_id, topic_id, type, message) VALUES (?, ?, ?, ?, ?)', [topic.user_id, currentUser.id, id, 'like', message]); 
+        await db.query('INSERT INTO notifications (user_id, actor_id, topic_id, type, message) VALUES (?, ?, ?, ?, ?)', [freshTopics[0].user_id, actor.id, topicId, 'like', message]);
         
         // 2. 🚀 ยิง Pusher แจ้งเตือนแบบ Real-time ทันที
         try {
-          await pusherServer.trigger(`user-${topic.user_id}`, 'new-notification', {
+          await pusherServer.trigger(`user-${freshTopics[0].user_id}`, 'new-notification', {
             message: message,
-            link: `/topic/${id}`,
+            link: `/topic/${topicId}`,
             created_at: new Date().toISOString()
           });
         } catch (error) {
@@ -199,23 +232,47 @@ export default async function TopicDetailPage({ params }) {
         }
       } 
     } 
-    revalidatePath(`/topic/${id}`); 
+    revalidatePath(`/topic/${topicId}`);
   }
-  async function toggleBookmark() { 'use server'; if (!currentUser) return; const [existing] = await db.query('SELECT * FROM bookmarks WHERE user_id = ? AND topic_id = ?', [currentUser.id, id]); if (existing.length > 0) { await db.query('DELETE FROM bookmarks WHERE user_id = ? AND topic_id = ?', [currentUser.id, id]); } else { await db.query('INSERT INTO bookmarks (user_id, topic_id) VALUES (?, ?)', [currentUser.id, id]); } revalidatePath(`/topic/${id}`); }
-  async function deleteComment(formData) { 'use server'; const commentId = formData.get('commentId'); await db.query('DELETE FROM comments WHERE id = ?', [commentId]); revalidatePath(`/topic/${id}`); }
+  async function toggleBookmark() {
+    'use server';
+    const actor = await requireUser();
+    const topicId = positiveInteger(id, 'topic id');
+    const [existing] = await db.query('SELECT id FROM bookmarks WHERE user_id = ? AND topic_id = ?', [actor.id, topicId]);
+    if (existing.length > 0) {
+      await db.query('DELETE FROM bookmarks WHERE user_id = ? AND topic_id = ?', [actor.id, topicId]);
+    } else {
+      await db.query('INSERT INTO bookmarks (user_id, topic_id) VALUES (?, ?)', [actor.id, topicId]);
+    }
+    revalidatePath(`/topic/${topicId}`);
+  }
+  async function deleteComment(formData) {
+    'use server';
+    const actor = await requireUser();
+    const commentId = positiveInteger(formData.get('commentId'), 'comment id');
+    const topicId = positiveInteger(id, 'topic id');
+    const [comments] = await db.query('SELECT user_id FROM comments WHERE id = ? AND topic_id = ?', [commentId, topicId]);
+    if (!comments[0] || (comments[0].user_id !== actor.id && !isAdminUser(actor))) throw new Error('Forbidden');
+    await deleteCommentCascade(commentId);
+    revalidatePath(`/topic/${topicId}`);
+  }
   async function submitReport(formData) { 
     'use server'; 
-    if (!currentUser) return; 
-    
-    const targetId = formData.get('targetId'); 
+    const actor = await requireUser();
+    enforceRateLimit(`report:${actor.id}`, { limit: 5, windowMs: 60 * 60 * 1000 });
+    const targetId = positiveInteger(formData.get('targetId'), 'report target');
     const type = formData.get('type'); 
-    const reason = formData.get('reason'); 
+    const reason = requiredText(formData.get('reason'), 'reason', { min: 3, max: 500 });
     
     if (type === 'topic') { 
-      await db.query('INSERT INTO reports (reporter_id, topic_id, reason) VALUES (?, ?, ?)', [currentUser.id, targetId, reason]); 
+      const [targets] = await db.query('SELECT id FROM topics WHERE id = ?', [targetId]);
+      if (!targets[0]) throw new Error('Invalid report target');
+      await db.query('INSERT INTO reports (reporter_id, topic_id, reason) VALUES (?, ?, ?)', [actor.id, targetId, reason]);
     } else if (type === 'comment') { 
-      await db.query('INSERT INTO reports (reporter_id, comment_id, reason) VALUES (?, ?, ?)', [currentUser.id, targetId, reason]); 
-    }
+      const [targets] = await db.query('SELECT id FROM comments WHERE id = ?', [targetId]);
+      if (!targets[0]) throw new Error('Invalid report target');
+      await db.query('INSERT INTO reports (reporter_id, comment_id, reason) VALUES (?, ?, ?)', [actor.id, targetId, reason]);
+    } else throw new Error('Invalid report type');
 
     // 🚀 ยิง Pusher แจ้งเตือน Admin/Super Admin ทุกคนแบบ Real-time
     try {

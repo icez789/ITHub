@@ -6,9 +6,12 @@ import Footer from '../components/Footer';
 
 export default async function HomePage({ searchParams }) {
   const params = await searchParams;
-  const search = params?.search || '';
-  const category = params?.category || '';
-  const page = parseInt(params?.page || '1'); 
+  const search = String(params?.search || '').trim().slice(0, 100);
+  const requestedCategory = String(params?.category || '');
+  const allowedCategories = new Set(['Hardware', 'Software', 'Network', 'AI & Data', 'General']);
+  const category = allowedCategories.has(requestedCategory) ? requestedCategory : '';
+  const parsedPage = Number.parseInt(params?.page || '1', 10);
+  const page = Number.isInteger(parsedPage) && parsedPage > 0 ? Math.min(parsedPage, 10_000) : 1;
   const pageSize = 9; 
   const offset = (page - 1) * pageSize;
 
@@ -32,7 +35,8 @@ export default async function HomePage({ searchParams }) {
     return `/?${q.toString()}`;
   };
 
-  const sort = params?.sort || 'latest';
+  const requestedSort = params?.sort || 'latest';
+  const sort = ['latest', 'popular', 'likes'].includes(requestedSort) ? requestedSort : 'latest';
 
   // --- SQL Logic ---
   const conditions = [];

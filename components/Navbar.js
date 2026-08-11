@@ -1,58 +1,28 @@
 import React from 'react';
 import Link from 'next/link';
-import { cookies } from 'next/headers';
 import db from '../lib/db'; 
+import { getCurrentUser } from '../lib/auth';
 import ThemeToggle from './ThemeToggle'; 
 import NotificationBell from './NotificationBell';
 import SearchInput from './SearchInput';
 import LogoutButton from './LogoutButton'; // ✅ นำเข้าปุ่มใหม่ที่เราเพิ่งสร้าง
 
 export default async function Navbar() {
-  const cookieStore = await cookies();
-  const session = cookieStore.get('user_session');
-  let user = null;
+  let user = await getCurrentUser();
   let notifications = [];
   let unreadCount = 0;
 
   // ✅ Logic ดึงข้อมูลที่ปลอดภัยขึ้น (เว็บไม่ล่มแม้ DB หลุด)
-  if (session) {
+  if (user) {
     try {
-      // 1. ลองแปลง Session
-      let sessionData;
-      try {
-        sessionData = JSON.parse(session.value);
-      } catch (e) {
-        throw new Error("Invalid Session Data");
-      }
-
-      // 2. เช็ค Database Connection
-      if (!db) throw new Error("Database connection fail");
-
-      // 3. ดึง User (ดึงเฉพาะที่จำเป็น)
-      const [users] = await db.query(
-        'SELECT id, username, role, avatar_url FROM users WHERE id = ?', 
-        [sessionData.id]
-      );
-      
-      if (users && users.length > 0) {
-        user = users[0];
-        
-        // 4. ดึง Notification (แยก try-catch เพื่อไม่ให้กระทบส่วนอื่น)
-        try {
-            const [notisResult, countResult] = await Promise.all([
-                db.query('SELECT * FROM notifications WHERE user_id = ? ORDER BY created_at DESC LIMIT 10', [user.id]),
-                db.query('SELECT COUNT(*) as count FROM notifications WHERE user_id = ? AND is_read = 0', [user.id])
-            ]);
-            notifications = notisResult[0] || [];
-            unreadCount = countResult[0][0]?.count || 0;
-        } catch (notiError) {
-            console.error("Navbar Noti Error:", notiError.message);
-            // ปล่อยผ่าน ได้แค่ไม่มีแจ้งเตือนขึ้น
-        }
-      }
+      const [notisResult, countResult] = await Promise.all([
+        db.query('SELECT * FROM notifications WHERE user_id = ? ORDER BY created_at DESC LIMIT 10', [user.id]),
+        db.query('SELECT COUNT(*) as count FROM notifications WHERE user_id = ? AND is_read = 0', [user.id]),
+      ]);
+      notifications = notisResult[0] || [];
+      unreadCount = countResult[0][0]?.count || 0;
     } catch (error) {
-      console.error("🔴 DEBUG ERROR:", error);
-      // user จะเป็น null อัตโนมัติ ทำให้ Navbar แสดงผลแบบคนไม่ได้ Login แทนที่จะ Error จอแดง
+      console.error('Navbar notification error:', error);
     }
   }
 

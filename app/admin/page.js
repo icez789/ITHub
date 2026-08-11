@@ -2,22 +2,17 @@
 import React from 'react';
 import db from '../../lib/db';
 import { redirect } from 'next/navigation';
-import { cookies } from 'next/headers';
 import { revalidatePath } from 'next/cache';
 import Link from 'next/link';
 import DeleteButton from './DeleteButton'; // 👈 นำเข้าปุ่มที่เราเพิ่งสร้าง
+import { getCurrentUser, requireAdmin } from '../../lib/auth';
+import { optionalPositiveInteger, positiveInteger } from '../../lib/validation';
+import { deleteCommentCascade, deleteTopicCascade } from '../../lib/moderation';
 
 export default async function AdminDashboard() {
-  const cookieStore = await cookies();
-  const session = cookieStore.get('user_session');
-  
-  if (!session) redirect('/login');
-  
-  const currentUser = JSON.parse(session.value);
-  
-  // 1. ตรวจสอบ Role
-  const [userCheck] = await db.query('SELECT role FROM users WHERE id = ?', [currentUser.id]);
-  const myRole = userCheck[0]?.role;
+  const currentUser = await getCurrentUser();
+  if (!currentUser) redirect('/login');
+  const myRole = currentUser.role;
 
   if (myRole !== 'admin' && myRole !== 'super_admin') {
     redirect('/'); 
@@ -68,51 +63,43 @@ export default async function AdminDashboard() {
   
   async function toggleBan(formData) {
     'use server';
-    if (!isSuperAdmin) {
-       const targetId = formData.get('userId');
-       const [target] = await db.query('SELECT role FROM users WHERE id = ?', [targetId]);
-       if (target[0].role === 'super_admin') return;
-    }
-
-    const userId = formData.get('userId');
-    const currentStatus = formData.get('currentStatus') === '1'; 
-    const newStatus = !currentStatus;
-    await db.query('UPDATE users SET is_banned = ? WHERE id = ?', [newStatus, userId]);
+    const actor = await requireAdmin();
+    const userId = positiveInteger(formData.get('userId'), 'user id');
+    const [targets] = await db.query('SELECT role, is_banned FROM users WHERE id = ?', [userId]);
+    const target = targets[0];
+    if (!target || target.role === 'super_admin' || actor.id === userId) throw new Error('Forbidden');
+    await db.query('UPDATE users SET is_banned = ? WHERE id = ?', [!target.is_banned, userId]);
     revalidatePath('/admin');
   }
 
   async function toggleAdmin(formData) {
     'use server';
-    if (!isSuperAdmin) {
-       const targetId = formData.get('userId');
-       const [target] = await db.query('SELECT role FROM users WHERE id = ?', [targetId]);
-       if (target[0].role === 'super_admin') return;
-    }
-
-    const userId = formData.get('userId');
-    const currentRole = formData.get('currentRole');
-    
-    if (currentRole === 'super_admin') return;
-
-    const newRole = currentRole === 'admin' ? 'user' : 'admin';
+    const actor = await requireAdmin();
+    if (actor.role !== 'super_admin') throw new Error('Forbidden');
+    const userId = positiveInteger(formData.get('userId'), 'user id');
+    const [targets] = await db.query('SELECT role FROM users WHERE id = ?', [userId]);
+    const target = targets[0];
+    if (!target || target.role === 'super_admin' || actor.id === userId) throw new Error('Forbidden');
+    const newRole = target.role === 'admin' ? 'user' : 'admin';
     await db.query('UPDATE users SET role = ? WHERE id = ?', [newRole, userId]);
     revalidatePath('/admin');
   }
 
   async function resolveReport(formData) {
     'use server';
-    const reportId = formData.get('reportId');
+    await requireAdmin();
+    const reportId = positiveInteger(formData.get('reportId'), 'report id');
     await db.query("UPDATE reports SET status = 'resolved' WHERE id = ?", [reportId]);
     revalidatePath('/admin');
   }
 
   async function deleteTopic(formData) {
     'use server';
-    const topicId = formData.get('topicId');
-    const reportId = formData.get('reportId');
+    await requireAdmin();
+    const topicId = positiveInteger(formData.get('topicId'), 'topic id');
+    const reportId = optionalPositiveInteger(formData.get('reportId'), 'report id');
 
-    await db.query('DELETE FROM topics WHERE id = ?', [topicId]);
-    await db.query('DELETE FROM comments WHERE topic_id = ?', [topicId]);
+    await deleteTopicCascade(topicId);
 
     if (reportId) {
         await db.query("UPDATE reports SET status = 'resolved' WHERE id = ?", [reportId]);
@@ -122,10 +109,11 @@ export default async function AdminDashboard() {
 
   async function deleteComment(formData) {
     'use server';
-    const commentId = formData.get('commentId');
-    const reportId = formData.get('reportId');
+    await requireAdmin();
+    const commentId = positiveInteger(formData.get('commentId'), 'comment id');
+    const reportId = optionalPositiveInteger(formData.get('reportId'), 'report id');
 
-    await db.query('DELETE FROM comments WHERE id = ?', [commentId]);
+    await deleteCommentCascade(commentId);
 
     if (reportId) {
         await db.query("UPDATE reports SET status = 'resolved' WHERE id = ?", [reportId]);
@@ -151,7 +139,7 @@ export default async function AdminDashboard() {
         <div className="flex flex-col md:flex-row justify-between items-end mb-10 border-b border-gray-200 dark:border-red-900/30 pb-6">
             <div>
                 <h1 className="text-4xl font-black tracking-tight flex items-center gap-3 text-gray-900 dark:text-white">
-                    <span className="text-red-600 dark:text-red-500 text-5xl">///</span> ADMIN CONSOLE
+                    <span className="text-red-600 dark:text-red-500 text-5xl">{'///'}</span> ADMIN CONSOLE
                 </h1>
                 <p className="text-gray-500 dark:text-gray-400 mt-2 text-sm font-medium">
                     System Control & Monitoring Center
@@ -373,7 +361,7 @@ export default async function AdminDashboard() {
                                         <div className="flex items-center gap-3">
                                             <div className="relative">
                                                 <div className="w-10 h-10 rounded-full bg-gray-200 dark:bg-neutral-700 flex items-center justify-center text-sm font-bold text-gray-700 dark:text-white overflow-hidden ring-2 ring-transparent group-hover:ring-red-500 transition">
-                                                    {u.avatar_url ? <img src={u.avatar_url} className="w-full h-full object-cover"/> : u.username.charAt(0).toUpperCase()}
+                                                    {u.avatar_url ? <img src={u.avatar_url} alt={`${u.username} avatar`} className="w-full h-full object-cover"/> : u.username.charAt(0).toUpperCase()}
                                                 </div>
                                                 <div className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-white dark:border-neutral-900 ${u.is_banned ? 'bg-red-500' : 'bg-green-500'}`}></div>
                                             </div>

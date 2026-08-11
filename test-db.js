@@ -1,4 +1,4 @@
-require('dotenv').config(); // ต้องลง npm install dotenv ก่อนนะ
+process.loadEnvFile?.('.env');
 const mysql = require('mysql2/promise');
 
 async function testConnection() {

@@ -33,7 +33,7 @@ export default function ProfileAvatar({ user, updateAvatar, myTopicsCount }) {
         <div className="mb-6 text-gray-600 italic text-sm p-3 rounded-lg border border-gray-100 
                         bg-gray-50 dark:bg-neutral-800 dark:border-neutral-700 dark:text-gray-300 
                         break-words whitespace-pre-wrap">
-          "{user.bio}"
+          <span aria-hidden="true">“</span>{user.bio}<span aria-hidden="true">”</span>
         </div>
       )}
 

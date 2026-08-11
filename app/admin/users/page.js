@@ -1,24 +1,21 @@
 import React from 'react';
 import db from '../../../lib/db'; // ถอยกลับ 3 ชั้นเพื่อหา lib
 import { redirect } from 'next/navigation';
-import { cookies } from 'next/headers';
 import { revalidatePath } from 'next/cache';
 import Link from 'next/link';
+import { getCurrentUser, requireAdmin } from '../../../lib/auth';
+import { positiveInteger } from '../../../lib/validation';
 
 export default async function UsersManagementPage({ searchParams }) {
-  const cookieStore = await cookies();
-  const session = cookieStore.get('user_session');
-  if (!session) redirect('/login');
-  
-  // 1. Check Admin
-  const currentUser = JSON.parse(session.value);
-  const [userCheck] = await db.query('SELECT role FROM users WHERE id = ?', [currentUser.id]);
-  if (userCheck[0]?.role !== 'admin' && userCheck[0]?.role !== 'super_admin') redirect('/');
+  const currentUser = await getCurrentUser();
+  if (!currentUser) redirect('/login');
+  if (!['admin', 'super_admin'].includes(currentUser.role)) redirect('/');
 
-  const isSuperAdmin = userCheck[0]?.role === 'super_admin';
+  const isSuperAdmin = currentUser.role === 'super_admin';
   
   // 2. Search Logic
-  const q = searchParams?.q || '';
+  const params = await searchParams;
+  const q = String(params?.q || '').slice(0, 100);
   const querySQL = `
     SELECT * FROM users 
     WHERE username LIKE ? OR email LIKE ?
@@ -29,24 +26,25 @@ export default async function UsersManagementPage({ searchParams }) {
   // --- Actions ---
   async function toggleBan(formData) {
     'use server';
-    const userId = formData.get('userId');
-    const [target] = await db.query('SELECT role FROM users WHERE id = ?', [userId]);
+    const actor = await requireAdmin();
+    const userId = positiveInteger(formData.get('userId'), 'user id');
+    const [target] = await db.query('SELECT role, is_banned FROM users WHERE id = ?', [userId]);
     // กันไม่ให้แบน Super Admin
-    if (target[0].role === 'super_admin') return;
+    if (!target[0] || target[0].role === 'super_admin' || actor.id === userId) throw new Error('Forbidden');
 
-    const currentStatus = formData.get('currentStatus') === '1';
-    await db.query('UPDATE users SET is_banned = ? WHERE id = ?', [!currentStatus, userId]);
+    await db.query('UPDATE users SET is_banned = ? WHERE id = ?', [!target[0].is_banned, userId]);
     revalidatePath('/admin/users');
   }
 
   async function toggleAdmin(formData) {
     'use server';
-    const userId = formData.get('userId');
+    const actor = await requireAdmin();
+    if (actor.role !== 'super_admin') throw new Error('Forbidden');
+    const userId = positiveInteger(formData.get('userId'), 'user id');
     const [target] = await db.query('SELECT role FROM users WHERE id = ?', [userId]);
-    if (target[0].role === 'super_admin') return;
+    if (!target[0] || target[0].role === 'super_admin' || actor.id === userId) throw new Error('Forbidden');
 
-    const currentRole = formData.get('currentRole');
-    const newRole = currentRole === 'admin' ? 'user' : 'admin';
+    const newRole = target[0].role === 'admin' ? 'user' : 'admin';
     await db.query('UPDATE users SET role = ? WHERE id = ?', [newRole, userId]);
     revalidatePath('/admin/users');
   }
@@ -97,7 +95,7 @@ export default async function UsersManagementPage({ searchParams }) {
                                 <tr key={u.id} className="hover:bg-gray-50 dark:hover:bg-neutral-800/50 transition">
                                     <td className="px-6 py-4 flex items-center gap-3">
                                         <div className="w-10 h-10 rounded-full bg-gray-200 dark:bg-neutral-800 flex items-center justify-center font-bold text-gray-600 dark:text-gray-300 overflow-hidden">
-                                            {u.avatar_url ? <img src={u.avatar_url} className="w-full h-full object-cover"/> : u.username.charAt(0).toUpperCase()}
+                                            {u.avatar_url ? <img src={u.avatar_url} alt="" className="w-full h-full object-cover"/> : u.username.charAt(0).toUpperCase()}
                                         </div>
                                         <div>
                                             <div className="font-bold text-gray-900 dark:text-white">{u.username}</div>
@@ -122,13 +120,14 @@ export default async function UsersManagementPage({ searchParams }) {
                                     <td className="px-6 py-4 text-center">
                                         {showActions ? (
                                             <div className="flex justify-center gap-2">
-                                                <form action={toggleAdmin}>
-                                                    <input type="hidden" name="userId" value={u.id} />
-                                                    <input type="hidden" name="currentRole" value={u.role} />
-                                                    <button className="px-3 py-1.5 rounded text-xs border border-gray-300 dark:border-neutral-700 hover:bg-gray-100 dark:hover:bg-neutral-800 transition">
-                                                        {u.role === 'admin' ? '⬇️ Demote' : '⬆️ Promote'}
-                                                    </button>
-                                                </form>
+                                                {isSuperAdmin && (
+                                                    <form action={toggleAdmin}>
+                                                        <input type="hidden" name="userId" value={u.id} />
+                                                        <button className="px-3 py-1.5 rounded text-xs border border-gray-300 dark:border-neutral-700 hover:bg-gray-100 dark:hover:bg-neutral-800 transition">
+                                                            {u.role === 'admin' ? '⬇️ Demote' : '⬆️ Promote'}
+                                                        </button>
+                                                    </form>
+                                                )}
                                                 <form action={toggleBan}>
                                                     <input type="hidden" name="userId" value={u.id} />
                                                     <input type="hidden" name="currentStatus" value={u.is_banned ? '1' : '0'} />

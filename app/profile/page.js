@@ -1,26 +1,16 @@
 import React from 'react';
 import db from '../../lib/db';
 import { redirect } from 'next/navigation';
-import { cookies } from 'next/headers';
 import Link from 'next/link';
-import fs from 'node:fs/promises';
-import path from 'node:path';
 import ProfileAvatar from '../../components/ProfileAvatar'; 
 import Footer from '../../components/Footer';
 import UserBadge from '../../components/UserBadge'; // ✅ 1. เพิ่ม UserBadge
+import { getCurrentUser } from '../../lib/auth';
+import { updateAvatar } from '../../lib/actions';
 
 export default async function ProfilePage() {
-  const cookieStore = await cookies();
-  const session = cookieStore.get('user_session');
-  
-  if (!session) redirect('/login');
-
-  let userSession;
-  try {
-    userSession = JSON.parse(session.value);
-  } catch (error) {
-    redirect('/login');
-  }
+  const userSession = await getCurrentUser();
+  if (!userSession) redirect('/login');
 
   // ดึงข้อมูล User (รวม XP)
   const [users] = await db.query(
@@ -61,29 +51,6 @@ export default async function ProfilePage() {
 
   // คำนวณ % หลอด (กันเกิน 100%)
   const xpProgress = Math.min(100, Math.max(0, ((fullUserData.xp - currentRankXP) / (nextRankXP - currentRankXP)) * 100));
-
-  // Server Action อัปโหลดรูป (ของเดิม)
-  async function updateAvatar(formData) {
-    'use server';
-    const imageFile = formData.get('avatar');
-
-    if (imageFile && imageFile.size > 0) {
-      const fileName = `user_${userSession.id}_${Date.now()}_${imageFile.name.replaceAll(" ", "_")}`;
-      const arrayBuffer = await imageFile.arrayBuffer();
-      const buffer = Buffer.from(arrayBuffer);
-
-      const uploadDir = path.join(process.cwd(), 'public/uploads/avatars');
-      try { await fs.mkdir(uploadDir, { recursive: true }); } catch (e) {}
-
-      const savePath = path.join(uploadDir, fileName);
-      await fs.writeFile(savePath, buffer);
-
-      const avatarUrl = `/uploads/avatars/${fileName}`;
-      await db.query('UPDATE users SET avatar_url = ? WHERE id = ?', [avatarUrl, userSession.id]);
-      
-      redirect('/profile?notify=edit_success');
-    }
-  }
 
   return (
     <div className="container mx-auto p-6 max-w-5xl">

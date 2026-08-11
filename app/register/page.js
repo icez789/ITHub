@@ -4,8 +4,10 @@ import db from '../../lib/db';
 import { redirect } from 'next/navigation';
 import bcrypt from 'bcryptjs';
 import Link from 'next/link';
-import { cookies } from 'next/headers';
 import RippleButton from '../../components/RippleButton';
+import { getCurrentUser } from '../../lib/auth';
+import { enforceRateLimit } from '../../lib/rateLimit';
+import { requiredText, validEmail } from '../../lib/validation';
 
 export default async function RegisterPage({ searchParams }) {
   
@@ -16,10 +18,20 @@ export default async function RegisterPage({ searchParams }) {
   async function registerUser(formData) {
     'use server';
     
-    const username = formData.get('username');
-    const email = formData.get('email');
-    const password = formData.get('password');
-    const confirmPassword = formData.get('confirmPassword');
+    let username;
+    let email;
+    let password;
+    let confirmPassword;
+
+    try {
+      username = requiredText(formData.get('username'), 'username', { min: 3, max: 40 });
+      email = validEmail(formData.get('email'));
+      password = requiredText(formData.get('password'), 'password', { min: 8, max: 128 });
+      confirmPassword = String(formData.get('confirmPassword') || '');
+      enforceRateLimit(`register:${email}`, { limit: 4, windowMs: 60 * 60 * 1000 });
+    } catch {
+      redirect('/register?notify=error');
+    }
 
     // 1. เช็คว่ารหัสผ่านตรงกันไหม
     if (password !== confirmPassword) {
@@ -49,9 +61,7 @@ export default async function RegisterPage({ searchParams }) {
   }
 
   // --- ถ้าล็อกอินอยู่แล้ว ไม่ควรมาหน้านี้ ให้ดีดกลับหน้าแรก ---
-  const cookieStore = await cookies();
-  const session = cookieStore.get('user_session');
-  if (session) {
+  if (await getCurrentUser()) {
       redirect('/'); 
   }
 

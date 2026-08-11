@@ -1,22 +1,21 @@
 import React from 'react';
 import db from '../../../lib/db';
 import { redirect } from 'next/navigation';
-import { cookies } from 'next/headers';
 import { revalidatePath } from 'next/cache';
 import Link from 'next/link';
 import DeleteButton from '../DeleteButton'; // ดึงปุ่มจากโฟลเดอร์ admin แม่
+import { getCurrentUser, requireAdmin } from '../../../lib/auth';
+import { positiveInteger } from '../../../lib/validation';
+import { deleteTopicCascade } from '../../../lib/moderation';
 
 export default async function TopicsManagementPage({ searchParams }) {
-  const cookieStore = await cookies();
-  const session = cookieStore.get('user_session');
-  if (!session) redirect('/login');
-  
-  const currentUser = JSON.parse(session.value);
-  const [userCheck] = await db.query('SELECT role FROM users WHERE id = ?', [currentUser.id]);
-  if (userCheck[0]?.role !== 'admin' && userCheck[0]?.role !== 'super_admin') redirect('/');
+  const currentUser = await getCurrentUser();
+  if (!currentUser) redirect('/login');
+  if (!['admin', 'super_admin'].includes(currentUser.role)) redirect('/');
 
   // Search Logic
-  const q = searchParams?.q || '';
+  const params = await searchParams;
+  const q = String(params?.q || '').slice(0, 100);
   const querySQL = `
     SELECT t.*, u.username, u.avatar_url, 
     (SELECT COUNT(*) FROM comments WHERE topic_id = t.id) as comment_count
@@ -30,9 +29,9 @@ export default async function TopicsManagementPage({ searchParams }) {
   // Action ลบกระทู้
   async function deleteTopic(formData) {
     'use server';
-    const topicId = formData.get('topicId');
-    await db.query('DELETE FROM topics WHERE id = ?', [topicId]);
-    await db.query('DELETE FROM comments WHERE topic_id = ?', [topicId]);
+    await requireAdmin();
+    const topicId = positiveInteger(formData.get('topicId'), 'topic id');
+    await deleteTopicCascade(topicId);
     revalidatePath('/admin/topics');
   }
 
@@ -64,7 +63,7 @@ export default async function TopicsManagementPage({ searchParams }) {
                         <div className="flex items-center gap-4 text-xs text-gray-400 font-mono">
                             <span className="flex items-center gap-1 text-gray-600 dark:text-gray-300">
                                 <span className="w-5 h-5 rounded-full bg-gray-200 flex items-center justify-center text-[10px] overflow-hidden">
-                                    {t.avatar_url ? <img src={t.avatar_url} className="w-full h-full object-cover"/> : t.username.charAt(0)}
+                                    {t.avatar_url ? <img src={t.avatar_url} alt="" className="w-full h-full object-cover"/> : t.username.charAt(0)}
                                 </span>
                                 {t.username}
                             </span>

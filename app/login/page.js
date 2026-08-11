@@ -4,8 +4,10 @@ import db from '../../lib/db';
 import { redirect } from 'next/navigation';
 import bcrypt from 'bcryptjs';
 import Link from 'next/link';
-import { cookies } from 'next/headers';
 import RippleButton from '../../components/RippleButton';
+import { getCurrentUser, setUserSession } from '../../lib/auth';
+import { enforceRateLimit } from '../../lib/rateLimit';
+import { validEmail } from '../../lib/validation';
 
 export default async function LoginPage({ searchParams }) {
   
@@ -16,8 +18,15 @@ export default async function LoginPage({ searchParams }) {
   async function login(formData) {
     'use server';
     
-    const email = formData.get('email');
-    const password = formData.get('password');
+    let email;
+    const password = String(formData.get('password') || '');
+
+    try {
+      email = validEmail(formData.get('email'));
+      enforceRateLimit(`login:${email}`, { limit: 8, windowMs: 15 * 60 * 1000 });
+    } catch {
+      redirect('/login?notify=login_failed');
+    }
 
     const [users] = await db.query('SELECT * FROM users WHERE email = ?', [email]);
     const user = users[0];
@@ -32,30 +41,13 @@ export default async function LoginPage({ searchParams }) {
        redirect('/login?notify=banned');
     }
 
-    // สร้าง Session Data
-    const userData = JSON.stringify({ 
-      id: user.id, 
-      username: user.username, 
-      role: user.role,
-      avatar_url: user.avatar_url 
-    });
-    
-    const cookieStore = await cookies();
-    cookieStore.set('user_session', userData, { 
-      httpOnly: true, 
-      secure: process.env.NODE_ENV === 'production', 
-      sameSite: 'lax', 
-      path: '/',      
-      maxAge: 60 * 60 * 24 // 1 วัน
-    });
+    await setUserSession(user);
 
     redirect('/?notify=login_success');
   }
 
   // --- เช็คว่าถ้าล็อกอินอยู่แล้ว ให้เด้งไปหน้าแรก ---
-  const cookieStore = await cookies();
-  const session = cookieStore.get('user_session');
-  if (session) {
+  if (await getCurrentUser()) {
       redirect('/'); 
   }
 

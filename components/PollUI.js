@@ -70,7 +70,7 @@ export default function PollUI({ poll, options: initialOptions, userVote: initia
     setUserVote(selectedOption);
     setIsEditMode(false); 
 
-    const result = await votePoll(poll.id, selectedOption, currentUser.id);
+    const result = await votePoll(poll.id, selectedOption);
 
     setIsVoting(false);
 

@@ -1,27 +1,18 @@
 import React from 'react';
 import db from '../../../lib/db';
 import { redirect } from 'next/navigation';
-import { cookies } from 'next/headers';
 import bcrypt from 'bcryptjs'; // ✅ อย่าลืม install: npm install bcryptjs
 import Link from 'next/link';
+import { getCurrentUser, requireUser } from '../../../lib/auth';
+import { requiredText } from '../../../lib/validation';
 
 export const metadata = {
   title: 'แก้ไขข้อมูลส่วนตัว | IT Techboard',
 };
 
 export default async function EditProfilePage({ searchParams }) {
-  const cookieStore = await cookies();
-  const session = cookieStore.get('user_session');
-
-  // 1. เช็ค Session
-  if (!session) redirect('/login');
-
-  let userSession;
-  try {
-    userSession = JSON.parse(session.value);
-  } catch (error) {
-    redirect('/login');
-  }
+  const userSession = await getCurrentUser();
+  if (!userSession) redirect('/login');
 
   // 2. ดึงข้อมูล User ล่าสุดจาก DB
   const [users] = await db.query('SELECT * FROM users WHERE id = ?', [userSession.id]);
@@ -36,9 +27,15 @@ export default async function EditProfilePage({ searchParams }) {
   // --- Server Action ---
   async function updateProfile(formData) {
     'use server';
-    
-    const username = formData.get('username');
-    const bio = formData.get('bio'); 
+    const actor = await requireUser();
+    let username;
+    let bio;
+    try {
+      username = requiredText(formData.get('username'), 'username', { min: 3, max: 40 });
+      bio = String(formData.get('bio') || '').trim().slice(0, 500);
+    } catch {
+      redirect('/profile/edit?notify=error_username');
+    }
     
     const oldPassword = formData.get('oldPassword');
     const newPassword = formData.get('newPassword');
@@ -46,7 +43,7 @@ export default async function EditProfilePage({ searchParams }) {
 
     // 1. อัปเดตข้อมูลทั่วไป (Username, Bio)
     try {
-        await db.query('UPDATE users SET username = ?, bio = ? WHERE id = ?', [username, bio, userSession.id]);
+        await db.query('UPDATE users SET username = ?, bio = ? WHERE id = ?', [username, bio, actor.id]);
     } catch (error) {
         console.error("Update Error:", error);
         // กรณีชื่อซ้ำ (ถ้าตั้ง unique ไว้ที่ username) อาจจะต้อง catch error นี้
@@ -59,8 +56,13 @@ export default async function EditProfilePage({ searchParams }) {
             redirect('/profile/edit?notify=missing_password');
         }
 
+        if (String(newPassword).length < 8 || String(newPassword).length > 128) {
+            redirect('/profile/edit?notify=missing_password');
+        }
+
         // เช็คว่ารหัสเดิมถูกไหม
-        const match = await bcrypt.compare(oldPassword, currentUser.password);
+        const [freshUsers] = await db.query('SELECT password FROM users WHERE id = ?', [actor.id]);
+        const match = freshUsers[0] && await bcrypt.compare(String(oldPassword), freshUsers[0].password);
         if (!match) {
             redirect('/profile/edit?notify=wrong_old_password');
         }
@@ -71,26 +73,8 @@ export default async function EditProfilePage({ searchParams }) {
 
         // แฮชรหัสใหม่แล้วบันทึก
         const hashedPassword = await bcrypt.hash(newPassword, 10);
-        await db.query('UPDATE users SET password = ? WHERE id = ?', [hashedPassword, userSession.id]);
+        await db.query('UPDATE users SET password = ? WHERE id = ?', [hashedPassword, actor.id]);
     }
-
-    // 3. อัปเดต Session Cookie (สำคัญมาก เพราะ Username เปลี่ยน)
-    // เราต้องสร้างก้อนข้อมูลใหม่ โดยอิงจากข้อมูลล่าสุดใน DB (ไม่งั้นข้อมูลใน Cookie จะไม่อัปเดต)
-    const updatedSessionData = {
-        ...userSession,
-        username: username, // อัปเดตชื่อใหม่
-        // ถ้ามี avatar หรือ role เปลี่ยน ก็ควรอัปเดตตรงนี้ด้วย
-    };
-    
-    // ตั้งค่า Cookie ใหม่ทับอันเดิม
-    const newCookieStore = await cookies();
-    newCookieStore.set('user_session', JSON.stringify(updatedSessionData), { 
-        httpOnly: true, 
-        secure: process.env.NODE_ENV === 'production', 
-        sameSite: 'lax', 
-        path: '/',
-        maxAge: 60 * 60 * 24 * 7 // 7 วัน
-    });
 
     redirect('/profile?notify=profile_updated');
   }

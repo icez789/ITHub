@@ -1,36 +1,47 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# ByteBoard / IT Hub
 
-## Getting Started
+เว็บบอร์ดชุมชนไอทีที่สร้างด้วย Next.js App Router, MySQL/TiDB, Pusher, Cloudinary และ Gemini มีระบบกระทู้ คอมเมนต์ โพล ไลก์ บุ๊กมาร์ก การแจ้งเตือน XP และเครื่องมือดูแลระบบ
 
-First, run the development server:
+## เริ่มต้นใช้งาน
+
+1. ใช้ Node.js 20 ขึ้นไป และสร้างฐานข้อมูล MySQL/TiDB
+2. คัดลอก `.env.example` เป็น `.env` แล้วกำหนดค่าที่จำเป็น
+3. สร้าง `SESSION_SECRET` แบบสุ่มความยาวอย่างน้อย 32 ตัวอักษร ห้ามใช้ค่าเดียวกับรหัสผ่านฐานข้อมูลใน production
+4. ติดตั้งและเปิดแอป
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+แอปทำงานที่ `http://localhost:3000`
 
-You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
+## คำสั่งตรวจสอบ
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npm run lint
+npm run build
+npm run test:e2e
+npm run check
+```
 
-## Learn More
+Playwright จะเปิด development server ให้อัตโนมัติ การทดสอบ login/create ต้องกำหนด `BYTEBOARD_E2E_EMAIL` และ `BYTEBOARD_E2E_PASSWORD` เป็นบัญชีทดสอบที่แยกจากผู้ดูแลระบบ
 
-To learn more about Next.js, take a look at the following resources:
+## ความปลอดภัย
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- Session cookie ถูกเซ็นด้วย HMAC และเก็บเฉพาะ user ID; role และสถานะ ban โหลดจากฐานข้อมูลทุกครั้ง
+- Server actions ทุกตัวต้องตรวจ user/role ภายใน action ห้ามเชื่อ user ID หรือ role จาก form
+- Rich text ถูก sanitize ด้วย allowlist ก่อนบันทึกและก่อนแสดงข้อมูลเก่า
+- รูปภาพรองรับเฉพาะ JPG, PNG, WebP และ GIF ขนาดไม่เกิน 5MB และจัดเก็บใน Cloudinary
+- Login, comment, report, poll, create topic และ AI chat มี rate limit ระดับแอป การ deploy หลาย instance ควรเปลี่ยน store เป็น Redis/KV
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Environment variables
 
-## Deploy on Vercel
+ดูรายการทั้งหมดใน `.env.example` ตัวแปรที่ต้องระวังเป็นพิเศษ:
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- `SESSION_SECRET`: secret สุ่มอย่างน้อย 32 ตัวอักษร
+- `NEXT_SERVER_ACTIONS_ENCRYPTION_KEY`: คีย์ base64 ที่ถอดแล้วมีขนาด 32 bytes สำหรับให้ Server Actions ใช้คีย์เดียวกันทุก instance
+- `SERVER_ACTION_ALLOWED_ORIGINS`: hostname ที่อนุญาต คั่นด้วย comma
+- `BYTEBOARD_E2E_EMAIL`, `BYTEBOARD_E2E_PASSWORD`: ใช้เฉพาะชุดทดสอบ
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+อย่า commit `.env`, test credentials หรือไฟล์ upload ลง Git
