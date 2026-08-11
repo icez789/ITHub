@@ -5,7 +5,11 @@ import { redirect } from 'next/navigation';
 import bcrypt from 'bcryptjs';
 import Link from 'next/link';
 import RippleButton from '../../components/RippleButton';
-import { getCurrentUser, setUserSession } from '../../lib/auth';
+import {
+  getCurrentUser,
+  isSessionConfigurationError,
+  setUserSession,
+} from '../../lib/auth';
 import { enforceRateLimit } from '../../lib/rateLimit';
 import { validEmail } from '../../lib/validation';
 
@@ -41,7 +45,15 @@ export default async function LoginPage({ searchParams }) {
        redirect('/login?notify=banned');
     }
 
-    await setUserSession(user);
+    try {
+      await setUserSession(user);
+    } catch (error) {
+      if (isSessionConfigurationError(error)) {
+        console.error('Login session is not configured:', error.message);
+        redirect('/login?notify=server_config');
+      }
+      throw error;
+    }
 
     redirect('/?notify=login_success');
   }
@@ -73,6 +85,11 @@ export default async function LoginPage({ searchParams }) {
         {notify === 'logout_success' && (
             <div className="mb-4 p-3 bg-green-50 text-green-600 border border-green-200 rounded-lg text-sm text-center">
                 ออกจากระบบเรียบร้อยแล้ว
+            </div>
+        )}
+        {notify === 'server_config' && (
+            <div className="mb-4 p-3 bg-amber-50 text-amber-800 border border-amber-200 rounded-lg text-sm text-center dark:bg-amber-950/30 dark:text-amber-300 dark:border-amber-800">
+                ระบบเข้าสู่ระบบยังตั้งค่าไม่สมบูรณ์ กรุณาติดต่อผู้ดูแลระบบ
             </div>
         )}
 

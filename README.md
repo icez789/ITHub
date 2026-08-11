@@ -44,4 +44,27 @@ Playwright จะเปิด development server ให้อัตโนมั�
 - `SERVER_ACTION_ALLOWED_ORIGINS`: hostname ที่อนุญาต คั่นด้วย comma
 - `BYTEBOARD_E2E_EMAIL`, `BYTEBOARD_E2E_PASSWORD`: ใช้เฉพาะชุดทดสอบ
 
+### ตั้งค่าบน Vercel
+
+ใน Vercel ไปที่ **Project Settings → Environment Variables** แล้วเพิ่มค่าที่จำเป็น:
+
+- `SESSION_SECRET`: ค่าสุ่มอย่างน้อย 32 ตัวอักษร
+
+ค่าต่อไปนี้ใช้เมื่อรูปแบบ deployment ต้องการเท่านั้น:
+
+- `NEXT_SERVER_ACTIONS_ENCRYPTION_KEY`: base64 ของข้อมูลสุ่ม 32 bytes เมื่อจำเป็นต้องให้หลาย build/instance ใช้คีย์ Server Actions เดียวกัน
+- `SERVER_ACTION_ALLOWED_ORIGINS`: hostname เพิ่มเติมที่ต้องยอมรับผ่าน reverse proxy หรือโดเมนอื่น สำหรับ request จากโดเมนเดียวกันปล่อยว่างได้
+
+เลือกให้ครอบคลุม Production และ Preview ตามที่ใช้งาน จากนั้น **Redeploy** เพราะ deployment เดิมจะไม่เห็นค่าที่เพิ่งเพิ่ม หาก `SESSION_SECRET` ไม่มีหรือสั้นเกินไป ระบบจะปฏิเสธการสร้าง session เพื่อไม่ให้ cookie ถูกปลอมแปลงได้
+
+สร้างค่าได้ด้วย PowerShell โดยไม่ต้องนำรหัสผ่านฐานข้อมูลมาใช้ซ้ำ:
+
+```powershell
+# SESSION_SECRET
+[Convert]::ToBase64String([Security.Cryptography.RandomNumberGenerator]::GetBytes(48))
+
+# NEXT_SERVER_ACTIONS_ENCRYPTION_KEY (เมื่อจำเป็น)
+[Convert]::ToBase64String([Security.Cryptography.RandomNumberGenerator]::GetBytes(32))
+```
+
 อย่า commit `.env`, test credentials หรือไฟล์ upload ลง Git
