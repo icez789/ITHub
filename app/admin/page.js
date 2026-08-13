@@ -36,21 +36,26 @@ export default async function AdminDashboard() {
     db.query('SELECT COUNT(*) as count FROM topics'),
     db.query('SELECT COUNT(*) as count FROM comments'),
     db.query(`
-      SELECT * FROM users ORDER BY 
+      SELECT id, username, role, avatar_url, is_banned FROM users ORDER BY
       CASE WHEN role = 'super_admin' THEN 1 WHEN role = 'admin' THEN 2 ELSE 3 END, 
       created_at DESC
+      LIMIT 20
     `),
     db.query(`
-      SELECT r.*, reporter.username as reporter_name, t.title as topic_title, c.content as comment_content
+      SELECT r.id, r.topic_id, r.comment_id, r.reason,
+             reporter.username AS reporter_name,
+             t.title AS topic_title,
+             c.content AS comment_content
       FROM reports r
       LEFT JOIN users reporter ON r.reporter_id = reporter.id
       LEFT JOIN topics t ON r.topic_id = t.id
       LEFT JOIN comments c ON r.comment_id = c.id
       WHERE r.status = 'pending'
       ORDER BY r.created_at DESC
+      LIMIT 50
     `),
     db.query(`
-      SELECT t.*, u.username, u.role 
+      SELECT t.id, t.title, t.created_at, u.username, u.role
       FROM topics t 
       JOIN users u ON t.user_id = u.id 
       ORDER BY t.created_at DESC 

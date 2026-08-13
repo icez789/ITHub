@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Pusher from 'pusher-js';
 import Link from 'next/link';
+import { notificationChannelName } from '../lib/pusherChannels';
 // 1. ✅ Import Server Action ที่เราเพิ่งสร้าง
 import { markNotificationsAsRead } from '../lib/actions'; 
 
@@ -18,14 +19,19 @@ export default function NotificationBell({ count: initialCount, notifications: i
     if (!currentUserId || !key || !cluster) return;
     const pusher = new Pusher(key, {
       cluster,
+      channelAuthorization: {
+        endpoint: '/api/pusher/auth',
+        transport: 'ajax',
+      },
     });
-    const channel = pusher.subscribe(`user-${currentUserId}`);
+    const channelName = notificationChannelName(currentUserId);
+    const channel = pusher.subscribe(channelName);
     channel.bind('new-notification', (data) => {
       setUnreadCount((prev) => prev + 1);
       setNotifications((prev) => [data, ...prev]);
     });
     return () => {
-      pusher.unsubscribe(`user-${currentUserId}`);
+      pusher.unsubscribe(channelName);
       pusher.disconnect();
     };
   }, [currentUserId]);
@@ -48,7 +54,7 @@ export default function NotificationBell({ count: initialCount, notifications: i
   return (
      <div className="relative">
         {/* 3. ✅ เปลี่ยน onClick ให้มาใช้ฟังก์ชันใหม่ของเรา */}
-        <button type="button" onClick={handleBellClick} aria-label="เปิดการแจ้งเตือน" aria-expanded={isOpen} className="relative p-2 text-gray-600 hover:text-red-600 transition-colors dark:text-gray-300 dark:hover:text-red-400">
+        <button type="button" onClick={handleBellClick} data-user-id={currentUserId || undefined} aria-label="เปิดการแจ้งเตือน" aria-expanded={isOpen} className="relative p-2 text-gray-600 hover:text-red-600 transition-colors dark:text-gray-300 dark:hover:text-red-400">
            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
            
            {unreadCount > 0 && (

@@ -20,10 +20,10 @@ function SidebarItem({ href, icon, label, active }) {
       }`}
     >
       <span aria-hidden="true" className="flex-shrink-0 text-xl w-6 text-center">{icon}</span>
-      <span className="whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-300 font-medium">
+      <span className="whitespace-nowrap opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity duration-300 font-medium">
         {label}
       </span>
-      <span className="absolute left-full top-1/2 -translate-y-1/2 ml-3 px-2 py-1 bg-gray-900 text-white text-xs rounded-md shadow-lg opacity-0 -translate-x-3 pointer-events-none group-hover/item:opacity-100 group-hover/item:translate-x-0 transition-all duration-200 z-50 whitespace-nowrap dark:bg-white dark:text-black group-hover:hidden">
+      <span aria-hidden="true" className="absolute left-full top-1/2 -translate-y-1/2 ml-3 px-2 py-1 bg-gray-900 text-white text-xs rounded-md shadow-lg opacity-0 -translate-x-3 pointer-events-none group-hover/item:opacity-100 group-focus-visible/item:opacity-100 group-hover/item:translate-x-0 group-focus-visible/item:translate-x-0 transition-all duration-200 z-50 whitespace-nowrap dark:bg-white dark:text-black group-hover:hidden group-focus-within:hidden">
         {label}
       </span>
     </Link>
@@ -72,15 +72,15 @@ export default function Sidebar() {
   ];
 
   return (
-    <aside className="fixed top-0 left-0 z-40 h-full w-16 hover:w-64 bg-white border-r border-gray-200 text-gray-600 transition-all duration-300 ease-in-out shadow-2xl group hidden md:flex flex-col pt-24 dark:bg-black dark:border-neutral-800 dark:text-gray-400">
-      <div className="absolute top-0 left-0 w-1 h-full bg-red-600 group-hover:opacity-0 transition-opacity duration-300" />
+    <aside className="fixed top-0 left-0 z-40 h-full w-16 hover:w-64 focus-within:w-64 bg-white border-r border-gray-200 text-gray-600 transition-all duration-300 ease-in-out shadow-2xl group hidden md:flex flex-col pt-24 dark:bg-black dark:border-neutral-800 dark:text-gray-400">
+      <div className="absolute top-0 left-0 w-1 h-full bg-red-600 group-hover:opacity-0 group-focus-within:opacity-0 transition-opacity duration-300" />
       <div className="flex-1 flex flex-col p-3 overflow-y-auto no-scrollbar">
         <nav aria-label="เมนูหลัก" className="space-y-1">
           {mainMenus.map((item) => <SidebarItem key={item.label} {...item} />)}
         </nav>
 
         <hr className="border-gray-200 my-4 dark:border-neutral-800 mx-2" />
-        <p className="px-3 mb-2 text-xs font-bold text-gray-400 uppercase tracking-wider opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap dark:text-neutral-500">
+        <p className="px-3 mb-2 text-xs font-bold text-gray-400 uppercase tracking-wider opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity duration-300 whitespace-nowrap dark:text-neutral-500">
           พื้นที่ของฉัน
         </p>
         <nav aria-label="พื้นที่ส่วนตัว" className="space-y-1">
@@ -88,7 +88,7 @@ export default function Sidebar() {
         </nav>
 
         <hr className="border-gray-200 my-4 dark:border-neutral-800 mx-2" />
-        <p className="px-3 mb-2 text-xs font-bold text-gray-400 uppercase tracking-wider opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap dark:text-neutral-500">
+        <p className="px-3 mb-2 text-xs font-bold text-gray-400 uppercase tracking-wider opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity duration-300 whitespace-nowrap dark:text-neutral-500">
           หมวดหมู่
         </p>
         <nav aria-label="หมวดหมู่" className="space-y-1">
@@ -103,7 +103,7 @@ export default function Sidebar() {
           ))}
         </nav>
 
-        <nav aria-label="ข้อมูลเว็บไซต์" className="mt-auto pt-6 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 p-2 text-xs">
+        <nav aria-label="ข้อมูลเว็บไซต์" className="mt-auto pt-6 flex flex-col gap-2 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity duration-300 p-2 text-xs">
           <Link href="/terms" className="text-gray-400 hover:text-red-600">• ข้อกำหนด</Link>
           <Link href="/privacy" className="text-gray-400 hover:text-red-600">• ความเป็นส่วนตัว</Link>
           <Link href="/help" className="text-gray-400 hover:text-red-600">• ช่วยเหลือ</Link>

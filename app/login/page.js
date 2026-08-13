@@ -32,7 +32,7 @@ export default async function LoginPage({ searchParams }) {
 
     try {
       email = validEmail(formData.get('email'));
-      enforceRateLimit(`login:${email}`, { limit: 8, windowMs: 15 * 60 * 1000 });
+      await enforceRateLimit(`login:${email}`, { limit: 8, windowMs: 15 * 60 * 1000 });
     } catch {
       redirect(`/login?notify=login_failed${nextQuery}`);
     }
@@ -74,7 +74,7 @@ export default async function LoginPage({ searchParams }) {
         <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-red-600 to-red-800"></div>
         
         <h1 className="text-3xl font-bold text-center mb-2 text-gray-800 dark:text-white">เข้าสู่ระบบ</h1>
-        <p className="text-center text-gray-500 mb-8 dark:text-gray-400">ยินดีต้อนรับกลับสู่ IT Techboard</p>
+        <p className="text-center text-gray-500 mb-8 dark:text-gray-400">ยินดีต้อนรับกลับสู่ ITHub</p>
 
         {/* แสดงแจ้งเตือน Error */}
         {notify === 'login_failed' && (

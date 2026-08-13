@@ -28,7 +28,7 @@ export default async function RegisterPage({ searchParams }) {
       email = validEmail(formData.get('email'));
       password = requiredText(formData.get('password'), 'password', { min: 8, max: 128 });
       confirmPassword = String(formData.get('confirmPassword') || '');
-      enforceRateLimit(`register:${email}`, { limit: 4, windowMs: 60 * 60 * 1000 });
+      await enforceRateLimit(`register:${email}`, { limit: 4, windowMs: 60 * 60 * 1000 });
     } catch {
       redirect('/register?notify=error');
     }
@@ -72,7 +72,7 @@ export default async function RegisterPage({ searchParams }) {
         <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-red-600 to-red-800"></div>
         
         <h1 className="text-3xl font-bold text-center mb-2 text-gray-800 dark:text-white">สมัครสมาชิก</h1>
-        <p className="text-center text-gray-500 mb-8 dark:text-gray-400">เข้าร่วมชุมชน IT Techboard วันนี้!</p>
+        <p className="text-center text-gray-500 mb-8 dark:text-gray-400">เข้าร่วมชุมชน ITHub วันนี้!</p>
 
         {/* --- ส่วนแสดง Error Message --- */}
         {notify === 'password_mismatch' && (

@@ -5,7 +5,7 @@ import EditTopicForm from './EditTopicForm'; // ✅ นำเข้า Form ท�
 import { getCurrentUser, isAdmin } from '../../../lib/auth';
 
 export const metadata = {
-  title: 'แก้ไขกระทู้ | IT Techboard',
+  title: 'แก้ไขกระทู้ | ITHub',
 };
 
 export default async function EditTopicPage({ params }) {

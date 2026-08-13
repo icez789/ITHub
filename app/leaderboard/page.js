@@ -22,7 +22,7 @@ export default async function LeaderboardPage() {
           <h1 className="text-4xl font-extrabold mb-2 bg-clip-text text-transparent bg-gradient-to-r from-yellow-500 via-red-500 to-pink-500 drop-shadow-sm">
             🏆 Hall of Fame
           </h1>
-          <p className="text-gray-500 dark:text-gray-400">สุดยอดนักเขียนประจำชุมชน IT Techboard</p>
+          <p className="text-gray-500 dark:text-gray-400">สุดยอดนักเขียนประจำชุมชน ITHub</p>
         </div>
 
         {/* --- 🥇 Podium Section (3 อันดับแรก) --- */}

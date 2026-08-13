@@ -8,6 +8,7 @@ import DeleteButton from '../DeleteButton'; // ดึงปุ่มจากโ
 import { getCurrentUser, requireAdmin } from '../../../lib/auth';
 import { positiveInteger } from '../../../lib/validation';
 import { deleteTopicCascade } from '../../../lib/moderation';
+import AdminPagination from '../AdminPagination';
 
 export default async function TopicsManagementPage({ searchParams }) {
   const currentUser = await getCurrentUser();
@@ -16,16 +17,26 @@ export default async function TopicsManagementPage({ searchParams }) {
 
   // Search Logic
   const params = await searchParams;
-  const q = String(params?.q || '').slice(0, 100);
+  const q = String(params?.q || '').trim().slice(0, 100);
+  const requestedPage = Number.parseInt(params?.page || '1', 10);
+  const page = Number.isInteger(requestedPage) && requestedPage > 0 ? requestedPage : 1;
+  const pageSize = 25;
+  const offset = (page - 1) * pageSize;
+  const searchPattern = `%${q}%`;
   const querySQL = `
-    SELECT t.*, u.username, u.avatar_url, 
+    SELECT t.id, t.title, t.content, t.created_at, t.views, u.username, u.avatar_url,
     (SELECT COUNT(*) FROM comments WHERE topic_id = t.id) as comment_count
     FROM topics t 
     JOIN users u ON t.user_id = u.id
     WHERE t.title LIKE ? OR t.content LIKE ?
     ORDER BY t.created_at DESC
+    LIMIT ? OFFSET ?
   `;
-  const [topics] = await db.query(querySQL, [`%${q}%`, `%${q}%`]);
+  const [[topics], [countRows]] = await Promise.all([
+    db.query(querySQL, [searchPattern, searchPattern, pageSize, offset]),
+    db.query('SELECT COUNT(*) AS count FROM topics WHERE title LIKE ? OR content LIKE ?', [searchPattern, searchPattern]),
+  ]);
+  const totalPages = Math.max(1, Math.ceil(Number(countRows[0].count) / pageSize));
 
   // Action ลบกระทู้
   async function deleteTopic(formData) {
@@ -88,6 +99,7 @@ export default async function TopicsManagementPage({ searchParams }) {
             ))}
             {topics.length === 0 && <div className="text-center py-10 text-gray-500">No topics found.</div>}
          </div>
+         <AdminPagination path="/admin/topics" page={page} totalPages={totalPages} query={q} />
        </div>
     </div>
   );

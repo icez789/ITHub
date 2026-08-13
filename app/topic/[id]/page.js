@@ -24,14 +24,15 @@ import { plainText, sanitizeRichText } from '../../../lib/content';
 import { enforceRateLimit } from '../../../lib/rateLimit';
 import { optionalPositiveInteger, positiveInteger, requiredText } from '../../../lib/validation';
 import { deleteCommentCascade, deleteTopicCascade } from '../../../lib/moderation';
+import { notificationChannelName } from '../../../lib/pusherChannels';
 
 export async function generateMetadata({ params }) {
   const { id } = await params;
   const [topics] = await db.query('SELECT title, content FROM topics WHERE id = ?', [id]);
   const topic = topics[0];
-  if (!topic) return { title: 'ไม่พบเนื้อหา | IT Techboard' };
+  if (!topic) return { title: 'ไม่พบเนื้อหา | ITHub' };
   return {
-    title: `${topic.title} | IT Techboard`,
+    title: `${topic.title} | ITHub`,
     description: topic.content.replace(/<[^>]*>?/gm, '').slice(0, 100) + '...',
   };
 }
@@ -153,7 +154,7 @@ export default async function TopicDetailPage({ params }) {
   async function addComment(formData) { 
     'use server'; 
     const actor = await requireUser();
-    enforceRateLimit(`comment:${actor.id}`, { limit: 12, windowMs: 60 * 1000 });
+    await enforceRateLimit(`comment:${actor.id}`, { limit: 12, windowMs: 60 * 1000 });
     const topicId = positiveInteger(id, 'topic id');
     const parentId = optionalPositiveInteger(formData.get('parentId'), 'parent comment id');
     const content = sanitizeRichText(formData.get('content'));
@@ -191,7 +192,7 @@ export default async function TopicDetailPage({ params }) {
 
     if (!parentId && freshTopic.user_id !== actor.id) {
       try {
-        await pusherServer.trigger(`user-${freshTopic.user_id}`, 'new-notification', {
+        await pusherServer.trigger(notificationChannelName(freshTopic.user_id), 'new-notification', {
           message: `${actor.username} แสดงความคิดเห็นในกระทู้ของคุณ`,
           link: `/topic/${topicId}`,
           created_at: new Date().toISOString(),
@@ -251,7 +252,7 @@ export default async function TopicDetailPage({ params }) {
 
     if (added && topicOwnerId !== actor.id) {
       try {
-        await pusherServer.trigger(`user-${topicOwnerId}`, 'new-notification', {
+        await pusherServer.trigger(notificationChannelName(topicOwnerId), 'new-notification', {
           message: `${actor.username} ถูกใจกระทู้ของคุณ`,
           link: `/topic/${topicId}`,
           created_at: new Date().toISOString(),
@@ -321,7 +322,7 @@ export default async function TopicDetailPage({ params }) {
   async function submitReport(formData) { 
     'use server'; 
     const actor = await requireUser();
-    enforceRateLimit(`report:${actor.id}`, { limit: 5, windowMs: 60 * 60 * 1000 });
+    await enforceRateLimit(`report:${actor.id}`, { limit: 5, windowMs: 60 * 60 * 1000 });
     const targetId = positiveInteger(formData.get('targetId'), 'report target');
     const type = formData.get('type'); 
     const reason = requiredText(formData.get('reason'), 'reason', { min: 3, max: 500 });
@@ -340,7 +341,7 @@ export default async function TopicDetailPage({ params }) {
     try {
       const [admins] = await db.query("SELECT id FROM users WHERE role IN ('admin', 'super_admin')");
       for (const admin of admins) {
-         await pusherServer.trigger(`user-${admin.id}`, 'new-notification', {
+         await pusherServer.trigger(notificationChannelName(admin.id), 'new-notification', {
             message: `🚨 มีรายการ Report ใหม่รอตรวจสอบ: ${reason}`,
             link: '/admin', // กดที่กระดิ่งแล้วเด้งไปหน้าแอดมินเลย
             created_at: new Date().toISOString()
@@ -402,7 +403,7 @@ export default async function TopicDetailPage({ params }) {
             <div className="p-8 min-h-[200px] border-b border-gray-100 dark:border-neutral-800">
               {topic.image_url && (
                 <div className="mb-6 rounded-lg overflow-hidden border border-gray-200 shadow-sm inline-block max-w-full dark:border-neutral-700">
-                   <Image src={topic.image_url} alt={`ภาพประกอบกระทู้ ${topic.title}`} width={1200} height={800} sizes="(max-width: 1024px) 100vw, 900px" className="max-h-[500px] w-auto h-auto object-contain bg-gray-50 dark:bg-black" />
+                   <Image src={topic.image_url} alt={`ภาพประกอบกระทู้ ${topic.title}`} width={1200} height={800} sizes="(max-width: 1024px) 100vw, 900px" loading="eager" className="max-h-[500px] w-auto h-auto object-contain bg-gray-50 dark:bg-black" />
                 </div>
               )}
               

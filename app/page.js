@@ -71,11 +71,7 @@ export default async function HomePage({ searchParams }) {
   }
 
   const countSql = `SELECT COUNT(DISTINCT topics.id) as total FROM topics ${joinLikes} ${whereClause}`;
-  const [countResult] = await db.query(countSql, sqlParams);
-  const totalTopics = countResult[0].total;
-  const totalPages = Math.ceil(totalTopics / pageSize);
-
-  let sql = `
+  const sql = `
     SELECT topics.*, users.username ${selectLikeCount}
     FROM topics 
     LEFT JOIN users ON topics.user_id = users.id
@@ -87,8 +83,9 @@ export default async function HomePage({ searchParams }) {
   `;
   
   const queryParams = [...sqlParams, pageSize, offset];
-  const [topics] = await db.query(sql, queryParams);
-  const [siteStatsResult, popularCategoriesResult] = await Promise.all([
+  const [countResult, topicsResult, siteStatsResult, popularCategoriesResult] = await Promise.all([
+    db.query(countSql, sqlParams),
+    db.query(sql, queryParams),
     db.query(`
       SELECT
         (SELECT COUNT(*) FROM topics) AS total_topics,
@@ -104,6 +101,9 @@ export default async function HomePage({ searchParams }) {
       LIMIT 5
     `),
   ]);
+  const totalTopics = Number(countResult[0][0].total);
+  const totalPages = Math.ceil(totalTopics / pageSize);
+  const topics = topicsResult[0];
   const siteStats = siteStatsResult[0][0] || {};
   const popularCategories = popularCategoriesResult[0] || [];
   const numberFormat = new Intl.NumberFormat('th-TH');

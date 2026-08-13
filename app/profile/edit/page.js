@@ -7,7 +7,7 @@ import { getCurrentUser, requireUser } from '../../../lib/auth';
 import { requiredText } from '../../../lib/validation';
 
 export const metadata = {
-  title: 'แก้ไขข้อมูลส่วนตัว | IT Techboard',
+  title: 'แก้ไขข้อมูลส่วนตัว | ITHub',
 };
 
 export default async function EditProfilePage({ searchParams }) {
@@ -15,7 +15,7 @@ export default async function EditProfilePage({ searchParams }) {
   if (!userSession) redirect('/login');
 
   // 2. ดึงข้อมูล User ล่าสุดจาก DB
-  const [users] = await db.query('SELECT * FROM users WHERE id = ?', [userSession.id]);
+  const [users] = await db.query('SELECT id, username, bio FROM users WHERE id = ?', [userSession.id]);
   const currentUser = users[0];
 
   if (!currentUser) redirect('/login');
@@ -37,46 +37,67 @@ export default async function EditProfilePage({ searchParams }) {
       redirect('/profile/edit?notify=error_username');
     }
     
-    const oldPassword = formData.get('oldPassword');
-    const newPassword = formData.get('newPassword');
-    const confirmNewPassword = formData.get('confirmNewPassword');
+    const oldPassword = String(formData.get('oldPassword') || '');
+    const newPassword = String(formData.get('newPassword') || '');
+    const confirmNewPassword = String(formData.get('confirmNewPassword') || '');
+    const wantsPasswordChange = Boolean(oldPassword || newPassword || confirmNewPassword);
 
-    // 1. อัปเดตข้อมูลทั่วไป (Username, Bio)
+    // Validate every field before starting any mutation so an invalid password
+    // request can never partially save the username or bio.
+    if (wantsPasswordChange && (!oldPassword || !newPassword || !confirmNewPassword)) {
+      redirect('/profile/edit?notify=missing_password');
+    }
+    if (wantsPasswordChange && (newPassword.length < 8 || newPassword.length > 128)) {
+      redirect('/profile/edit?notify=missing_password');
+    }
+    if (wantsPasswordChange && newPassword !== confirmNewPassword) {
+      redirect('/profile/edit?notify=password_mismatch');
+    }
+
+    const connection = await db.getConnection();
+    let notifyPath = '/profile?notify=profile_updated';
     try {
-        await db.query('UPDATE users SET username = ?, bio = ? WHERE id = ?', [username, bio, actor.id]);
-    } catch (error) {
-        console.error("Update Error:", error);
-        // กรณีชื่อซ้ำ (ถ้าตั้ง unique ไว้ที่ username) อาจจะต้อง catch error นี้
-        return redirect('/profile/edit?notify=error_username');
-    }
+      await connection.beginTransaction();
+      let hashedPassword = null;
 
-    // 2. Logic เปลี่ยนรหัสผ่าน (ถ้ามีการกรอก)
-    if (newPassword || oldPassword) {
-        if (!oldPassword || !newPassword) {
-            redirect('/profile/edit?notify=missing_password');
-        }
-
-        if (String(newPassword).length < 8 || String(newPassword).length > 128) {
-            redirect('/profile/edit?notify=missing_password');
-        }
-
-        // เช็คว่ารหัสเดิมถูกไหม
-        const [freshUsers] = await db.query('SELECT password FROM users WHERE id = ?', [actor.id]);
-        const match = freshUsers[0] && await bcrypt.compare(String(oldPassword), freshUsers[0].password);
+      if (wantsPasswordChange) {
+        const [freshUsers] = await connection.query(
+          'SELECT password FROM users WHERE id = ? FOR UPDATE',
+          [actor.id],
+        );
+        const match = freshUsers[0]
+          && await bcrypt.compare(oldPassword, freshUsers[0].password);
         if (!match) {
-            redirect('/profile/edit?notify=wrong_old_password');
+          await connection.rollback();
+          notifyPath = '/profile/edit?notify=wrong_old_password';
+        } else {
+          hashedPassword = await bcrypt.hash(newPassword, 10);
         }
+      }
 
-        if (newPassword !== confirmNewPassword) {
-            redirect('/profile/edit?notify=password_mismatch');
+      if (notifyPath === '/profile?notify=profile_updated') {
+        if (hashedPassword) {
+          await connection.query(
+            'UPDATE users SET username = ?, bio = ?, password = ? WHERE id = ?',
+            [username, bio, hashedPassword, actor.id],
+          );
+        } else {
+          await connection.query(
+            'UPDATE users SET username = ?, bio = ? WHERE id = ?',
+            [username, bio, actor.id],
+          );
         }
-
-        // แฮชรหัสใหม่แล้วบันทึก
-        const hashedPassword = await bcrypt.hash(newPassword, 10);
-        await db.query('UPDATE users SET password = ? WHERE id = ?', [hashedPassword, actor.id]);
+        await connection.commit();
+      }
+    } catch (error) {
+      await connection.rollback().catch(() => {});
+      console.error('Update Profile Error:', error);
+      notifyPath = '/profile/edit?notify=error_username';
+    } finally {
+      connection.release();
     }
 
-    redirect('/profile?notify=profile_updated');
+    redirect(notifyPath);
   }
 
   return (

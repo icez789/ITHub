@@ -6,6 +6,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { getCurrentUser, requireAdmin } from '../../../lib/auth';
 import { positiveInteger } from '../../../lib/validation';
+import AdminPagination from '../AdminPagination';
 
 export default async function UsersManagementPage({ searchParams }) {
   const currentUser = await getCurrentUser();
@@ -16,13 +17,23 @@ export default async function UsersManagementPage({ searchParams }) {
   
   // 2. Search Logic
   const params = await searchParams;
-  const q = String(params?.q || '').slice(0, 100);
+  const q = String(params?.q || '').trim().slice(0, 100);
+  const requestedPage = Number.parseInt(params?.page || '1', 10);
+  const page = Number.isInteger(requestedPage) && requestedPage > 0 ? requestedPage : 1;
+  const pageSize = 25;
+  const offset = (page - 1) * pageSize;
   const querySQL = `
-    SELECT * FROM users 
+    SELECT id, username, email, role, avatar_url, is_banned FROM users
     WHERE username LIKE ? OR email LIKE ?
     ORDER BY CASE WHEN role = 'super_admin' THEN 1 WHEN role = 'admin' THEN 2 ELSE 3 END, created_at DESC
+    LIMIT ? OFFSET ?
   `;
-  const [users] = await db.query(querySQL, [`%${q}%`, `%${q}%`]);
+  const searchPattern = `%${q}%`;
+  const [[users], [countRows]] = await Promise.all([
+    db.query(querySQL, [searchPattern, searchPattern, pageSize, offset]),
+    db.query('SELECT COUNT(*) AS count FROM users WHERE username LIKE ? OR email LIKE ?', [searchPattern, searchPattern]),
+  ]);
+  const totalPages = Math.max(1, Math.ceil(Number(countRows[0].count) / pageSize));
 
   // --- Actions ---
   async function toggleBan(formData) {
@@ -151,6 +162,7 @@ export default async function UsersManagementPage({ searchParams }) {
                 </table>
             </div>
          </div>
+         <AdminPagination path="/admin/users" page={page} totalPages={totalPages} query={q} />
        </div>
     </div>
   );

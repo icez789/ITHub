@@ -1,0 +1,17 @@
+.git
+.next
+.vercel
+node_modules
+
+# Local configuration and test artifacts
+.env
+.env*.local
+test-results
+playwright-report
+playwright/.cache
+playwright/.auth
+
+# User-owned document generation workspaces
+deliverables
+output
+tools

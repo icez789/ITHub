@@ -8,6 +8,7 @@ import DeleteButton from '../DeleteButton';
 import { getCurrentUser, requireAdmin } from '../../../lib/auth';
 import { positiveInteger } from '../../../lib/validation';
 import { deleteCommentCascade } from '../../../lib/moderation';
+import AdminPagination from '../AdminPagination';
 
 export default async function CommentsManagementPage({ searchParams }) {
   const currentUser = await getCurrentUser();
@@ -15,18 +16,32 @@ export default async function CommentsManagementPage({ searchParams }) {
   if (!['admin', 'super_admin'].includes(currentUser.role)) redirect('/');
 
   const params = await searchParams;
-  const q = String(params?.q || '').slice(0, 100);
+  const q = String(params?.q || '').trim().slice(0, 100);
+  const requestedPage = Number.parseInt(params?.page || '1', 10);
+  const page = Number.isInteger(requestedPage) && requestedPage > 0 ? requestedPage : 1;
+  const pageSize = 25;
+  const offset = (page - 1) * pageSize;
+  const searchPattern = `%${q}%`;
   const querySQL = `
-    SELECT c.*, u.username, u.avatar_url, t.title as topic_title
+    SELECT c.id, c.topic_id, c.content, c.created_at,
+           u.username, u.avatar_url, t.title AS topic_title
     FROM comments c
     JOIN users u ON c.user_id = u.id
     JOIN topics t ON c.topic_id = t.id
     WHERE c.content LIKE ? OR u.username LIKE ?
     ORDER BY c.created_at DESC
-    LIMIT 50
+    LIMIT ? OFFSET ?
   `;
-  // Limit 50 ไว้ก่อนเพื่อไม่ให้เยอะเกินไป (ถ้าจะทำจริงจังต้องทำ Pagination)
-  const [comments] = await db.query(querySQL, [`%${q}%`, `%${q}%`]);
+  const [[comments], [countRows]] = await Promise.all([
+    db.query(querySQL, [searchPattern, searchPattern, pageSize, offset]),
+    db.query(`
+      SELECT COUNT(*) AS count
+      FROM comments c
+      JOIN users u ON c.user_id = u.id
+      WHERE c.content LIKE ? OR u.username LIKE ?
+    `, [searchPattern, searchPattern]),
+  ]);
+  const totalPages = Math.max(1, Math.ceil(Number(countRows[0].count) / pageSize));
 
   async function deleteComment(formData) {
     'use server';
@@ -93,6 +108,7 @@ export default async function CommentsManagementPage({ searchParams }) {
                 {comments.length === 0 && <div className="text-center py-10 text-gray-500">No comments found.</div>}
              </div>
          </div>
+         <AdminPagination path="/admin/comments" page={page} totalPages={totalPages} query={q} />
        </div>
     </div>
   );

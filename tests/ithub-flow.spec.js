@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 
-const email = process.env.BYTEBOARD_E2E_EMAIL;
-const password = process.env.BYTEBOARD_E2E_PASSWORD;
+const email = process.env.ITHUB_E2E_EMAIL;
+const password = process.env.ITHUB_E2E_PASSWORD;
 
 async function login(page) {
   await page.goto('/login');
@@ -11,7 +11,7 @@ async function login(page) {
   await expect(page).toHaveURL(/\/?(?:\?notify=login_success)?$/);
 }
 
-test.describe('ByteBoard critical flows', () => {
+test.describe('ITHub critical flows', () => {
   test('opens the AI chat without calling the external model', async ({ page }) => {
     await page.goto('/help');
     await page.getByRole('button', { name: 'Open AI chat' }).click();
@@ -20,27 +20,36 @@ test.describe('ByteBoard critical flows', () => {
   });
 
   test('logs in with the configured test account', async ({ page }) => {
-    test.skip(!email || !password, 'Set BYTEBOARD_E2E_EMAIL and BYTEBOARD_E2E_PASSWORD');
+    test.skip(!email || !password, 'Set ITHUB_E2E_EMAIL and ITHUB_E2E_PASSWORD');
     await login(page);
     await expect(page.getByRole('button', { name: 'ออกจากระบบ' })).toBeVisible();
   });
 
   test('creates a topic', async ({ page }) => {
-    test.skip(!email || !password, 'Set BYTEBOARD_E2E_EMAIL and BYTEBOARD_E2E_PASSWORD');
+    test.skip(!email || !password, 'Set ITHUB_E2E_EMAIL and ITHUB_E2E_PASSWORD');
     await login(page);
     await page.goto('/create');
-    await page.locator('input[name="title"]').fill(`Playwright topic ${Date.now()}`);
-    await page.locator('select[name="category"]').selectOption('Software');
-    await page.locator('.ql-editor').click();
-    await page.locator('button.ql-code-block').click();
-    const languagePicker = page.locator('.ql-code-block-container select.ql-ui');
-    await expect(languagePicker).toBeVisible();
-    await expect(languagePicker.locator('option')).toHaveCount(14);
-    await languagePicker.selectOption('javascript');
-    await expect(languagePicker).toHaveValue('javascript');
-    await page.locator('.ql-editor').fill('Topic created by the isolated Playwright test account.');
-    await page.locator('button[type="submit"]').click();
-    await expect(page).toHaveURL(/\/topic\/\d+/, { timeout: 15_000 });
+    let created = false;
+    try {
+      await page.locator('input[name="title"]').fill(`Playwright topic ${Date.now()}`);
+      await page.locator('select[name="category"]').selectOption('Software');
+      await page.locator('.ql-editor').click();
+      await page.locator('button.ql-code-block').click();
+      const languagePicker = page.locator('.ql-code-block-container select.ql-ui');
+      await expect(languagePicker).toBeVisible();
+      await expect(languagePicker.locator('option')).toHaveCount(14);
+      await languagePicker.selectOption('javascript');
+      await expect(languagePicker).toHaveValue('javascript');
+      await page.locator('.ql-editor').fill('Topic created by the isolated Playwright test account.');
+      await page.locator('button[type="submit"]').click();
+      await expect(page).toHaveURL(/\/topic\/\d+/, { timeout: 15_000 });
+      created = true;
+    } finally {
+      if (created) {
+        await page.getByRole('button', { name: '🗑️ ลบกระทู้นี้' }).click();
+        await expect(page).toHaveURL((url) => url.pathname === '/');
+      }
+    }
   });
 
   test('opens a search result without returning to the search page', async ({ page }) => {
@@ -56,8 +65,8 @@ test.describe('ByteBoard critical flows', () => {
     const topicPath = await result.getAttribute('href');
     await result.click();
     await expect(page).toHaveURL((url) => url.pathname === topicPath);
-    await page.waitForTimeout(750);
     await expect(page).toHaveURL((url) => url.pathname === topicPath);
+    await expect(page.getByRole('heading', { level: 1, name: title })).toBeVisible();
     await expect(page.locator('input[aria-label="ค้นหากระทู้"]:visible')).toHaveValue('');
   });
 
@@ -118,6 +127,56 @@ test.describe('ByteBoard critical flows', () => {
     await expect(page.getByRole('dialog', { name: 'ITHub Bot' })).toBeVisible();
   });
 
+  test('keeps desktop content clear of the collapsed sidebar', async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await page.goto('/help');
+    const sidebarBox = await page.locator('aside').boundingBox();
+    const mainBox = await page.locator('#main-content').boundingBox();
+    expect(sidebarBox).not.toBeNull();
+    expect(mainBox).not.toBeNull();
+    expect(sidebarBox.x + sidebarBox.width).toBeLessThanOrEqual(mainBox.x);
+  });
+
+  test('requires authentication for Pusher channel subscriptions', async ({ page }) => {
+    const signedOutResponse = await page.request.post('/api/pusher/auth', {
+      form: { socket_id: '123.456', channel_name: 'private-user-1' },
+    });
+    expect(signedOutResponse.status()).toBe(401);
+  });
+
+  test('authorizes only the current user Pusher channel', async ({ page }) => {
+    test.skip(!email || !password, 'Set ITHUB_E2E_EMAIL and ITHUB_E2E_PASSWORD');
+    await login(page);
+    const bell = page.getByRole('button', { name: 'เปิดการแจ้งเตือน' });
+    const userId = await bell.getAttribute('data-user-id');
+    expect(userId).toMatch(/^\d+$/);
+
+    const forbiddenResponse = await page.request.post('/api/pusher/auth', {
+      form: { socket_id: '123.456', channel_name: 'private-user-999999999' },
+    });
+    expect(forbiddenResponse.status()).toBe(403);
+
+    const ownChannelResponse = await page.request.post('/api/pusher/auth', {
+      form: { socket_id: '123.456', channel_name: `private-user-${userId}` },
+    });
+    expect(ownChannelResponse.status()).toBe(200);
+  });
+
+  test('does not partially update a profile when the old password is wrong', async ({ page }) => {
+    test.skip(!email || !password, 'Set ITHUB_E2E_EMAIL and ITHUB_E2E_PASSWORD');
+    await login(page);
+    await page.goto('/profile/edit');
+    const usernameInput = page.locator('input[name="username"]');
+    const originalUsername = await usernameInput.inputValue();
+    await usernameInput.fill(`pwcheck_${Date.now()}`.slice(0, 40));
+    await page.locator('input[name="oldPassword"]').fill('definitely-not-the-current-password');
+    await page.locator('input[name="newPassword"]').fill('Temporary-password-123');
+    await page.locator('input[name="confirmNewPassword"]').fill('Temporary-password-123');
+    await page.getByRole('button', { name: 'บันทึกการแก้ไข' }).click();
+    await expect(page).toHaveURL(/notify=wrong_old_password/);
+    await expect(page.locator('input[name="username"]')).toHaveValue(originalUsername);
+  });
+
   test('keeps engagement controls disabled for signed-out users', async ({ page }) => {
     await page.goto('/');
     const firstTopic = page.locator('section a[href^="/topic/"]').first();
@@ -138,7 +197,7 @@ test.describe('ByteBoard critical flows', () => {
   });
 
   test('toggles likes and bookmarks without leaving the topic', async ({ page }) => {
-    test.skip(!email || !password, 'Set BYTEBOARD_E2E_EMAIL and BYTEBOARD_E2E_PASSWORD');
+    test.skip(!email || !password, 'Set ITHUB_E2E_EMAIL and ITHUB_E2E_PASSWORD');
     await login(page);
     const firstTopic = page.locator('section a[href^="/topic/"]').first();
     test.skip(await firstTopic.count() === 0, 'The test database has no topics');

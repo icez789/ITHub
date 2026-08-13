@@ -13,7 +13,7 @@ import 'highlight.js/styles/atom-one-dark.css';
 import { Analytics } from '@vercel/analytics/react';
 
 export const metadata = {
-  title: "IT Hub",
+  title: "ITHub",
   description: "ชุมชนไอที วิทยาลัยเทคนิคเชียงใหม่",
 };
 
@@ -45,7 +45,7 @@ export default function RootLayout({ children }) {
               
               <Suspense fallback={null}><Sidebar /></Suspense>
 
-              <div className="flex-1 flex flex-col h-screen overflow-hidden">
+              <div className="flex-1 flex flex-col h-screen overflow-hidden md:ml-16">
                   
                   <Navbar />
                   

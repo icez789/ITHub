@@ -44,7 +44,7 @@ export default function Editor({ defaultValue = '', className = 'h-64 mb-12' }) 
   const [value, setValue] = useState(defaultValue);
 
   return (
-    <div className="byteboard-editor w-full relative">
+    <div className="ithub-editor w-full relative">
       <ReactQuill
         theme="snow"
         value={value}
