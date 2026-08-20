@@ -10,6 +10,23 @@ export const ONBOARDING_STORAGE_KEY = 'ithub_onboarding_v2';
 const TARGET_TIMEOUT_MS = 3500;
 const SPOTLIGHT_MARGIN = 8;
 const SPOTLIGHT_PADDING = 10;
+const TOUR_SHADE_BACKDROP = 'blur(10px) saturate(0.6) brightness(0.72)';
+const TOUR_SHADE_STYLE = {
+  backgroundColor: 'rgba(3, 7, 18, 0.58)',
+  backdropFilter: TOUR_SHADE_BACKDROP,
+  WebkitBackdropFilter: TOUR_SHADE_BACKDROP,
+};
+const TOUR_SHADE_FALLBACK_STYLE = {
+  backgroundColor: 'rgba(3, 7, 18, 0.82)',
+};
+const SPOTLIGHT_GUARD_STYLE = {
+  backgroundColor: 'transparent',
+  boxShadow: [
+    '0 0 0 3px rgba(255, 255, 255, 0.9)',
+    '0 0 0 7px rgba(220, 38, 38, 0.72)',
+    '0 0 34px 10px rgba(239, 68, 68, 0.42)',
+  ].join(', '),
+};
 
 const steps = [
   {
@@ -170,10 +187,10 @@ function findTopicUrl() {
 
 function createSpotlightRect(element) {
   const rect = element.getBoundingClientRect();
-  const left = Math.max(SPOTLIGHT_MARGIN, rect.left - SPOTLIGHT_PADDING);
-  const top = Math.max(SPOTLIGHT_MARGIN, rect.top - SPOTLIGHT_PADDING);
-  const right = Math.min(window.innerWidth - SPOTLIGHT_MARGIN, rect.right + SPOTLIGHT_PADDING);
-  const bottom = Math.min(window.innerHeight - SPOTLIGHT_MARGIN, rect.bottom + SPOTLIGHT_PADDING);
+  const left = Math.floor(Math.max(SPOTLIGHT_MARGIN, rect.left - SPOTLIGHT_PADDING));
+  const top = Math.floor(Math.max(SPOTLIGHT_MARGIN, rect.top - SPOTLIGHT_PADDING));
+  const right = Math.ceil(Math.min(window.innerWidth - SPOTLIGHT_MARGIN, rect.right + SPOTLIGHT_PADDING));
+  const bottom = Math.ceil(Math.min(window.innerHeight - SPOTLIGHT_MARGIN, rect.bottom + SPOTLIGHT_PADDING));
 
   return {
     left,
@@ -183,6 +200,12 @@ function createSpotlightRect(element) {
     width: Math.max(1, right - left),
     height: Math.max(1, bottom - top),
   };
+}
+
+function supportsTourBackdropFilter() {
+  if (typeof window === 'undefined' || !window.CSS?.supports) return false;
+  return window.CSS.supports('backdrop-filter', 'blur(1px)')
+    || window.CSS.supports('-webkit-backdrop-filter', 'blur(1px)');
 }
 
 function getTooltipPosition(target, tooltip) {
@@ -233,21 +256,52 @@ function getTooltipPosition(target, tooltip) {
 
 function OverlayPanels({ rect }) {
   const transition = { duration: 0.28, ease: 'easeOut' };
+  const hasBackdropFilter = supportsTourBackdropFilter();
+  const shadeStyle = hasBackdropFilter ? TOUR_SHADE_STYLE : TOUR_SHADE_FALLBACK_STYLE;
+  const shadeMode = hasBackdropFilter ? 'blur' : 'fallback';
+
   if (!rect) {
-    return <div className="ithub-tour-shade pointer-events-auto fixed inset-0 z-[1]" data-tour-overlay="fallback" />;
+    return (
+      <div
+        className="ithub-tour-shade pointer-events-auto fixed inset-0 z-[1]"
+        data-tour-overlay="fallback"
+        data-tour-shade-mode={shadeMode}
+        style={shadeStyle}
+      />
+    );
   }
 
   return (
     <>
-      <motion.div className="ithub-tour-shade pointer-events-auto fixed left-0 right-0 top-0 z-[1]" animate={{ height: rect.top }} transition={transition} />
-      <motion.div className="ithub-tour-shade pointer-events-auto fixed bottom-0 left-0 right-0 z-[1]" animate={{ top: rect.bottom }} transition={transition} />
+      <motion.div
+        className="ithub-tour-shade pointer-events-auto fixed left-0 right-0 top-0 z-[1]"
+        data-tour-overlay="shade"
+        data-tour-shade-mode={shadeMode}
+        style={shadeStyle}
+        animate={{ height: rect.top }}
+        transition={transition}
+      />
+      <motion.div
+        className="ithub-tour-shade pointer-events-auto fixed bottom-0 left-0 right-0 z-[1]"
+        data-tour-overlay="shade"
+        data-tour-shade-mode={shadeMode}
+        style={shadeStyle}
+        animate={{ top: rect.bottom }}
+        transition={transition}
+      />
       <motion.div
         className="ithub-tour-shade pointer-events-auto fixed left-0 z-[1]"
+        data-tour-overlay="shade"
+        data-tour-shade-mode={shadeMode}
+        style={shadeStyle}
         animate={{ top: rect.top, width: rect.left, height: rect.height }}
         transition={transition}
       />
       <motion.div
         className="ithub-tour-shade pointer-events-auto fixed right-0 z-[1]"
+        data-tour-overlay="shade"
+        data-tour-shade-mode={shadeMode}
+        style={shadeStyle}
         animate={{ top: rect.top, left: rect.right, height: rect.height }}
         transition={transition}
       />
@@ -542,6 +596,7 @@ export default function OnboardingProvider({ children }) {
             <motion.div
               className="ithub-tour-spotlight-guard pointer-events-auto fixed z-[2] rounded-2xl border-2 border-red-500"
               aria-hidden="true"
+              style={SPOTLIGHT_GUARD_STYLE}
               animate={{
                 left: targetRect.left,
                 top: targetRect.top,
