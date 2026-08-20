@@ -27,7 +27,7 @@ export default function TopicEngagementActions({
   const [bookmarkState, submitBookmark, bookmarkPending] = useActionState(bookmarkAction, null);
 
   return (
-    <div className="mt-8 flex flex-wrap items-center gap-4">
+    <div className="mt-8 flex flex-wrap items-center gap-4" data-tour="engagement-actions">
       <form action={submitLike}>
         <button
           type="submit"

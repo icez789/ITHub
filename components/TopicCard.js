@@ -24,8 +24,9 @@ export default function TopicCard({ id, title, username, created_at, image_url, 
       whileTap={{ scale: 0.98 }} // ตอนกดให้ยุบลงนิดนึง
       
       className="h-full"
+      data-tour="topic-card"
     >
-      <Link href={`/topic/${id}`}>
+      <Link href={`/topic/${id}`} data-tour="topic-link">
         {/* เพิ่ม transition-all เพื่อให้สีขอบเปลี่ยนนุ่มนวล */}
         <div className="bg-white rounded-xl border border-gray-200 p-5 h-full flex flex-col relative overflow-hidden group transition-all duration-300 
                         hover:border-red-500 dark:bg-neutral-900 dark:border-neutral-800 dark:hover:border-red-500">

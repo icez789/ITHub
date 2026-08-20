@@ -2,7 +2,24 @@ import { test, expect } from '@playwright/test';
 
 const email = process.env.ITHUB_E2E_EMAIL;
 const password = process.env.ITHUB_E2E_PASSWORD;
-const onboardingStorageKey = 'ithub_onboarding_v1';
+const onboardingStorageKey = 'ithub_onboarding_v2';
+
+function onboarding(page) {
+  const root = page.locator('[data-tour-root="true"]');
+  return {
+    root,
+    dialog: root.getByRole('dialog'),
+    spotlight: root.locator('.ithub-tour-spotlight-guard'),
+  };
+}
+
+async function expectTourStep(page, id, heading) {
+  const tour = onboarding(page);
+  await expect(tour.root).toHaveAttribute('data-tour-step', id);
+  await expect(tour.dialog.getByRole('heading', { name: heading })).toBeVisible();
+  await expect(tour.dialog.getByRole('button', { name: id === 'ai-safety' ? 'เริ่มใช้งาน' : 'ถัดไป' })).toBeEnabled();
+  return tour;
+}
 
 async function login(page) {
   await page.goto('/login');
@@ -21,34 +38,54 @@ test.describe('ITHub onboarding', () => {
 
   test('shows once and remembers when the user dismisses it', async ({ page }) => {
     await page.goto('/help');
-    const dialog = page.locator('dialog.onboarding-dialog');
+    const tour = await expectTourStep(page, 'search', 'ค้นหากระทู้ที่ตรงกับคุณ');
 
-    await expect(dialog).toBeVisible();
-    await expect(dialog.getByRole('heading', { name: 'เริ่มใช้งานได้ในไม่กี่นาที' })).toBeVisible();
-    await expect(dialog.getByText('ขั้นตอน 1 จาก 4')).toBeVisible();
-    await dialog.getByRole('button', { name: 'ปิดคำแนะนำ' }).click();
-    await expect(dialog).not.toBeVisible();
+    await expect(page).toHaveURL('/');
+    await expect(tour.dialog.getByText('ขั้นตอน 1 จาก 6')).toBeVisible();
+    await expect(tour.spotlight).toBeVisible();
+    await expect.poll(() => page.locator('[data-tour-app-shell="true"]').evaluate((element) => element.inert)).toBe(true);
+
+    const spotlightBox = await tour.spotlight.boundingBox();
+    expect(spotlightBox).not.toBeNull();
+    await expect.poll(() => page.evaluate(({ x, y }) => {
+      return Boolean(document.elementFromPoint(x, y)?.closest('.ithub-tour-spotlight-guard'));
+    }, {
+      x: spotlightBox.x + spotlightBox.width / 2,
+      y: spotlightBox.y + spotlightBox.height / 2,
+    })).toBe(true);
+
+    await tour.dialog.getByRole('button', { name: 'ปิดคำแนะนำ' }).click();
+    await expect(tour.dialog).not.toBeVisible();
+    await expect(page).toHaveURL('/help');
     await expect.poll(() => page.evaluate((key) => localStorage.getItem(key), onboardingStorageKey)).toBe('dismissed');
 
     await page.reload();
-    await expect(dialog).not.toBeVisible();
+    await expect(tour.dialog).not.toBeVisible();
   });
 
-  test('moves through all four steps and records completion', async ({ page }) => {
-    await page.goto('/');
-    const dialog = page.locator('dialog.onboarding-dialog');
+  test('moves across the six spotlight steps, restores the start URL, and records completion', async ({ page }) => {
+    await page.goto('/help?tour=playwright#getting-started');
+    const initialHistoryLength = await page.evaluate(() => history.length);
 
-    await expect(dialog.getByRole('heading', { name: 'ค้นหากระทู้ที่ตรงกับคุณ' })).toBeVisible();
-    await dialog.getByRole('button', { name: 'ถัดไป' }).click();
-    await expect(dialog.getByRole('heading', { name: 'สร้างกระทู้ให้ชุมชนช่วยกันตอบ' })).toBeVisible();
-    await dialog.getByRole('button', { name: 'ถัดไป' }).click();
-    await expect(dialog.getByRole('heading', { name: 'พูดคุย ถูกใจ และเก็บไว้อ่าน' })).toBeVisible();
-    await dialog.getByRole('button', { name: 'ถัดไป' }).click();
-    await expect(dialog.getByRole('heading', { name: 'จัดการโปรไฟล์และดูแลชุมชนร่วมกัน' })).toBeVisible();
-    await dialog.getByRole('button', { name: 'เริ่มใช้งาน' }).click();
+    let tour = await expectTourStep(page, 'search', 'ค้นหากระทู้ที่ตรงกับคุณ');
+    await tour.dialog.getByRole('button', { name: 'ถัดไป' }).click();
+    tour = await expectTourStep(page, 'explore', 'เลือกดูกระทู้ที่น่าสนใจ');
+    const hasTutorialTopic = await page.locator('[data-tour="topic-link"]').count() > 0;
+    await tour.dialog.getByRole('button', { name: 'ถัดไป' }).click();
+    tour = await expectTourStep(page, 'create', 'เข้าสู่ระบบแล้วสร้างกระทู้');
+    await tour.dialog.getByRole('button', { name: 'ถัดไป' }).click();
+    tour = await expectTourStep(page, 'engage', 'ถูกใจและบันทึกเก็บไว้');
+    await expect(page).toHaveURL(hasTutorialTopic ? /\/topic\/\d+$/ : /\/$/);
+    await tour.dialog.getByRole('button', { name: 'ถัดไป' }).click();
+    tour = await expectTourStep(page, 'personal', 'โปรไฟล์และการแจ้งเตือน');
+    await tour.dialog.getByRole('button', { name: 'ถัดไป' }).click();
+    tour = await expectTourStep(page, 'ai-safety', 'ใช้ ITHub Bot อย่างเหมาะสม');
+    await tour.dialog.getByRole('button', { name: 'เริ่มใช้งาน' }).click();
 
-    await expect(dialog).not.toBeVisible();
+    await expect(tour.dialog).not.toBeVisible();
+    await expect(page).toHaveURL('/help?tour=playwright#getting-started');
     await expect.poll(() => page.evaluate((key) => localStorage.getItem(key), onboardingStorageKey)).toBe('completed');
+    await expect.poll(() => page.evaluate(() => history.length)).toBe(initialHistoryLength);
   });
 
   test('can be reopened from help and restores focus after Escape', async ({ page }) => {
@@ -58,34 +95,76 @@ test.describe('ITHub onboarding', () => {
     await page.goto('/help');
 
     const launcher = page.getByRole('button', { name: 'เปิดคำแนะนำอีกครั้ง' });
-    const dialog = page.locator('dialog.onboarding-dialog');
-    await expect(dialog).not.toBeVisible();
+    const tour = onboarding(page);
+    await expect(tour.dialog).not.toBeVisible();
     await launcher.focus();
     await launcher.click();
-    await expect(dialog).toBeVisible();
+    await expectTourStep(page, 'search', 'ค้นหากระทู้ที่ตรงกับคุณ');
 
     for (let index = 0; index < 8; index += 1) await page.keyboard.press('Tab');
     await expect.poll(() => page.evaluate(() => {
-      const activeDialog = document.querySelector('.onboarding-dialog');
+      const activeDialog = document.querySelector('[data-tour-root="true"] [role="dialog"]');
       return activeDialog?.contains(document.activeElement) ?? false;
     })).toBe(true);
 
     await page.keyboard.press('Escape');
-    await expect(dialog).not.toBeVisible();
+    await expect(tour.dialog).not.toBeVisible();
+    await expect(page).toHaveURL('/help');
     await expect(launcher).toBeFocused();
   });
 
   test('fits within a mobile viewport without horizontal overflow', async ({ page }) => {
+    await page.addInitScript(() => window.localStorage.setItem('theme', 'dark'));
     await page.setViewportSize({ width: 375, height: 812 });
     await page.goto('/help');
-    const dialog = page.locator('dialog.onboarding-dialog');
-    await expect(dialog).toBeVisible();
-    const box = await dialog.boundingBox();
+    const tour = await expectTourStep(page, 'search', 'ค้นหากระทู้ที่ตรงกับคุณ');
+    const box = await tour.dialog.boundingBox();
+    const spotlightBox = await tour.spotlight.boundingBox();
 
     expect(box).not.toBeNull();
+    expect(spotlightBox).not.toBeNull();
     expect(box.x).toBeGreaterThanOrEqual(0);
     expect(box.x + box.width).toBeLessThanOrEqual(375);
+    expect(spotlightBox.x).toBeGreaterThanOrEqual(0);
+    expect(spotlightBox.x + spotlightBox.width).toBeLessThanOrEqual(375);
+    await expect(page.locator('html')).toHaveClass(/dark/);
+    await expect.poll(() => tour.dialog.evaluate((element) => getComputedStyle(element).backgroundColor)).not.toBe('rgb(255, 255, 255)');
     await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth)).toBe(375);
+  });
+
+  test('falls back gracefully when a spotlight target is unavailable', async ({ page }) => {
+    await page.goto('/');
+    const tour = await expectTourStep(page, 'search', 'ค้นหากระทู้ที่ตรงกับคุณ');
+    await page.locator('[data-tour="topic-card"]').evaluateAll((elements) => {
+      for (const element of elements) element.style.display = 'none';
+    });
+    await page.locator('[data-tour="topic-list"]').evaluateAll((elements) => {
+      for (const element of elements) element.style.display = 'none';
+    });
+
+    await tour.dialog.getByRole('button', { name: 'ถัดไป' }).click();
+    await expect(tour.root).toHaveAttribute('data-tour-step', 'explore');
+    await expect(tour.root).toHaveAttribute('data-tour-fallback', 'true', { timeout: 5_000 });
+    await expect(tour.dialog.getByText(/ยังไม่พบส่วนนี้/)).toBeVisible();
+    await expect(tour.dialog.getByRole('button', { name: 'ถัดไป' })).toBeEnabled();
+  });
+
+  test('spotlights the member create action when authenticated', async ({ page }) => {
+    test.skip(!email || !password, 'Set ITHUB_E2E_EMAIL and ITHUB_E2E_PASSWORD');
+    await page.addInitScript((storageKey) => {
+      window.localStorage.setItem(storageKey, 'completed');
+    }, onboardingStorageKey);
+    await login(page);
+    await page.goto('/help');
+    await page.getByRole('button', { name: 'เปิดคำแนะนำอีกครั้ง' }).click();
+
+    let tour = await expectTourStep(page, 'search', 'ค้นหากระทู้ที่ตรงกับคุณ');
+    await tour.dialog.getByRole('button', { name: 'ถัดไป' }).click();
+    tour = await expectTourStep(page, 'explore', 'เลือกดูกระทู้ที่น่าสนใจ');
+    await tour.dialog.getByRole('button', { name: 'ถัดไป' }).click();
+    tour = await expectTourStep(page, 'create', 'เข้าสู่ระบบแล้วสร้างกระทู้');
+    await expect(page.locator('[data-tour="create-topic"]:visible').first()).toBeVisible();
+    await expect(tour.spotlight).toBeVisible();
   });
 });
 

@@ -32,13 +32,24 @@
   outline-offset: 3px;
 }
 
-.onboarding-dialog::backdrop {
-  background: rgba(0, 0, 0, 0.72);
-  backdrop-filter: blur(4px);
+.ithub-tour-shade {
+  background: rgb(3 7 18 / 0.72);
+  backdrop-filter: blur(5px) saturate(0.7);
+  -webkit-backdrop-filter: blur(5px) saturate(0.7);
 }
 
-.onboarding-dialog[open] {
-  display: block;
+.ithub-tour-spotlight-guard {
+  background: transparent;
+  box-shadow:
+    0 0 0 3px rgb(255 255 255 / 0.9),
+    0 0 0 7px rgb(220 38 38 / 0.72),
+    0 0 34px 10px rgb(239 68 68 / 0.42);
+}
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .ithub-tour-shade {
+    background: rgb(3 7 18 / 0.88);
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

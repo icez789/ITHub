@@ -168,7 +168,7 @@ export default async function HomePage({ searchParams }) {
               </div>
           </div>
 
-          <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
+          <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 mb-12" data-tour="topic-list">
             {topics.length > 0 ? (
               topics.map((topic, index) => (
                 <TopicCard 

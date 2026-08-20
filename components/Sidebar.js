@@ -83,7 +83,7 @@ export default function Sidebar() {
         <p className="px-3 mb-2 text-xs font-bold text-gray-400 uppercase tracking-wider opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity duration-300 whitespace-nowrap dark:text-neutral-500">
           พื้นที่ของฉัน
         </p>
-        <nav aria-label="พื้นที่ส่วนตัว" className="space-y-1">
+        <nav aria-label="พื้นที่ส่วนตัว" className="space-y-1" data-tour="personal-nav">
           {personalMenus.map((item) => <SidebarItem key={item.label} {...item} />)}
         </nav>
 

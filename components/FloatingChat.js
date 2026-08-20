@@ -70,7 +70,7 @@ export default function FloatingChat() {
   };
 
   return (
-    <div className="fixed bottom-20 right-4 z-50 flex flex-col items-end md:bottom-6 md:right-6">
+    <div className="fixed bottom-20 right-4 z-50 flex flex-col items-end md:bottom-6 md:right-6" data-tour="ai-chat">
       
       {isOpen && (
         <div

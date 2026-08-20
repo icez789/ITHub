@@ -53,7 +53,7 @@ function SearchInputForRoute({ pathname, queryString, initialSearch, className }
   };
 
   return (
-    <div className={`relative ${className}`}>
+    <div className={`relative ${className}`} data-tour="search">
       <input
         type="search"
         value={text}

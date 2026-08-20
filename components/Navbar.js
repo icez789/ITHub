@@ -42,7 +42,7 @@ export default async function Navbar() {
       <SearchInput className="hidden md:block flex-1 max-w-xl" />
 
       {/* Menu Icons */}
-      <nav aria-label="บัญชีผู้ใช้" className="ml-auto flex gap-2 sm:gap-3 items-center">
+      <nav aria-label="บัญชีผู้ใช้" className="ml-auto flex gap-2 sm:gap-3 items-center" data-tour="account-area">
         
         <ThemeToggle />
 
@@ -68,6 +68,7 @@ export default async function Navbar() {
               {/* ปุ่มสร้างกระทู้ */}
               <Link 
                 href="/create" 
+                data-tour="create-topic"
                 className="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white px-3 sm:px-4 py-2 rounded-lg font-bold shadow-md transition-all transform hover:scale-105 active:scale-95 text-sm"
               >
                 <span>+</span> <span className="hidden sm:inline">สร้างกระทู้</span>
@@ -98,7 +99,7 @@ export default async function Navbar() {
           /* กรณีไม่ได้ Login */
           <>
             <Link href="/register" className="hidden sm:inline-flex text-gray-600 hover:text-red-600 font-medium px-3 py-2 transition-colors dark:text-gray-300">สมัครสมาชิก</Link>
-            <Link href="/login" className="whitespace-nowrap bg-red-600 hover:bg-red-700 text-white px-3 sm:px-5 py-2 rounded-md text-sm font-medium shadow-md transition-all hover:shadow-red-500/30">เข้าสู่ระบบ</Link>
+            <Link href="/login" data-tour="auth-action" className="whitespace-nowrap bg-red-600 hover:bg-red-700 text-white px-3 sm:px-5 py-2 rounded-md text-sm font-medium shadow-md transition-all hover:shadow-red-500/30">เข้าสู่ระบบ</Link>
           </>
         )}
       </nav>
