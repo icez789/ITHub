@@ -8,6 +8,7 @@ import Sidebar from "../components/Sidebar";
 import NextTopLoader from 'nextjs-toploader'; 
 import FloatingChat from "../components/FloatingChat"; // ✅ 1. Import แชทบอทเข้ามา
 import Footer from "../components/Footer";
+import OnboardingProvider from "../components/OnboardingProvider";
 import { Suspense } from "react";
 import 'highlight.js/styles/atom-one-dark.css';
 import { Analytics } from '@vercel/analytics/react';
@@ -38,6 +39,7 @@ export default function RootLayout({ children }) {
         />
 
         <ThemeProvider>
+          <OnboardingProvider>
            <GlobalClickEffect /> 
            <ToastProvider />
            
@@ -61,6 +63,8 @@ export default function RootLayout({ children }) {
 
            {/* ✅ 2. ฝัง FloatingChat ไว้ตรงนี้ เพื่อให้ลอยอยู่เหนือทุกสิ่ง และเปลี่ยนสีตาม Theme ได้ */}
            <FloatingChat />
+
+          </OnboardingProvider>
 
         </ThemeProvider>
         <Analytics />

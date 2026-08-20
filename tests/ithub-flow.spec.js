@@ -2,6 +2,7 @@ import { test, expect } from '@playwright/test';
 
 const email = process.env.ITHUB_E2E_EMAIL;
 const password = process.env.ITHUB_E2E_PASSWORD;
+const onboardingStorageKey = 'ithub_onboarding_v1';
 
 async function login(page) {
   await page.goto('/login');
@@ -11,7 +12,90 @@ async function login(page) {
   await expect(page).toHaveURL(/\/?(?:\?notify=login_success)?$/);
 }
 
+test.describe('ITHub onboarding', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.addInitScript((storageKey) => {
+      window.localStorage.removeItem(storageKey);
+    }, onboardingStorageKey);
+  });
+
+  test('shows once and remembers when the user dismisses it', async ({ page }) => {
+    await page.goto('/help');
+    const dialog = page.locator('dialog.onboarding-dialog');
+
+    await expect(dialog).toBeVisible();
+    await expect(dialog.getByRole('heading', { name: 'เริ่มใช้งานได้ในไม่กี่นาที' })).toBeVisible();
+    await expect(dialog.getByText('ขั้นตอน 1 จาก 4')).toBeVisible();
+    await dialog.getByRole('button', { name: 'ปิดคำแนะนำ' }).click();
+    await expect(dialog).not.toBeVisible();
+    await expect.poll(() => page.evaluate((key) => localStorage.getItem(key), onboardingStorageKey)).toBe('dismissed');
+
+    await page.reload();
+    await expect(dialog).not.toBeVisible();
+  });
+
+  test('moves through all four steps and records completion', async ({ page }) => {
+    await page.goto('/');
+    const dialog = page.locator('dialog.onboarding-dialog');
+
+    await expect(dialog.getByRole('heading', { name: 'ค้นหากระทู้ที่ตรงกับคุณ' })).toBeVisible();
+    await dialog.getByRole('button', { name: 'ถัดไป' }).click();
+    await expect(dialog.getByRole('heading', { name: 'สร้างกระทู้ให้ชุมชนช่วยกันตอบ' })).toBeVisible();
+    await dialog.getByRole('button', { name: 'ถัดไป' }).click();
+    await expect(dialog.getByRole('heading', { name: 'พูดคุย ถูกใจ และเก็บไว้อ่าน' })).toBeVisible();
+    await dialog.getByRole('button', { name: 'ถัดไป' }).click();
+    await expect(dialog.getByRole('heading', { name: 'จัดการโปรไฟล์และดูแลชุมชนร่วมกัน' })).toBeVisible();
+    await dialog.getByRole('button', { name: 'เริ่มใช้งาน' }).click();
+
+    await expect(dialog).not.toBeVisible();
+    await expect.poll(() => page.evaluate((key) => localStorage.getItem(key), onboardingStorageKey)).toBe('completed');
+  });
+
+  test('can be reopened from help and restores focus after Escape', async ({ page }) => {
+    await page.addInitScript((storageKey) => {
+      window.localStorage.setItem(storageKey, 'completed');
+    }, onboardingStorageKey);
+    await page.goto('/help');
+
+    const launcher = page.getByRole('button', { name: 'เปิดคำแนะนำอีกครั้ง' });
+    const dialog = page.locator('dialog.onboarding-dialog');
+    await expect(dialog).not.toBeVisible();
+    await launcher.focus();
+    await launcher.click();
+    await expect(dialog).toBeVisible();
+
+    for (let index = 0; index < 8; index += 1) await page.keyboard.press('Tab');
+    await expect.poll(() => page.evaluate(() => {
+      const activeDialog = document.querySelector('.onboarding-dialog');
+      return activeDialog?.contains(document.activeElement) ?? false;
+    })).toBe(true);
+
+    await page.keyboard.press('Escape');
+    await expect(dialog).not.toBeVisible();
+    await expect(launcher).toBeFocused();
+  });
+
+  test('fits within a mobile viewport without horizontal overflow', async ({ page }) => {
+    await page.setViewportSize({ width: 375, height: 812 });
+    await page.goto('/help');
+    const dialog = page.locator('dialog.onboarding-dialog');
+    await expect(dialog).toBeVisible();
+    const box = await dialog.boundingBox();
+
+    expect(box).not.toBeNull();
+    expect(box.x).toBeGreaterThanOrEqual(0);
+    expect(box.x + box.width).toBeLessThanOrEqual(375);
+    await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth)).toBe(375);
+  });
+});
+
 test.describe('ITHub critical flows', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.addInitScript((storageKey) => {
+      window.localStorage.setItem(storageKey, 'completed');
+    }, onboardingStorageKey);
+  });
+
   test('opens the AI chat without calling the external model', async ({ page }) => {
     await page.goto('/help');
     await page.getByRole('button', { name: 'Open AI chat' }).click();
@@ -93,6 +177,10 @@ test.describe('ITHub critical flows', () => {
       await page.goto(path);
       await expect(page.getByRole('heading', { level: 1, name: heading })).toBeVisible();
     }
+
+    await page.goto('/help');
+    await expect(page.getByRole('heading', { name: 'คู่มือ ITHub ใน 4 ขั้นตอน' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'เปิดคำแนะนำอีกครั้ง' })).toBeVisible();
   });
 
   test('filters the AI and Data category with an encoded query', async ({ page }) => {

@@ -1,9 +1,69 @@
 import Link from 'next/link';
+import OnboardingLauncher from '../../components/OnboardingLauncher';
 
 export const metadata = {
-  title: 'ศูนย์ช่วยเหลือ | ITHub',
-  description: 'คำถามที่พบบ่อยและช่องทางติดต่อทีมงาน ITHub',
+  title: 'คู่มือและศูนย์ช่วยเหลือ | ITHub',
+  description: 'คู่มือเริ่มต้นใช้งาน คำถามที่พบบ่อย และช่องทางติดต่อทีมงาน ITHub',
 };
+
+const guideSections = [
+  {
+    id: 'discover',
+    step: '01',
+    icon: '🔎',
+    title: 'ค้นหาและสำรวจกระทู้',
+    description: 'ใช้ช่องค้นหาด้านบนเพื่อค้นจากหัวข้อหรือเนื้อหา เลือกเมนูมาแรงเพื่อดูเรื่องที่ชุมชนสนใจ หรือกรองตามหมวดหมู่จาก Sidebar',
+    items: [
+      'หน้าแรกเรียงกระทู้ล่าสุดให้โดยอัตโนมัติ และเปลี่ยนเป็นยอดนิยมหรือมาแรงได้',
+      'หมวดหมู่หลักประกอบด้วย Hardware, Software, Network, AI & Data และ General',
+      'กดการ์ดผลการค้นหาเพื่อเปิดรายละเอียดกระทู้โดยตรง',
+    ],
+    tip: 'หากยังไม่แน่ใจว่าควรค้นคำใด ลองเริ่มจากชื่ออุปกรณ์ โปรแกรม หรือข้อความผิดพลาดที่พบ',
+    action: { href: '/', label: 'สำรวจกระทู้' },
+  },
+  {
+    id: 'create',
+    step: '02',
+    icon: '✍️',
+    title: 'สมัครสมาชิกและสร้างกระทู้',
+    description: 'สมัครสมาชิกหรือเข้าสู่ระบบ จากนั้นเลือก “สร้างกระทู้” ระบุหัวข้อ หมวดหมู่ และรายละเอียดที่ช่วยให้ผู้อื่นเข้าใจปัญหาได้ครบถ้วน',
+    items: [
+      'ตั้งหัวข้อให้กระชับ เช่น ระบุอุปกรณ์ โปรแกรม หรืออาการที่พบ',
+      'ใช้ตัวแก้ไขข้อความสำหรับรายการ ลิงก์ รูปภาพ และตัวอย่างโค้ด',
+      'สร้างโพลได้เมื่อต้องการรวบรวมความคิดเห็นจากสมาชิก',
+    ],
+    tip: 'ลบรหัสผ่าน เลขประจำตัว ที่อยู่ และข้อมูลลับออกจากภาพหน้าจอหรือข้อความก่อนเผยแพร่เสมอ',
+    action: { href: '/create', label: 'สร้างกระทู้ใหม่' },
+  },
+  {
+    id: 'engage',
+    step: '03',
+    icon: '💬',
+    title: 'ตอบกลับ ถูกใจ และบันทึก',
+    description: 'เมื่อเข้าสู่ระบบแล้ว คุณสามารถร่วมตอบคำถาม กดถูกใจ บันทึกกระทู้ไว้อ่านภายหลัง และติดตามกิจกรรมจากศูนย์แจ้งเตือน',
+    items: [
+      'ตอบด้วยขั้นตอนที่ทดลองจริง พร้อมอธิบายผลลัพธ์และข้อควรระวัง',
+      'เจ้าของกระทู้สามารถเลือกความคิดเห็นที่ช่วยแก้ปัญหาเป็นคำตอบที่ยอมรับ',
+      'เปิดกระทู้ที่บันทึกไว้ได้จากเมนู “บันทึกไว้” ในพื้นที่ส่วนตัว',
+    ],
+    tip: 'สื่อสารอย่างสุภาพและอธิบายเหตุผลเมื่อเสนอแนวทางที่ต่างจากสมาชิกคนอื่น',
+    action: { href: '/notifications', label: 'ดูการแจ้งเตือน' },
+  },
+  {
+    id: 'account-safety',
+    step: '04',
+    icon: '🛡️',
+    title: 'โปรไฟล์ ความปลอดภัย และ AI',
+    description: 'ปรับข้อมูลโปรไฟล์ ดูอันดับสมาชิก และช่วยดูแลชุมชนด้วยการรายงานเนื้อหาที่ไม่เหมาะสม ส่วน ITHub Bot ใช้เพื่อช่วยตั้งต้นการค้นคว้าได้',
+    items: [
+      'ใช้รหัสผ่านที่ไม่ซ้ำกับบริการอื่น และออกจากระบบเมื่อใช้อุปกรณ์สาธารณะ',
+      'รายงานเนื้อหาพร้อมเหตุผลที่กระชับ เพื่อให้ผู้ดูแลตรวจสอบได้รวดเร็ว',
+      'ตรวจสอบคำตอบจาก AI กับเอกสารทางการ โดยเฉพาะคำแนะนำที่มีความเสี่ยง',
+    ],
+    tip: 'อย่าส่งรหัสผ่าน คีย์ API หรือข้อมูลส่วนบุคคลให้ ITHub Bot หรือโพสต์ลงในชุมชน',
+    action: { href: '/profile', label: 'ไปยังโปรไฟล์' },
+  },
+];
 
 const faqs = [
   ['เริ่มสร้างกระทู้อย่างไร?', 'เข้าสู่ระบบแล้วเลือก “สร้างกระทู้” ระบุหัวข้อ หมวดหมู่ และรายละเอียดให้ชัดเจน ก่อนเผยแพร่ควรตรวจข้อมูลส่วนตัวและแหล่งอ้างอิง'],
@@ -16,37 +76,107 @@ const faqs = [
 
 export default function HelpPage() {
   return (
-    <div className="max-w-5xl mx-auto px-6 py-12 md:py-16">
-      <header className="text-center max-w-3xl mx-auto mb-12">
-        <p className="text-sm font-bold uppercase tracking-[0.2em] text-red-600 mb-3">Support</p>
-        <h1 className="text-3xl md:text-5xl font-black text-gray-900 dark:text-white mb-4">ศูนย์ช่วยเหลือ</h1>
-        <p className="text-lg text-gray-600 dark:text-gray-300">ค้นหาคำตอบสำหรับการใช้งานทั่วไป หรือส่งรายละเอียดให้ทีมงานเมื่อพบปัญหา</p>
+    <div className="mx-auto max-w-6xl px-5 py-10 sm:px-6 md:py-16">
+      <header className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-gray-950 via-red-950 to-red-700 px-6 py-10 text-white shadow-xl sm:px-10 md:py-14">
+        <div className="absolute -right-20 -top-24 h-64 w-64 rounded-full bg-red-500/20 blur-3xl" aria-hidden="true" />
+        <div className="relative max-w-3xl">
+          <p className="text-sm font-bold uppercase tracking-[0.2em] text-red-200">Guide & Support</p>
+          <h1 className="mt-3 text-3xl font-black sm:text-4xl md:text-5xl">ศูนย์ช่วยเหลือ</h1>
+          <p className="mt-4 max-w-2xl text-base leading-7 text-gray-200 sm:text-lg">
+            เรียนรู้การใช้งาน ITHub ตั้งแต่ค้นหาความรู้ สร้างกระทู้ ไปจนถึงดูแลบัญชีและใช้งานชุมชนอย่างปลอดภัย
+          </p>
+          <div className="mt-7 flex flex-col gap-3 sm:flex-row">
+            <OnboardingLauncher className="inline-flex items-center justify-center gap-2 rounded-xl bg-white px-5 py-3 font-bold text-red-700 shadow-lg transition hover:bg-red-50" />
+            <a href="#getting-started" className="inline-flex items-center justify-center rounded-xl border border-white/40 px-5 py-3 font-bold transition hover:bg-white/10">
+              อ่านคู่มือทั้งหมด
+            </a>
+          </div>
+        </div>
       </header>
 
-      <section aria-labelledby="quick-help" className="grid sm:grid-cols-3 gap-4 mb-12">
-        <Link href="/create" className="rounded-2xl bg-white dark:bg-neutral-900 border border-gray-200 dark:border-neutral-800 p-6 hover:border-red-400 transition"><span className="text-2xl" aria-hidden="true">✍️</span><h2 id="quick-help" className="font-bold mt-3">สร้างกระทู้</h2><p className="text-sm text-gray-500 mt-1">ถามและแบ่งปันความรู้กับชุมชน</p></Link>
-        <Link href="/notifications" className="rounded-2xl bg-white dark:bg-neutral-900 border border-gray-200 dark:border-neutral-800 p-6 hover:border-red-400 transition"><span className="text-2xl" aria-hidden="true">🔔</span><h2 className="font-bold mt-3">การแจ้งเตือน</h2><p className="text-sm text-gray-500 mt-1">ดูการตอบกลับและกิจกรรมล่าสุด</p></Link>
-        <Link href="/privacy" className="rounded-2xl bg-white dark:bg-neutral-900 border border-gray-200 dark:border-neutral-800 p-6 hover:border-red-400 transition"><span className="text-2xl" aria-hidden="true">🛡️</span><h2 className="font-bold mt-3">ความเป็นส่วนตัว</h2><p className="text-sm text-gray-500 mt-1">ดูวิธีที่เราดูแลข้อมูลของคุณ</p></Link>
+      <nav aria-label="สารบัญคู่มือ" className="mt-8 rounded-2xl border border-gray-200 bg-white p-5 shadow-sm dark:border-neutral-800 dark:bg-neutral-900">
+        <p className="text-sm font-bold text-gray-500 dark:text-gray-400">ไปยังหัวข้อ</p>
+        <ul className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+          {guideSections.map((section) => (
+            <li key={section.id}>
+              <a href={`#${section.id}`} className="flex h-full items-center gap-3 rounded-xl px-3 py-3 font-semibold text-gray-700 transition hover:bg-red-50 hover:text-red-700 dark:text-gray-200 dark:hover:bg-red-950/30 dark:hover:text-red-300">
+                <span aria-hidden="true">{section.icon}</span>
+                <span>{section.title}</span>
+              </a>
+            </li>
+          ))}
+        </ul>
+      </nav>
+
+      <section id="getting-started" aria-labelledby="guide-title" className="scroll-mt-24 pt-14">
+        <div className="max-w-3xl">
+          <p className="text-sm font-bold uppercase tracking-[0.18em] text-red-600">เริ่มต้นใช้งาน</p>
+          <h2 id="guide-title" className="mt-2 text-3xl font-black text-gray-900 dark:text-white">คู่มือ ITHub ใน 4 ขั้นตอน</h2>
+          <p className="mt-3 leading-7 text-gray-600 dark:text-gray-300">อ่านตามลำดับสำหรับการใช้งานครั้งแรก หรือเลือกเฉพาะหัวข้อที่ต้องการจากสารบัญด้านบน</p>
+        </div>
+
+        <div className="mt-8 space-y-6">
+          {guideSections.map((section) => (
+            <article id={section.id} key={section.id} className="scroll-mt-24 overflow-hidden rounded-3xl border border-gray-200 bg-white shadow-sm dark:border-neutral-800 dark:bg-neutral-900">
+              <div className="grid md:grid-cols-[11rem_1fr]">
+                <div className="flex items-center justify-between bg-gray-950 p-6 text-white md:flex-col md:items-start md:justify-start md:p-8">
+                  <span className="text-5xl" aria-hidden="true">{section.icon}</span>
+                  <div className="text-right md:mt-auto md:text-left">
+                    <p className="text-xs font-bold uppercase tracking-[0.18em] text-red-300">ขั้นตอน</p>
+                    <p className="text-4xl font-black text-white">{section.step}</p>
+                  </div>
+                </div>
+                <div className="p-6 sm:p-8">
+                  <h3 className="text-2xl font-black text-gray-900 dark:text-white">{section.title}</h3>
+                  <p className="mt-3 leading-7 text-gray-600 dark:text-gray-300">{section.description}</p>
+                  <ul className="mt-5 space-y-3">
+                    {section.items.map((item) => (
+                      <li key={item} className="flex gap-3 text-sm leading-6 text-gray-700 dark:text-gray-200">
+                        <span className="mt-0.5 text-red-600" aria-hidden="true">✓</span>
+                        <span>{item}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  <div className="mt-6 rounded-xl border-l-4 border-amber-400 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-950 dark:bg-amber-950/25 dark:text-amber-100">
+                    <strong>เคล็ดลับ:</strong> {section.tip}
+                  </div>
+                  <Link href={section.action.href} className="mt-6 inline-flex rounded-xl bg-red-600 px-5 py-3 font-bold text-white transition hover:bg-red-700">
+                    {section.action.label}
+                  </Link>
+                </div>
+              </div>
+            </article>
+          ))}
+        </div>
       </section>
 
-      <section aria-labelledby="faq-title">
-        <h2 id="faq-title" className="text-2xl font-bold mb-5">คำถามที่พบบ่อย</h2>
-        <div className="space-y-3">
+      <section aria-labelledby="quick-links-title" className="pt-14">
+        <h2 id="quick-links-title" className="text-2xl font-black">ทางลัดที่ใช้บ่อย</h2>
+        <div className="mt-5 grid gap-4 sm:grid-cols-3">
+          <Link href="/create" className="rounded-2xl border border-gray-200 bg-white p-6 transition hover:-translate-y-1 hover:border-red-400 hover:shadow-lg dark:border-neutral-800 dark:bg-neutral-900"><span className="text-2xl" aria-hidden="true">✍️</span><h3 className="mt-3 font-bold">สร้างกระทู้</h3><p className="mt-1 text-sm text-gray-500">ถามและแบ่งปันความรู้กับชุมชน</p></Link>
+          <Link href="/notifications" className="rounded-2xl border border-gray-200 bg-white p-6 transition hover:-translate-y-1 hover:border-red-400 hover:shadow-lg dark:border-neutral-800 dark:bg-neutral-900"><span className="text-2xl" aria-hidden="true">🔔</span><h3 className="mt-3 font-bold">การแจ้งเตือน</h3><p className="mt-1 text-sm text-gray-500">ดูการตอบกลับและกิจกรรมล่าสุด</p></Link>
+          <Link href="/privacy" className="rounded-2xl border border-gray-200 bg-white p-6 transition hover:-translate-y-1 hover:border-red-400 hover:shadow-lg dark:border-neutral-800 dark:bg-neutral-900"><span className="text-2xl" aria-hidden="true">🛡️</span><h3 className="mt-3 font-bold">ความเป็นส่วนตัว</h3><p className="mt-1 text-sm text-gray-500">ดูวิธีที่เราดูแลข้อมูลของคุณ</p></Link>
+        </div>
+      </section>
+
+      <section aria-labelledby="faq-title" className="pt-14">
+        <h2 id="faq-title" className="text-2xl font-black">คำถามที่พบบ่อย</h2>
+        <div className="mt-5 space-y-3">
           {faqs.map(([question, answer]) => (
-            <details key={question} className="group rounded-xl bg-white dark:bg-neutral-900 border border-gray-200 dark:border-neutral-800 p-5">
-              <summary className="font-bold cursor-pointer list-none flex justify-between gap-4">{question}<span aria-hidden="true" className="text-red-600 group-open:rotate-45 transition-transform">＋</span></summary>
-              <p className="pt-4 text-gray-600 dark:text-gray-300 leading-7">{answer}</p>
+            <details key={question} className="group rounded-xl border border-gray-200 bg-white p-5 dark:border-neutral-800 dark:bg-neutral-900">
+              <summary className="flex cursor-pointer list-none justify-between gap-4 font-bold">{question}<span aria-hidden="true" className="text-red-600 transition-transform group-open:rotate-45">＋</span></summary>
+              <p className="pt-4 leading-7 text-gray-600 dark:text-gray-300">{answer}</p>
             </details>
           ))}
         </div>
       </section>
 
-      <section className="mt-12 rounded-2xl bg-gradient-to-br from-red-600 to-red-800 text-white p-7 md:p-9">
-        <h2 className="text-2xl font-bold">ยังต้องการความช่วยเหลือ?</h2>
+      <section className="mt-14 rounded-3xl bg-gradient-to-br from-red-600 to-red-900 p-7 text-white md:p-9">
+        <h2 className="text-2xl font-black">ยังต้องการความช่วยเหลือ?</h2>
         <p className="mt-2 text-red-100">ส่งรายละเอียดปัญหา URL ของหน้า และขั้นตอนที่ทำก่อนพบปัญหา โดยหลีกเลี่ยงการส่งรหัสผ่านหรือข้อมูลลับ</p>
         <div className="mt-5 flex flex-wrap gap-3">
-          <a href="mailto:contact@cmtc.ac.th?subject=ITHub%20Support" className="rounded-lg bg-white text-red-700 font-bold px-5 py-3 hover:bg-red-50 transition">ส่งอีเมล</a>
-          <a href="tel:+6653217708" className="rounded-lg border border-white/40 font-bold px-5 py-3 hover:bg-white/10 transition">โทร 053-217-708</a>
+          <a href="mailto:contact@cmtc.ac.th?subject=ITHub%20Support" className="rounded-lg bg-white px-5 py-3 font-bold text-red-700 transition hover:bg-red-50">ส่งอีเมล</a>
+          <a href="tel:+6653217708" className="rounded-lg border border-white/40 px-5 py-3 font-bold transition hover:bg-white/10">โทร 053-217-708</a>
         </div>
       </section>
     </div>

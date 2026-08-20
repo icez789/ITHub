@@ -12,6 +12,7 @@ ITHub คือเว็บบอร์ดชุมชนด้านไอท�
 - Pusher private channel ที่ตรวจสิทธิ์ด้วย session ของผู้ใช้
 - หน้าผู้ดูแลสำหรับสมาชิก กระทู้ คอมเมนต์ และรายงาน พร้อม pagination
 - Dark mode, responsive navigation, skip link และ keyboard accessibility
+- คำแนะนำผู้ใช้ครั้งแรกแบบ 4 ขั้น และหน้าคู่มือฉบับเต็มที่ `/help`
 - AI assistant ผ่าน Gemini และรูปภาพผ่าน Cloudinary
 
 ## เทคโนโลยี
