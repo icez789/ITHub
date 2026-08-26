@@ -6,6 +6,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import { Bot, Maximize2, MessageCircle, Minimize2, Send, Trash2, X } from 'lucide-react';
 
 const INITIAL_MESSAGES = [{ role: 'bot', text: 'สวัสดีครับ! ITHub Bot 🤖 พร้อมช่วยเหลือ มีอะไรให้ผมรับใช้ครับ?' }];
 
@@ -70,43 +71,39 @@ export default function FloatingChat() {
   };
 
   return (
-    <div className="fixed bottom-20 right-4 z-50 flex flex-col items-end md:bottom-6 md:right-6">
+    <div className="fixed bottom-[calc(5rem+env(safe-area-inset-bottom))] right-4 z-40 flex flex-col items-end md:bottom-6 md:right-20">
       
       {isOpen && (
         <div
           role="dialog"
           aria-modal="false"
           aria-labelledby="ithub-chat-title"
-          className={`mb-2 bg-white dark:bg-neutral-900 border border-gray-200 dark:border-neutral-700 rounded-2xl shadow-2xl overflow-hidden flex flex-col transition-all duration-300 transform origin-bottom-right ${
+          className={`mb-2 flex origin-bottom-right flex-col overflow-hidden rounded-2xl border border-[var(--app-border)] bg-[var(--app-surface)] shadow-xl transition-all duration-200 ${
             isExpanded ? 'w-[calc(100vw-2rem)] md:w-[800px] h-[calc(100vh-7rem)] md:h-[80vh]' : 'w-[calc(100vw-2rem)] max-w-96 h-[min(500px,calc(100vh-7rem))]'
           }`}
         >
           
           {/* Header */}
-          <div className="bg-red-600 dark:bg-red-700 p-3 sm:p-4 flex justify-between items-center text-white">
+          <div className="flex items-center justify-between bg-red-600 p-3 text-white sm:p-4 dark:bg-red-700">
             <div id="ithub-chat-title" className="flex items-center gap-2 font-bold">
-              <span className="text-xl">🤖</span>
+              <Bot aria-hidden="true" className="h-5 w-5" />
               ITHub Bot
             </div>
             
             <div className="flex items-center gap-1">
               {/* ปุ่มล้างแชท */}
               <button type="button" onClick={clearChat} title="ล้างแชท" aria-label="ล้างประวัติแชท" className="hover:bg-red-800 p-2 rounded-lg transition">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+                <Trash2 aria-hidden="true" className="h-4 w-4" />
               </button>
               
               {/* ปุ่มขยายหน้าจอ */}
               <button type="button" onClick={() => setIsExpanded(!isExpanded)} title={isExpanded ? "ย่อหน้าจอ" : "ขยายหน้าจอ"} aria-label={isExpanded ? "ย่อหน้าต่างแชท" : "ขยายหน้าต่างแชท"} className="hover:bg-red-800 p-2 rounded-lg transition hidden sm:block">
-                {isExpanded ? (
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M8 3v3a2 2 0 0 1-2 2H3"/><path d="M21 8h-3a2 2 0 0 1-2-2V3"/><path d="M3 16h3a2 2 0 0 1 2 2v3"/><path d="M16 21v-3a2 2 0 0 1 2-2h3"/></svg>
-                ) : (
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 3h6v6"/><path d="M9 21H3v-6"/><path d="M21 3l-7 7"/><path d="M3 21l7-7"/></svg>
-                )}
+                {isExpanded ? <Minimize2 aria-hidden="true" className="h-4 w-4" /> : <Maximize2 aria-hidden="true" className="h-4 w-4" />}
               </button>
 
               {/* ปุ่มปิด */}
               <button type="button" onClick={() => setIsOpen(false)} title="ซ่อนแชท" aria-label="ปิดหน้าต่างแชท" className="hover:bg-red-800 p-2 rounded-lg transition">
-                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                <X aria-hidden="true" className="h-4.5 w-4.5" />
               </button>
             </div>
           </div>
@@ -186,9 +183,9 @@ export default function FloatingChat() {
                 type="submit" 
                 aria-label="ส่งข้อความ"
                 disabled={isLoading || !input.trim()}
-                className="bg-red-600 hover:bg-red-700 text-white p-2.5 rounded-full transition disabled:opacity-50"
+                className="rounded-xl bg-red-600 p-2.5 text-white transition-colors hover:bg-red-700 disabled:opacity-50"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>
+                <Send aria-hidden="true" className="h-4.5 w-4.5" />
               </button>
             </form>
           </div>
@@ -200,10 +197,10 @@ export default function FloatingChat() {
         <button 
           type="button"
           onClick={() => setIsOpen(true)}
-          aria-label="Open AI chat"
-          className="bg-red-600 hover:bg-red-700 text-white p-4 rounded-full shadow-[0_0_15px_rgba(220,38,38,0.5)] hover:shadow-[0_0_25px_rgba(220,38,38,0.7)] transition-all transform hover:scale-110 flex items-center justify-center"
+          aria-label="เปิด ITHub Bot"
+          className="flex h-12 w-12 items-center justify-center rounded-2xl border border-[var(--app-border)] bg-[var(--app-surface)] text-red-600 shadow-md transition-colors hover:bg-red-50 hover:text-red-700 dark:text-red-400 dark:hover:bg-red-950/35"
         >
-          <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m3 21 1.9-5.7a8.5 8.5 0 1 1 3.8 3.8z"/></svg>
+          <MessageCircle aria-hidden="true" className="h-5 w-5" strokeWidth={2.25} />
         </button>
       )}
     </div>

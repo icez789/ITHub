@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation';
 import db from '../../lib/db';
 import { getCurrentUser } from '../../lib/auth';
 import { markNotificationsAsRead } from '../../lib/actions';
+import { AlertTriangle, Bell, BellOff, Heart, MessageCircle } from 'lucide-react';
 
 export const metadata = {
   title: 'การแจ้งเตือน | ITHub',
@@ -10,9 +11,9 @@ export const metadata = {
 };
 
 const typeIcons = {
-  comment: '💬',
-  like: '❤️',
-  report: '⚠️',
+  comment: MessageCircle,
+  like: Heart,
+  report: AlertTriangle,
 };
 
 export default async function NotificationsPage() {
@@ -50,13 +51,15 @@ export default async function NotificationsPage() {
 
       {notifications.length > 0 ? (
         <section aria-label="รายการแจ้งเตือน" className="overflow-hidden rounded-2xl border border-gray-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 shadow-sm">
-          {notifications.map((notification) => (
+          {notifications.map((notification) => {
+            const Icon = typeIcons[notification.type] || Bell;
+            return (
             <Link
               key={notification.id}
               href={notification.topic_id ? `/topic/${notification.topic_id}` : '/'}
               className={`flex gap-4 p-5 border-b last:border-0 border-gray-100 dark:border-neutral-800 hover:bg-gray-50 dark:hover:bg-neutral-800 transition ${notification.is_read ? '' : 'bg-red-50/60 dark:bg-red-950/10'}`}
             >
-              <span className="w-11 h-11 shrink-0 rounded-full bg-gray-100 dark:bg-neutral-800 flex items-center justify-center text-xl" aria-hidden="true">{typeIcons[notification.type] || '🔔'}</span>
+              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[var(--app-surface-subtle)] text-[var(--app-primary)]"><Icon aria-hidden="true" size={20} /></span>
               <span className="min-w-0 flex-1">
                 <span className="flex items-start justify-between gap-4">
                   <span className="font-medium text-gray-800 dark:text-gray-200">{notification.message}</span>
@@ -67,11 +70,12 @@ export default async function NotificationsPage() {
                 </span>
               </span>
             </Link>
-          ))}
+            );
+          })}
         </section>
       ) : (
         <section className="text-center py-20 rounded-2xl border border-dashed border-gray-300 dark:border-neutral-700 bg-white dark:bg-neutral-900">
-          <div className="text-5xl mb-4" aria-hidden="true">🔕</div>
+          <BellOff className="mx-auto mb-4 text-[var(--app-text-muted)]" aria-hidden="true" size={36} />
           <h2 className="text-xl font-bold">ยังไม่มีการแจ้งเตือน</h2>
           <p className="text-gray-500 dark:text-gray-400 mt-2 mb-6">เมื่อมีคนตอบหรือถูกใจกระทู้ของคุณ รายการจะปรากฏที่นี่</p>
           <Link href="/" className="inline-flex rounded-lg bg-red-600 text-white font-bold px-5 py-3 hover:bg-red-700 transition">สำรวจกระทู้</Link>

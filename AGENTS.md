@@ -11,3 +11,7 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 ## Project review handoff
 
 Before changing ITHub, read `REVIEW_REPORT_FOR_AGENTS.md` at the repository root. It contains the 2026-08-13 UX/UI, backend, security, test evidence, prioritized defects, and workspace-hygiene notes.
+
+## Design change handoff
+
+Before changing visual UI, UX flows, responsive layout, typography, color, motion, iconography, or component styling, read `.md/design/README.md` and the active plan linked from it. Treat `.md/design/` as the source of truth for ITHub design work, and keep new design decisions, evidence, and status updates in that directory.

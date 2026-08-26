@@ -4,6 +4,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
+import { ArrowLeft, CalendarDays, Edit3, Eye, Flame, MessageCircle, Send, Trash2, UserRound } from 'lucide-react';
 
 // Components
 import UserBadge from '../../../components/UserBadge';
@@ -342,7 +343,7 @@ export default async function TopicDetailPage({ params }) {
       const [admins] = await db.query("SELECT id FROM users WHERE role IN ('admin', 'super_admin')");
       for (const admin of admins) {
          await pusherServer.trigger(notificationChannelName(admin.id), 'new-notification', {
-            message: `🚨 มีรายการ Report ใหม่รอตรวจสอบ: ${reason}`,
+            message: `มีรายการรายงานใหม่รอตรวจสอบ: ${reason}`,
             link: '/admin', // กดที่กระดิ่งแล้วเด้งไปหน้าแอดมินเลย
             created_at: new Date().toISOString()
          });
@@ -353,7 +354,7 @@ export default async function TopicDetailPage({ params }) {
   }
   // --- Render UI ---
   return (
-    <div className="p-8 pl-6 md:pl-8 max-w-7xl mx-auto">
+    <main className="ithub-page-container mx-auto max-w-[1120px] pb-24 pt-6 md:pb-12 md:pt-8">
           {/* CSS สำหรับ Syntax Highlighter */}
           <style dangerouslySetInnerHTML={{__html: `
             .view-ql-editor pre.ql-syntax {
@@ -372,44 +373,44 @@ export default async function TopicDetailPage({ params }) {
           <ViewCounter topicId={id} />
 
           {/* Header Navigation */}
-          <div className="flex justify-between items-center mb-6">
-            <Link href="/" className="inline-flex items-center gap-2 text-gray-500 hover:text-red-600 transition-colors dark:text-gray-400 dark:hover:text-red-400">&larr; กลับหน้าหลัก</Link>
-            <div className="flex gap-3 items-center">
+          <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+            <Link href="/" className="inline-flex min-h-10 items-center gap-2 rounded-lg px-2 text-sm font-medium text-[var(--app-text-muted)] transition-colors hover:bg-[var(--app-surface-subtle)] hover:text-[var(--app-primary)]"><ArrowLeft aria-hidden="true" size={17} /> กลับหน้าหลัก</Link>
+            <div className="flex flex-wrap items-center gap-2">
                 {currentUser && <ReportButton targetId={id} type="topic" reportAction={submitReport} />}
-                {isOwner && <Link href={`/edit/${id}`} className="flex items-center gap-2 px-4 py-2 bg-yellow-100 text-yellow-700 rounded-lg hover:bg-yellow-500 hover:text-white transition border border-yellow-200 dark:bg-yellow-900/30 dark:text-yellow-400 dark:border-yellow-800 dark:hover:bg-yellow-700">✏️ แก้ไข</Link>}
-                {(isOwner || isAdmin) && <form action={deleteTopic}><button type="submit" className="flex items-center gap-2 px-4 py-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-600 hover:text-white transition border border-red-200 dark:bg-red-900/30 dark:text-red-400 dark:border-red-800 dark:hover:bg-red-700">🗑️ {isAdmin && !isOwner ? 'ลบ (Admin)' : 'ลบกระทู้นี้'}</button></form>}
+                {isOwner && <Link href={`/edit/${id}`} className="inline-flex min-h-10 items-center gap-2 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-sm font-semibold text-amber-700 transition-colors hover:bg-amber-100 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-300"><Edit3 aria-hidden="true" size={16} /> แก้ไข</Link>}
+                {(isOwner || isAdmin) && <form action={deleteTopic}><button type="submit" className="inline-flex min-h-10 items-center gap-2 rounded-lg border border-red-300 bg-red-50 px-3 py-2 text-sm font-semibold text-red-700 transition-colors hover:bg-red-100 dark:border-red-900 dark:bg-red-950/30 dark:text-red-300"><Trash2 aria-hidden="true" size={16} /> {isAdmin && !isOwner ? 'ลบในฐานะแอดมิน' : 'ลบกระทู้'}</button></form>}
             </div>
           </div>
 
           {/* Topic Card Container */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden mb-8 relative dark:bg-neutral-900 dark:border-neutral-800">
+          <article className="mb-10 overflow-hidden rounded-2xl border border-[var(--app-border)] bg-[var(--app-surface)] shadow-sm">
             {/* Topic Header Area */}
-            <div className="bg-gray-900 p-8 text-white relative overflow-hidden dark:bg-black">
-               <div className="absolute top-0 right-0 w-32 h-32 bg-red-600 rounded-full blur-[80px] opacity-50"></div>
-               <span className="inline-block bg-red-600 text-xs font-bold px-2 py-1 rounded mb-4">{topic.category}</span>
-               <h1 className="text-3xl md:text-4xl font-bold mb-4 leading-tight">{topic.title}</h1>
-               <div className="flex flex-wrap items-center gap-6 text-gray-400 text-sm mt-4 dark:text-gray-500">
-                 <span className="flex items-center gap-1 bg-white/10 px-3 py-1 rounded-full text-white">
-                   👤 {topic.username || 'ไม่ระบุ'}
+            <header className="border-b border-[var(--app-border)] bg-zinc-950 px-5 py-7 text-white sm:px-8 sm:py-9">
+               <span className="mb-3 inline-block rounded-md bg-red-600 px-2.5 py-1 text-xs font-semibold">{topic.category}</span>
+               <h1 className="max-w-[860px] text-2xl font-bold leading-tight sm:text-3xl md:text-4xl">{topic.title}</h1>
+               <div className="mt-5 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-zinc-300">
+                 <span className="flex items-center gap-1.5">
+                   <UserRound aria-hidden="true" size={15} /> {topic.username || 'ไม่ระบุ'}
                    {/* แสดงยศตาม XP */}
                    <UserBadge role={topic.role} xp={topic.xp} />
                  </span>
-                 <span className="flex items-center gap-1">📅 {new Date(topic.created_at).toLocaleDateString('th-TH')}</span>
-                 <span className="flex items-center gap-1 font-bold text-yellow-400">👁️ {topic.views.toLocaleString()} ครั้ง</span>
+                 <span className="flex items-center gap-1.5"><CalendarDays aria-hidden="true" size={15} /> {new Date(topic.created_at).toLocaleDateString('th-TH')}</span>
+                 <span className="flex items-center gap-1.5"><Eye aria-hidden="true" size={15} /> {topic.views.toLocaleString()} ครั้ง</span>
                </div>
-            </div>
+            </header>
 
             {/* Topic Content Body */}
-            <div className="p-8 min-h-[200px] border-b border-gray-100 dark:border-neutral-800">
+            <div className="px-5 py-7 sm:px-8 sm:py-9">
+              <div className="mx-auto max-w-[840px]">
               {topic.image_url && (
-                <div className="mb-6 rounded-lg overflow-hidden border border-gray-200 shadow-sm inline-block max-w-full dark:border-neutral-700">
-                   <Image src={topic.image_url} alt={`ภาพประกอบกระทู้ ${topic.title}`} width={1200} height={800} sizes="(max-width: 1024px) 100vw, 900px" loading="eager" className="max-h-[500px] w-auto h-auto object-contain bg-gray-50 dark:bg-black" />
+                <div className="mb-7 overflow-hidden rounded-xl border border-[var(--app-border)] bg-[var(--app-surface-subtle)]">
+                   <Image src={topic.image_url} alt={`ภาพประกอบกระทู้ ${topic.title}`} width={1200} height={800} sizes="(max-width: 1024px) 100vw, 840px" loading="eager" className="max-h-[520px] h-auto w-full object-contain" />
                 </div>
               )}
               
               {/* Content with Syntax Highlighting */}
               <div 
-                className="view-ql-editor text-lg leading-relaxed text-gray-700 prose max-w-none dark:text-gray-300 dark:prose-invert" 
+                className="view-ql-editor prose max-w-none text-[17px] leading-8 text-[var(--app-text)] dark:prose-invert sm:text-lg"
                 dangerouslySetInnerHTML={{ __html: topic.content }} 
               />
               
@@ -427,6 +428,7 @@ export default async function TopicDetailPage({ params }) {
 
               {/* Action Buttons (Like / Bookmark) */}
               <TopicEngagementActions
+                topicId={id}
                 isAuthenticated={Boolean(currentUser)}
                 isLiked={isLiked}
                 isBookmarked={isBookmarked}
@@ -434,12 +436,13 @@ export default async function TopicDetailPage({ params }) {
                 likeAction={toggleLike}
                 bookmarkAction={toggleBookmark}
               />
+              </div>
             </div>
-          </div>
+          </article>
 
           {/* Comments Section */}
-          <div className="mb-8">
-            <h3 className="text-xl font-bold text-gray-700 mb-4 flex items-center gap-2 dark:text-gray-200">💬 ความคิดเห็น ({allComments.length})</h3>
+          <section className="mx-auto mb-8 max-w-[840px]" aria-labelledby="comments-heading">
+            <h2 id="comments-heading" className="mb-4 flex items-center gap-2 text-xl font-bold text-[var(--app-text)]"><MessageCircle aria-hidden="true" size={21} /> ความคิดเห็น <span className="text-[var(--app-text-muted)]">({allComments.length})</span></h2>
             <div className="flex flex-col gap-4">
               {rootComments.length > 0 ? (
                 rootComments.map((comment) => (
@@ -455,44 +458,44 @@ export default async function TopicDetailPage({ params }) {
                     />
                 ))
               ) : (
-                <div className="text-center py-8 text-gray-400 bg-gray-50 rounded-xl border border-dashed border-gray-300 dark:bg-neutral-900 dark:border-neutral-800 dark:text-gray-500">
+                <div className="rounded-xl border border-dashed border-[var(--app-border)] bg-[var(--app-surface)] py-8 text-center text-[var(--app-text-muted)]">
                   ยังไม่มีความคิดเห็น... เป็นคนแรกที่ตอบกระทู้นี้สิ!
                 </div>
               )}
             </div>
-          </div>
+          </section>
 
           {/* Comment Form */}
-          <div className="bg-white p-6 rounded-xl shadow-lg border-t-4 border-red-600 dark:bg-neutral-900 dark:border-red-700">
-            <h3 className="font-bold text-lg mb-4 dark:text-gray-200">แสดงความคิดเห็น</h3>
+          <section className="mx-auto max-w-[840px] rounded-xl border border-[var(--app-border)] bg-[var(--app-surface)] p-5 sm:p-6" aria-labelledby="comment-form-heading">
+            <h2 id="comment-form-heading" className="mb-4 text-lg font-bold text-[var(--app-text)]">แสดงความคิดเห็น</h2>
             {currentUser ? (
               <form action={addComment}>
                 <div className="mb-4 border border-gray-300 rounded-lg overflow-hidden dark:border-neutral-700">
                    <Editor className="h-32 mb-12 bg-white text-black" />
                 </div>
-                <RippleButton type="submit" className="bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-6 rounded-lg shadow-md dark:bg-red-700 dark:hover:bg-red-600">ส่งความคิดเห็น 🚀</RippleButton>
+                <RippleButton type="submit" className="inline-flex items-center gap-2 rounded-lg bg-[var(--app-primary)] px-5 py-2.5 font-semibold text-white hover:bg-[var(--app-primary-hover)]"><Send aria-hidden="true" size={17} /> ส่งความคิดเห็น</RippleButton>
               </form>
             ) : (
-              <div className="text-center py-4 bg-gray-100 rounded-lg border border-gray-300 dark:bg-neutral-800 dark:border-neutral-700">
-                <p className="text-gray-500 mb-2 dark:text-gray-400">กรุณาเข้าสู่ระบบเพื่อแสดงความคิดเห็น</p>
-                <Link href="/login" className="text-red-600 hover:underline font-bold dark:text-red-400">เข้าสู่ระบบคลิกที่นี่</Link>
+              <div className="rounded-lg border border-[var(--app-border)] bg-[var(--app-surface-subtle)] p-4 text-center">
+                <p className="mb-2 text-sm text-[var(--app-text-muted)]">เข้าสู่ระบบเพื่อร่วมตอบคำถามและแลกเปลี่ยนกับชุมชน</p>
+                <Link href={`/login?next=/topic/${id}`} className="font-semibold text-[var(--app-primary)] hover:underline">เข้าสู่ระบบเพื่อแสดงความคิดเห็น</Link>
               </div>
             )}
-          </div>
+          </section>
 
           {/* Related Topics */}
           {relatedTopics.length > 0 && (
-            <div className="mt-16 pt-8 border-t border-gray-200 dark:border-neutral-800">
-              <h3 className="text-xl font-bold text-gray-800 dark:text-white mb-6 flex items-center gap-2">
-                🔥 กระทู้ที่เกี่ยวข้องในหมวด <span className="text-red-600">{topic.category}</span>
-              </h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <section className="mx-auto mt-12 max-w-[840px] border-t border-[var(--app-border)] pt-8" aria-labelledby="related-heading">
+              <h2 id="related-heading" className="mb-4 flex items-center gap-2 text-xl font-bold text-[var(--app-text)]">
+                <Flame aria-hidden="true" size={21} /> กระทู้ที่เกี่ยวข้องในหมวด <span className="text-[var(--app-primary)]">{topic.category}</span>
+              </h2>
+              <div className="overflow-hidden rounded-xl border border-[var(--app-border)] bg-[var(--app-surface)]">
                 {relatedTopics.map((t, index) => (
-                  <TopicCard key={t.id} index={index} id={t.id} title={t.title} username={t.username} created_at={t.created_at} image_url={t.image_url} />
+                  <TopicCard key={t.id} index={index} id={t.id} title={t.title} category={t.category} username={t.username} createdAt={t.created_at} imageUrl={t.image_url} excerpt={plainText(t.content).slice(0, 120)} views={t.views || 0} commentCount={0} likeCount={0} />
                 ))}
               </div>
-            </div>
+            </section>
           )}
-    </div>
+    </main>
   );
 }

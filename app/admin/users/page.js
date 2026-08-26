@@ -7,6 +7,7 @@ import Image from 'next/image';
 import { getCurrentUser, requireAdmin } from '../../../lib/auth';
 import { positiveInteger } from '../../../lib/validation';
 import AdminPagination from '../AdminPagination';
+import { ArrowDown, ArrowLeft, ArrowUp, Ban, CircleCheck, Search, ShieldCheck, Undo2, Users } from 'lucide-react';
 
 export default async function UsersManagementPage({ searchParams }) {
   const currentUser = await getCurrentUser();
@@ -62,14 +63,14 @@ export default async function UsersManagementPage({ searchParams }) {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-[#0a0a0a] text-gray-900 dark:text-gray-100 p-8 font-sans">
-       <div className="container mx-auto max-w-6xl">
+    <main className="ithub-page-container mx-auto max-w-6xl pb-24 pt-8 text-[var(--app-text)] md:pb-12 md:pt-12">
+       <div>
          {/* Header & Breadcrumb */}
          <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
             <div>
-                <Link href="/admin" className="text-sm text-gray-500 hover:text-red-500 mb-2 inline-block">← Back to Dashboard</Link>
-                <h1 className="text-3xl font-black flex items-center gap-3">
-                    <span className="text-red-600 text-4xl">👥</span> User Management
+                <Link href="/admin" className="mb-3 inline-flex items-center gap-2 text-sm font-semibold text-[var(--app-muted)] hover:text-red-600"><ArrowLeft aria-hidden="true" size={16} /> กลับศูนย์จัดการ</Link>
+                <h1 className="flex items-center gap-3 text-3xl font-bold">
+                    <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-red-600 text-white"><Users aria-hidden="true" size={22} /></span> จัดการสมาชิก
                 </h1>
             </div>
             
@@ -78,24 +79,26 @@ export default async function UsersManagementPage({ searchParams }) {
                 <input 
                     name="q" 
                     defaultValue={q}
-                    placeholder="Search username or email..." 
-                    className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-300 dark:border-neutral-800 bg-white dark:bg-neutral-900 focus:ring-2 focus:ring-red-500 outline-none transition"
+                    id="user-search"
+                    placeholder="ค้นหาชื่อผู้ใช้หรืออีเมล..."
+                    className="w-full rounded-xl border border-[var(--app-border)] bg-[var(--app-surface)] py-2.5 pl-10 pr-4 outline-none transition focus:border-red-500 focus:ring-2 focus:ring-red-500/20"
                 />
-                <span className="absolute left-3 top-2.5 text-gray-400">🔍</span>
+                <label htmlFor="user-search" className="sr-only">ค้นหาสมาชิก</label>
+                <Search className="absolute left-3 top-3 text-[var(--app-muted)]" aria-hidden="true" size={17} />
                 <button type="submit" className="hidden"></button>
             </form>
          </div>
 
          {/* Users Table */}
-         <div className="bg-white dark:bg-neutral-900 border border-gray-200 dark:border-neutral-800 rounded-xl overflow-hidden shadow-sm">
+         <div className="overflow-hidden rounded-2xl border border-[var(--app-border)] bg-[var(--app-surface)] shadow-sm">
             <div className="overflow-x-auto">
                 <table className="w-full text-left text-sm text-gray-600 dark:text-gray-400">
                     <thead className="bg-gray-100 dark:bg-neutral-950 text-gray-500 dark:text-gray-500 uppercase font-bold text-xs">
                         <tr>
-                            <th className="px-6 py-4">User</th>
-                            <th className="px-6 py-4">Role</th>
-                            <th className="px-6 py-4">Status</th>
-                            <th className="px-6 py-4 text-center">Actions</th>
+                            <th className="px-6 py-4">สมาชิก</th>
+                            <th className="px-6 py-4">สิทธิ์</th>
+                            <th className="px-6 py-4">สถานะ</th>
+                            <th className="px-6 py-4 text-center">การจัดการ</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-100 dark:divide-neutral-800">
@@ -125,8 +128,8 @@ export default async function UsersManagementPage({ searchParams }) {
                                     </td>
                                     <td className="px-6 py-4">
                                         {u.is_banned ? 
-                                            <span className="text-red-600 font-bold flex items-center gap-1">🚫 Banned</span> : 
-                                            <span className="text-green-600 font-bold flex items-center gap-1">● Active</span>
+                                            <span className="flex items-center gap-1 font-bold text-red-600"><Ban aria-hidden="true" size={15} /> ระงับการใช้งาน</span> :
+                                            <span className="flex items-center gap-1 font-bold text-green-600"><CircleCheck aria-hidden="true" size={15} /> ใช้งานได้</span>
                                         }
                                     </td>
                                     <td className="px-6 py-4 text-center">
@@ -136,7 +139,7 @@ export default async function UsersManagementPage({ searchParams }) {
                                                     <form action={toggleAdmin}>
                                                         <input type="hidden" name="userId" value={u.id} />
                                                         <button className="px-3 py-1.5 rounded text-xs border border-gray-300 dark:border-neutral-700 hover:bg-gray-100 dark:hover:bg-neutral-800 transition">
-                                                            {u.role === 'admin' ? '⬇️ Demote' : '⬆️ Promote'}
+                                                            <span className="inline-flex items-center gap-1.5">{u.role === 'admin' ? <ArrowDown aria-hidden="true" size={14} /> : <ArrowUp aria-hidden="true" size={14} />}{u.role === 'admin' ? 'ลดสิทธิ์' : 'ตั้งเป็นแอดมิน'}</span>
                                                         </button>
                                                     </form>
                                                 )}
@@ -144,19 +147,19 @@ export default async function UsersManagementPage({ searchParams }) {
                                                     <input type="hidden" name="userId" value={u.id} />
                                                     <input type="hidden" name="currentStatus" value={u.is_banned ? '1' : '0'} />
                                                     <button className={`px-3 py-1.5 rounded text-xs text-white transition ${u.is_banned ? 'bg-gray-500 hover:bg-gray-600' : 'bg-red-600 hover:bg-red-700'}`}>
-                                                        {u.is_banned ? 'Unlock' : 'Ban'}
+                                                        <span className="inline-flex items-center gap-1.5">{u.is_banned ? <Undo2 aria-hidden="true" size={14} /> : <ShieldCheck aria-hidden="true" size={14} />}{u.is_banned ? 'ปลดระงับ' : 'ระงับ'}</span>
                                                     </button>
                                                 </form>
                                             </div>
                                         ) : (
-                                            <span className="text-xs text-gray-400 italic">No Actions</span>
+                                            <span className="text-xs text-gray-400">จัดการไม่ได้</span>
                                         )}
                                     </td>
                                 </tr>
                             )
                         })}
                         {users.length === 0 && (
-                            <tr><td colSpan="4" className="text-center py-8 text-gray-500">No users found.</td></tr>
+                            <tr><td colSpan="4" className="py-8 text-center text-gray-500">ไม่พบสมาชิก</td></tr>
                         )}
                     </tbody>
                 </table>
@@ -164,6 +167,6 @@ export default async function UsersManagementPage({ searchParams }) {
          </div>
          <AdminPagination path="/admin/users" page={page} totalPages={totalPages} query={q} />
        </div>
-    </div>
+    </main>
   );
 }

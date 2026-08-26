@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import OnboardingLauncher from '../../components/OnboardingLauncher';
+import { Bell, Check, MessageCircle, PenLine, Search, ShieldCheck } from 'lucide-react';
 
 export const metadata = {
   title: 'คู่มือและศูนย์ช่วยเหลือ | ITHub',
@@ -10,7 +11,7 @@ const guideSections = [
   {
     id: 'discover',
     step: '01',
-    icon: '🔎',
+    Icon: Search,
     title: 'ค้นหาและสำรวจกระทู้',
     description: 'ใช้ช่องค้นหาด้านบนเพื่อค้นจากหัวข้อหรือเนื้อหา เลือกเมนูมาแรงเพื่อดูเรื่องที่ชุมชนสนใจ หรือกรองตามหมวดหมู่จาก Sidebar',
     items: [
@@ -24,7 +25,7 @@ const guideSections = [
   {
     id: 'create',
     step: '02',
-    icon: '✍️',
+    Icon: PenLine,
     title: 'สมัครสมาชิกและสร้างกระทู้',
     description: 'สมัครสมาชิกหรือเข้าสู่ระบบ จากนั้นเลือก “สร้างกระทู้” ระบุหัวข้อ หมวดหมู่ และรายละเอียดที่ช่วยให้ผู้อื่นเข้าใจปัญหาได้ครบถ้วน',
     items: [
@@ -38,7 +39,7 @@ const guideSections = [
   {
     id: 'engage',
     step: '03',
-    icon: '💬',
+    Icon: MessageCircle,
     title: 'ตอบกลับ ถูกใจ และบันทึก',
     description: 'เมื่อเข้าสู่ระบบแล้ว คุณสามารถร่วมตอบคำถาม กดถูกใจ บันทึกกระทู้ไว้อ่านภายหลัง และติดตามกิจกรรมจากศูนย์แจ้งเตือน',
     items: [
@@ -52,7 +53,7 @@ const guideSections = [
   {
     id: 'account-safety',
     step: '04',
-    icon: '🛡️',
+    Icon: ShieldCheck,
     title: 'โปรไฟล์ ความปลอดภัย และ AI',
     description: 'ปรับข้อมูลโปรไฟล์ ดูอันดับสมาชิก และช่วยดูแลชุมชนด้วยการรายงานเนื้อหาที่ไม่เหมาะสม ส่วน ITHub Bot ใช้เพื่อช่วยตั้งต้นการค้นคว้าได้',
     items: [
@@ -97,14 +98,15 @@ export default function HelpPage() {
       <nav aria-label="สารบัญคู่มือ" className="mt-8 rounded-2xl border border-gray-200 bg-white p-5 shadow-sm dark:border-neutral-800 dark:bg-neutral-900">
         <p className="text-sm font-bold text-gray-500 dark:text-gray-400">ไปยังหัวข้อ</p>
         <ul className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
-          {guideSections.map((section) => (
-            <li key={section.id}>
+          {guideSections.map((section) => {
+            const Icon = section.Icon;
+            return <li key={section.id}>
               <a href={`#${section.id}`} className="flex h-full items-center gap-3 rounded-xl px-3 py-3 font-semibold text-gray-700 transition hover:bg-red-50 hover:text-red-700 dark:text-gray-200 dark:hover:bg-red-950/30 dark:hover:text-red-300">
-                <span aria-hidden="true">{section.icon}</span>
+                <Icon aria-hidden="true" size={18} />
                 <span>{section.title}</span>
               </a>
-            </li>
-          ))}
+            </li>;
+          })}
         </ul>
       </nav>
 
@@ -116,11 +118,12 @@ export default function HelpPage() {
         </div>
 
         <div className="mt-8 space-y-6">
-          {guideSections.map((section) => (
-            <article id={section.id} key={section.id} className="scroll-mt-24 overflow-hidden rounded-3xl border border-gray-200 bg-white shadow-sm dark:border-neutral-800 dark:bg-neutral-900">
+          {guideSections.map((section) => {
+            const Icon = section.Icon;
+            return <article id={section.id} key={section.id} className="scroll-mt-24 overflow-hidden rounded-2xl border border-[var(--app-border)] bg-[var(--app-surface)] shadow-sm">
               <div className="grid md:grid-cols-[11rem_1fr]">
                 <div className="flex items-center justify-between bg-gray-950 p-6 text-white md:flex-col md:items-start md:justify-start md:p-8">
-                  <span className="text-5xl" aria-hidden="true">{section.icon}</span>
+                  <Icon aria-hidden="true" size={34} />
                   <div className="text-right md:mt-auto md:text-left">
                     <p className="text-xs font-bold uppercase tracking-[0.18em] text-red-300">ขั้นตอน</p>
                     <p className="text-4xl font-black text-white">{section.step}</p>
@@ -132,7 +135,7 @@ export default function HelpPage() {
                   <ul className="mt-5 space-y-3">
                     {section.items.map((item) => (
                       <li key={item} className="flex gap-3 text-sm leading-6 text-gray-700 dark:text-gray-200">
-                        <span className="mt-0.5 text-red-600" aria-hidden="true">✓</span>
+                        <Check className="mt-1 shrink-0 text-red-600" aria-hidden="true" size={15} />
                         <span>{item}</span>
                       </li>
                     ))}
@@ -145,17 +148,17 @@ export default function HelpPage() {
                   </Link>
                 </div>
               </div>
-            </article>
-          ))}
+            </article>;
+          })}
         </div>
       </section>
 
       <section aria-labelledby="quick-links-title" className="pt-14">
         <h2 id="quick-links-title" className="text-2xl font-black">ทางลัดที่ใช้บ่อย</h2>
         <div className="mt-5 grid gap-4 sm:grid-cols-3">
-          <Link href="/create" className="rounded-2xl border border-gray-200 bg-white p-6 transition hover:-translate-y-1 hover:border-red-400 hover:shadow-lg dark:border-neutral-800 dark:bg-neutral-900"><span className="text-2xl" aria-hidden="true">✍️</span><h3 className="mt-3 font-bold">สร้างกระทู้</h3><p className="mt-1 text-sm text-gray-500">ถามและแบ่งปันความรู้กับชุมชน</p></Link>
-          <Link href="/notifications" className="rounded-2xl border border-gray-200 bg-white p-6 transition hover:-translate-y-1 hover:border-red-400 hover:shadow-lg dark:border-neutral-800 dark:bg-neutral-900"><span className="text-2xl" aria-hidden="true">🔔</span><h3 className="mt-3 font-bold">การแจ้งเตือน</h3><p className="mt-1 text-sm text-gray-500">ดูการตอบกลับและกิจกรรมล่าสุด</p></Link>
-          <Link href="/privacy" className="rounded-2xl border border-gray-200 bg-white p-6 transition hover:-translate-y-1 hover:border-red-400 hover:shadow-lg dark:border-neutral-800 dark:bg-neutral-900"><span className="text-2xl" aria-hidden="true">🛡️</span><h3 className="mt-3 font-bold">ความเป็นส่วนตัว</h3><p className="mt-1 text-sm text-gray-500">ดูวิธีที่เราดูแลข้อมูลของคุณ</p></Link>
+          <Link href="/create" className="rounded-2xl border border-[var(--app-border)] bg-[var(--app-surface)] p-6 transition hover:-translate-y-0.5 hover:border-red-400 hover:shadow-md"><PenLine className="text-red-600" aria-hidden="true" size={22} /><h3 className="mt-3 font-bold">สร้างกระทู้</h3><p className="mt-1 text-sm text-[var(--app-text-muted)]">ถามและแบ่งปันความรู้กับชุมชน</p></Link>
+          <Link href="/notifications" className="rounded-2xl border border-[var(--app-border)] bg-[var(--app-surface)] p-6 transition hover:-translate-y-0.5 hover:border-red-400 hover:shadow-md"><Bell className="text-red-600" aria-hidden="true" size={22} /><h3 className="mt-3 font-bold">การแจ้งเตือน</h3><p className="mt-1 text-sm text-[var(--app-text-muted)]">ดูการตอบกลับและกิจกรรมล่าสุด</p></Link>
+          <Link href="/privacy" className="rounded-2xl border border-[var(--app-border)] bg-[var(--app-surface)] p-6 transition hover:-translate-y-0.5 hover:border-red-400 hover:shadow-md"><ShieldCheck className="text-red-600" aria-hidden="true" size={22} /><h3 className="mt-3 font-bold">ความเป็นส่วนตัว</h3><p className="mt-1 text-sm text-[var(--app-text-muted)]">ดูวิธีที่เราดูแลข้อมูลของคุณ</p></Link>
         </div>
       </section>
 

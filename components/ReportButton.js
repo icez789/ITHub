@@ -1,29 +1,33 @@
 'use client';
 
 import React, { useState } from 'react';
+import { Check, Flag } from 'lucide-react';
 
 export default function ReportButton({ targetId, type, reportAction }) {
   const [isOpen, setIsOpen] = useState(false);
   const [isSent, setIsSent] = useState(false);
 
   if (isSent) {
-    return <span className="text-xs text-green-500 font-bold">✓ ส่งเรื่องแล้ว</span>;
+    return <span className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-600 dark:text-emerald-400"><Check aria-hidden="true" size={14} /> ส่งเรื่องแล้ว</span>;
   }
 
   return (
     <div className="relative inline-block">
       {/* ปุ่มกดรูปธง */}
       <button 
+        type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className="text-gray-400 hover:text-red-500 transition-colors p-1"
+        aria-label="แจ้งเนื้อหาไม่เหมาะสม"
+        aria-expanded={isOpen}
+        className="rounded-md p-2 text-[var(--app-text-muted)] transition-colors hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950/30"
         title="แจ้งเนื้อหาไม่เหมาะสม"
       >
-        🚩
+        <Flag aria-hidden="true" size={16} />
       </button>
 
       {/* กล่องฟอร์ม (เด้งออกมาเมื่อกด) */}
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-64 bg-white border border-gray-200 rounded-xl shadow-xl p-4 z-50 dark:bg-neutral-900 dark:border-neutral-700 animate-in fade-in zoom-in-95 duration-100">
+        <div className="absolute right-0 z-50 mt-2 w-64 rounded-xl border border-[var(--app-border)] bg-[var(--app-surface)] p-4 shadow-xl">
           <h4 className="text-sm font-bold mb-2 text-gray-800 dark:text-gray-200">แจ้งปัญหา</h4>
           <form action={async (formData) => {
               await reportAction(formData);

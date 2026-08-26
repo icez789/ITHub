@@ -1,6 +1,7 @@
 'use client';
 
 import { useTheme } from './ThemeProvider';
+import { Moon, Sun } from 'lucide-react';
 
 export default function ThemeToggle() {
   const { theme, toggleTheme } = useTheme();
@@ -9,11 +10,11 @@ export default function ThemeToggle() {
     <button 
       onClick={toggleTheme}
       data-testid="theme-toggle"
-      aria-label="Toggle color theme"
-      className="p-2 rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-gray-800 dark:text-yellow-400 dark:hover:bg-gray-700 transition-all shadow-sm border border-transparent dark:border-gray-700"
+      aria-label={theme === 'dark' ? 'เปลี่ยนเป็นโหมดสว่าง' : 'เปลี่ยนเป็นโหมดมืด'}
+      className="flex h-9 w-9 items-center justify-center rounded-xl border border-[var(--app-border)] bg-[var(--app-surface)] text-zinc-600 transition-colors hover:bg-zinc-100 hover:text-zinc-950 dark:text-zinc-300 dark:hover:bg-zinc-800 dark:hover:text-white"
       title="สลับโหมดมืด/สว่าง"
     >
-      {theme === 'dark' ? '☀️' : '🌙'}
+      {theme === 'dark' ? <Sun aria-hidden="true" className="h-4.5 w-4.5" /> : <Moon aria-hidden="true" className="h-4.5 w-4.5" />}
     </button>
   );
 }

@@ -21,13 +21,13 @@ test.describe('ITHub onboarding', () => {
 
   test('shows once and remembers when the user dismisses it', async ({ page }) => {
     await page.goto('/help');
+    const welcome = page.locator('aside[aria-labelledby="welcome-title"]');
     const dialog = page.locator('dialog.onboarding-dialog');
 
-    await expect(dialog).toBeVisible();
-    await expect(dialog.getByRole('heading', { name: 'เริ่มใช้งานได้ในไม่กี่นาที' })).toBeVisible();
-    await expect(dialog.getByText('ขั้นตอน 1 จาก 4')).toBeVisible();
-    await dialog.getByRole('button', { name: 'ปิดคำแนะนำ' }).click();
+    await expect(welcome).toBeVisible();
     await expect(dialog).not.toBeVisible();
+    await welcome.getByRole('button', { name: 'ปิดข้อความต้อนรับ' }).click();
+    await expect(welcome).not.toBeVisible();
     await expect.poll(() => page.evaluate((key) => localStorage.getItem(key), onboardingStorageKey)).toBe('dismissed');
 
     await page.reload();
@@ -36,8 +36,11 @@ test.describe('ITHub onboarding', () => {
 
   test('moves through all four steps and records completion', async ({ page }) => {
     await page.goto('/');
+    const welcome = page.locator('aside[aria-labelledby="welcome-title"]');
     const dialog = page.locator('dialog.onboarding-dialog');
 
+    await expect(welcome).toBeVisible();
+    await welcome.getByRole('button', { name: 'เปิดคู่มือ' }).click();
     await expect(dialog.getByRole('heading', { name: 'ค้นหากระทู้ที่ตรงกับคุณ' })).toBeVisible();
     await dialog.getByRole('button', { name: 'ถัดไป' }).click();
     await expect(dialog.getByRole('heading', { name: 'สร้างกระทู้ให้ชุมชนช่วยกันตอบ' })).toBeVisible();
@@ -76,16 +79,16 @@ test.describe('ITHub onboarding', () => {
   });
 
   test('fits within a mobile viewport without horizontal overflow', async ({ page }) => {
-    await page.setViewportSize({ width: 375, height: 812 });
+    await page.setViewportSize({ width: 390, height: 844 });
     await page.goto('/help');
-    const dialog = page.locator('dialog.onboarding-dialog');
-    await expect(dialog).toBeVisible();
-    const box = await dialog.boundingBox();
+    const welcome = page.locator('aside[aria-labelledby="welcome-title"]');
+    await expect(welcome).toBeVisible();
+    const box = await welcome.boundingBox();
 
     expect(box).not.toBeNull();
     expect(box.x).toBeGreaterThanOrEqual(0);
-    expect(box.x + box.width).toBeLessThanOrEqual(375);
-    await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth)).toBe(375);
+    expect(box.x + box.width).toBeLessThanOrEqual(390);
+    await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth)).toBe(390);
   });
 });
 
@@ -98,7 +101,7 @@ test.describe('ITHub critical flows', () => {
 
   test('opens the AI chat without calling the external model', async ({ page }) => {
     await page.goto('/help');
-    await page.getByRole('button', { name: 'Open AI chat' }).click();
+    await page.getByRole('button', { name: 'เปิด ITHub Bot' }).click();
     await expect(page.getByText(/ITHub Bot/).first()).toBeVisible();
     await expect(page.locator('input[type="text"]').last()).toBeVisible();
   });
@@ -130,7 +133,7 @@ test.describe('ITHub critical flows', () => {
       created = true;
     } finally {
       if (created) {
-        await page.getByRole('button', { name: '🗑️ ลบกระทู้นี้' }).click();
+        await page.getByRole('button', { name: /ลบกระทู้/ }).click();
         await expect(page).toHaveURL((url) => url.pathname === '/');
       }
     }
@@ -185,7 +188,7 @@ test.describe('ITHub critical flows', () => {
 
   test('filters the AI and Data category with an encoded query', async ({ page }) => {
     await page.goto('/?category=AI%20%26%20Data');
-    await expect(page.getByRole('heading', { name: /หมวดหมู่: AI & Data/ })).toBeVisible();
+    await expect(page.getByRole('heading', { name: /หมวดหมู่ AI & Data/ })).toBeVisible();
   });
 
   test('protects the notifications page from signed-out users', async ({ page }) => {
@@ -203,7 +206,7 @@ test.describe('ITHub critical flows', () => {
     await page.goto('/help');
 
     await expect(page.locator('input[aria-label="ค้นหากระทู้"]:visible')).toBeVisible();
-    const chatButton = page.getByRole('button', { name: 'Open AI chat' });
+    const chatButton = page.getByRole('button', { name: 'เปิด ITHub Bot' });
     const bottomNav = page.getByRole('navigation', { name: 'เมนูมือถือ' });
     const chatBox = await chatButton.boundingBox();
     const navBox = await bottomNav.boundingBox();
@@ -218,7 +221,7 @@ test.describe('ITHub critical flows', () => {
   test('keeps desktop content clear of the collapsed sidebar', async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 800 });
     await page.goto('/help');
-    const sidebarBox = await page.locator('aside').boundingBox();
+    const sidebarBox = await page.getByTestId('desktop-sidebar').boundingBox();
     const mainBox = await page.locator('#main-content').boundingBox();
     expect(sidebarBox).not.toBeNull();
     expect(mainBox).not.toBeNull();
@@ -265,23 +268,19 @@ test.describe('ITHub critical flows', () => {
     await expect(page.locator('input[name="username"]')).toHaveValue(originalUsername);
   });
 
-  test('keeps engagement controls disabled for signed-out users', async ({ page }) => {
+  test('offers a clear login action for signed-out engagement', async ({ page }) => {
     await page.goto('/');
     const firstTopic = page.locator('section a[href^="/topic/"]').first();
     test.skip(await firstTopic.count() === 0, 'The test database has no topics');
-    await firstTopic.click();
+    const topicPath = await firstTopic.getAttribute('href');
+    await page.goto(topicPath);
+    await expect(page).toHaveURL((url) => url.pathname === topicPath);
+    await expect(page.locator('main h1')).toBeVisible();
 
-    const likeButton = page.getByRole('button', { name: /ถูกใจกระทู้|ยกเลิกถูกใจ/ });
-    const bookmarkButton = page.getByRole('button', { name: /บันทึกกระทู้|นำกระทู้ออก/ });
-    await expect(likeButton).toBeDisabled();
-    await expect(bookmarkButton).toBeDisabled();
-
-    // Simulate a session expiring after the page rendered. The action should
-    // report a local error instead of replacing the whole route with error.js.
-    await likeButton.evaluate((button) => { button.disabled = false; });
-    await likeButton.click();
-    await expect(page.getByRole('alert').filter({ hasText: 'กรุณาเข้าสู่ระบบอีกครั้ง' })).toBeVisible();
-    await expect(page.getByRole('heading', { name: 'โหลดข้อมูลไม่สำเร็จ' })).toHaveCount(0);
+    await expect(page.getByRole('button', { name: /ถูกใจกระทู้|ยกเลิกถูกใจ/ })).toHaveCount(0);
+    await expect(page.getByRole('button', { name: /บันทึกกระทู้|นำกระทู้ออก/ })).toHaveCount(0);
+    const loginLink = page.locator('a[href^="/login?next=/topic/"]').first();
+    await expect(loginLink).toHaveAttribute('href', /\/login\?next=\/topic\//);
   });
 
   test('toggles likes and bookmarks without leaving the topic', async ({ page }) => {
@@ -309,6 +308,125 @@ test.describe('ITHub critical flows', () => {
     } finally {
       if (await likeButton.getAttribute('aria-pressed') !== initialLike) await likeButton.click();
       if (await bookmarkButton.getAttribute('aria-pressed') !== initialBookmark) await bookmarkButton.click();
+    }
+  });
+});
+
+test.describe('ITHub responsive layout regression', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.addInitScript((storageKey) => {
+      window.localStorage.setItem(storageKey, 'completed');
+    }, onboardingStorageKey);
+  });
+
+  test('keeps shell, first topic, and floating controls within all target viewports', async ({ page }, testInfo) => {
+    const viewports = [
+      { width: 390, height: 844 },
+      { width: 768, height: 900 },
+      { width: 1024, height: 900 },
+      { width: 1440, height: 1000 },
+    ];
+
+    for (const viewport of viewports) {
+      await page.setViewportSize(viewport);
+      await page.goto('/');
+      await expect(page.locator('#main-content')).toBeVisible();
+      await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth)).toBe(viewport.width);
+
+      const mainBox = await page.locator('#main-content').boundingBox();
+      expect(mainBox).not.toBeNull();
+      expect(mainBox.x).toBeGreaterThanOrEqual(0);
+      expect(mainBox.x + mainBox.width).toBeLessThanOrEqual(viewport.width);
+
+      if (viewport.width >= 768) {
+        const sidebar = page.getByTestId('desktop-sidebar');
+        const sidebarBox = await sidebar.boundingBox();
+        expect(sidebarBox).not.toBeNull();
+        expect(sidebarBox.x + sidebarBox.width).toBeLessThanOrEqual(mainBox.x);
+        await expect(sidebar.getByRole('button', { name: /เมนูด้านข้าง/ })).toBeEnabled();
+      } else {
+        const firstTopic = page.locator('#topic-feed article').first();
+        if (await firstTopic.count()) {
+          await expect(firstTopic.locator('h3')).toBeVisible();
+          await expect(firstTopic.locator('[aria-label*="ความคิดเห็น"]')).toBeVisible();
+          const firstTopicBox = await firstTopic.boundingBox();
+          expect(firstTopicBox).not.toBeNull();
+          expect(firstTopicBox.y).toBeLessThan(viewport.height);
+        }
+
+        const chatBox = await page.getByRole('button', { name: 'เปิด ITHub Bot' }).boundingBox();
+        const bottomNavBox = await page.getByRole('navigation', { name: 'เมนูมือถือ' }).boundingBox();
+        expect(chatBox).not.toBeNull();
+        expect(bottomNavBox).not.toBeNull();
+        expect(chatBox.y + chatBox.height).toBeLessThanOrEqual(bottomNavBox.y);
+      }
+
+      const screenshot = await page.screenshot({ fullPage: true, animations: 'disabled' });
+      expect(screenshot.byteLength).toBeGreaterThan(10_000);
+      await testInfo.attach(`home-${viewport.width}-light`, { body: screenshot, contentType: 'image/png' });
+    }
+  });
+
+  test('preserves readable hierarchy in dark mode and reduced motion', async ({ page }, testInfo) => {
+    await page.addInitScript(() => window.localStorage.setItem('theme', 'dark'));
+    await page.emulateMedia({ colorScheme: 'dark', reducedMotion: 'reduce' });
+    for (const viewport of [{ width: 390, height: 844 }, { width: 1440, height: 1000 }]) {
+      await page.setViewportSize(viewport);
+      await page.goto('/');
+
+      await expect(page.locator('html')).toHaveClass(/dark/);
+      await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth)).toBe(viewport.width);
+      const screenshot = await page.screenshot({ fullPage: true, animations: 'disabled' });
+      expect(screenshot.byteLength).toBeGreaterThan(10_000);
+      await testInfo.attach(`home-${viewport.width}-dark-reduced-motion`, { body: screenshot, contentType: 'image/png' });
+    }
+  });
+
+  test('toggles the desktop sidebar by keyboard without covering content', async ({ page }) => {
+    await page.setViewportSize({ width: 1024, height: 900 });
+    await page.goto('/');
+    const sidebar = page.getByTestId('desktop-sidebar');
+    const toggle = sidebar.getByRole('button', { name: /เมนูด้านข้าง/ });
+    const initialState = await toggle.getAttribute('aria-expanded');
+
+    await toggle.focus();
+    await toggle.press('Enter');
+    await expect(toggle).toHaveAttribute('aria-expanded', initialState === 'true' ? 'false' : 'true');
+
+    const sidebarBox = await sidebar.boundingBox();
+    const mainBox = await page.locator('#main-content').boundingBox();
+    expect(sidebarBox).not.toBeNull();
+    expect(mainBox).not.toBeNull();
+    expect(sidebarBox.x + sidebarBox.width).toBeLessThanOrEqual(mainBox.x);
+  });
+
+  test('keeps topic text within the reading measure on desktop and mobile', async ({ page }, testInfo) => {
+    for (const viewport of [{ width: 390, height: 844 }, { width: 1440, height: 1000 }]) {
+      await page.setViewportSize(viewport);
+      await page.goto('/');
+      const firstTopic = page.locator('#topic-feed a[href^="/topic/"]').first();
+      test.skip(await firstTopic.count() === 0, 'The test database has no topics');
+      const topicPath = await firstTopic.getAttribute('href');
+
+      for (const theme of ['light', 'dark']) {
+        await page.evaluate((nextTheme) => window.localStorage.setItem('theme', nextTheme), theme);
+        await page.emulateMedia({ colorScheme: theme, reducedMotion: 'reduce' });
+        await page.goto(topicPath);
+        await expect(page.locator('html')).toHaveClass(theme === 'dark' ? /dark/ : /^(?!.*dark)/);
+        const content = page.locator('.view-ql-editor');
+        await expect(content).toBeVisible();
+
+        const contentBox = await content.boundingBox();
+        expect(contentBox).not.toBeNull();
+        expect(contentBox.width).toBeLessThanOrEqual(860);
+        expect(contentBox.x).toBeGreaterThanOrEqual(0);
+        expect(contentBox.x + contentBox.width).toBeLessThanOrEqual(viewport.width);
+        await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth)).toBe(viewport.width);
+
+        const screenshot = await page.screenshot({ fullPage: true, animations: 'disabled' });
+        expect(screenshot.byteLength).toBeGreaterThan(10_000);
+        await testInfo.attach(`topic-${viewport.width}-${theme}`, { body: screenshot, contentType: 'image/png' });
+      }
     }
   });
 });

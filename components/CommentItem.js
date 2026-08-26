@@ -10,6 +10,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import { Check, CheckCircle2, Reply, Send, Trash2 } from 'lucide-react';
 // SweetAlert2
 import Swal from 'sweetalert2';
 
@@ -70,12 +71,12 @@ export default function CommentItem({
 
   return (
     <div className="flex flex-col">
-      <div className={`p-4 rounded-xl border shadow-sm flex gap-4 group relative transition-all duration-500
+      <div className={`group relative flex gap-3 rounded-xl border p-4 transition-colors
           ${isSolved 
-            ? 'bg-green-50 border-green-500 ring-1 ring-green-500 dark:bg-green-900/20 dark:border-green-500' 
-            : 'bg-white border-gray-200 dark:bg-neutral-900 dark:border-neutral-800'
+            ? 'border-emerald-300 border-l-4 bg-emerald-50/60 dark:border-emerald-800 dark:bg-emerald-950/20'
+            : 'border-[var(--app-border)] bg-[var(--app-surface)]'
           }
-          ${comment.parent_id ? 'ml-8 md:ml-12 border-l-4 border-l-gray-300 dark:border-l-neutral-700' : ''}
+          ${comment.parent_id ? 'ml-4 sm:ml-8' : ''}
       `}>
         
         <div className={`w-10 h-10 rounded-full flex-shrink-0 flex items-center justify-center font-bold border 
@@ -94,8 +95,8 @@ export default function CommentItem({
                 <UserBadge role={comment.role} xp={comment.xp} />
                 
                 {isSolved && (
-                    <span className="flex items-center gap-1 text-[10px] font-bold bg-green-600 text-white px-2 py-0.5 rounded-full shadow-sm animate-in fade-in zoom-in duration-300">
-                        ✅ คำตอบที่ใช่
+                    <span className="inline-flex items-center gap-1 rounded-md bg-emerald-600 px-2 py-0.5 text-[10px] font-semibold text-white">
+                        <CheckCircle2 aria-hidden="true" size={11} /> คำตอบที่ใช่
                     </span>
                 )}
                 
@@ -151,9 +152,9 @@ export default function CommentItem({
                 <button 
                     type="button"
                     onClick={() => setIsReplying(!isReplying)}
-                    className="text-xs font-bold text-gray-500 hover:text-blue-600 dark:text-gray-400 dark:hover:text-blue-400 transition-colors flex items-center gap-1"
+                    className="flex items-center gap-1 text-xs font-semibold text-[var(--app-text-muted)] transition-colors hover:text-blue-600"
                 >
-                    💬 ตอบกลับ
+                    <Reply aria-hidden="true" size={14} /> ตอบกลับ
                 </button>
             )}
 
@@ -161,9 +162,9 @@ export default function CommentItem({
                 <button 
                     type="button"
                     onClick={handleMarkAsSolution} 
-                    className="text-xs font-bold text-green-600 hover:text-green-700 hover:bg-green-50 px-2 py-1 rounded transition-colors border border-green-200 dark:border-green-800 dark:hover:bg-green-900/30 ml-auto"
+                    className="ml-auto inline-flex items-center gap-1 rounded-md border border-emerald-300 px-2 py-1 text-xs font-semibold text-emerald-700 transition-colors hover:bg-emerald-50 dark:border-emerald-800 dark:text-emerald-300 dark:hover:bg-emerald-950/30"
                 >
-                    ✅ เลือกเป็นคำตอบ
+                    <Check aria-hidden="true" size={14} /> เลือกเป็นคำตอบ
                 </button>
             )}
           </div>
@@ -174,7 +175,7 @@ export default function CommentItem({
               await deleteAction(formData);
           }} className="absolute top-4 right-4 opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100">
              <input type="hidden" name="commentId" value={comment.id} />
-             <button type="submit" aria-label="ลบคอมเมนต์นี้" className="text-gray-400 hover:text-red-600 p-1 rounded-md hover:bg-red-50 transition-colors dark:hover:bg-neutral-800" title="ลบคอมเมนต์นี้">🗑️</button>
+             <button type="submit" aria-label="ลบคอมเมนต์นี้" className="rounded-md p-1 text-[var(--app-text-muted)] transition-colors hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950/30" title="ลบคอมเมนต์นี้"><Trash2 aria-hidden="true" size={16} /></button>
           </form>
         )}
       </div>
@@ -189,8 +190,8 @@ export default function CommentItem({
                     <Editor className="h-24 bg-white dark:bg-black text-black dark:text-white" />
                     <input type="hidden" name="parentId" value={comment.id} />
                 </div>
-                <button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold py-2 px-4 rounded-lg shadow-md transition-all dark:bg-blue-700 dark:hover:bg-blue-600 whitespace-nowrap mt-1">
-                    ส่ง
+                <button type="submit" className="mt-1 inline-flex items-center gap-1 whitespace-nowrap rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-blue-700">
+                    <Send aria-hidden="true" size={15} /> ส่ง
                 </button>
             </form>
         </div>

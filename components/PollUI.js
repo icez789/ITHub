@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { votePoll } from '../lib/actions';
 import Swal from 'sweetalert2';
 import { pusherClient } from '../lib/pusherClient'; // ✅ Import Pusher Client
+import { BarChart3, CheckCircle2, Crown, Handshake } from 'lucide-react';
 
 export default function PollUI({ poll, options: initialOptions, userVote: initialUserVote, currentUser }) {
   const router = useRouter();
@@ -99,7 +100,7 @@ export default function PollUI({ poll, options: initialOptions, userVote: initia
     <div className="bg-white dark:bg-neutral-900 border border-gray-200 dark:border-neutral-800 rounded-xl p-6 mb-8 shadow-sm">
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
-            <span className="text-2xl">📊</span>
+            <BarChart3 className="text-red-600 dark:text-red-400" aria-hidden="true" size={22} />
             <h3 className="text-xl font-bold text-gray-800 dark:text-white">{poll.question}</h3>
         </div>
       </div>
@@ -154,7 +155,7 @@ export default function PollUI({ poll, options: initialOptions, userVote: initia
                                 ? 'bg-gray-600 text-white dark:bg-gray-700' 
                                 : 'bg-yellow-400 text-black'
                             }`}>
-                                {isTie ? '🤝 เสมอ' : '👑 นำอยู่'}
+                                {isTie ? <><Handshake aria-hidden="true" size={13} /> เสมอ</> : <><Crown aria-hidden="true" size={13} /> นำอยู่</>}
                             </span>
                         )}
                     </span>
@@ -202,8 +203,8 @@ export default function PollUI({ poll, options: initialOptions, userVote: initia
             </div>
         ) : (
             <div className="flex items-center gap-4 ml-auto">
-                <div className="flex items-center gap-2 text-green-600 dark:text-green-500 text-sm font-bold bg-green-50 dark:bg-green-900/20 px-3 py-1.5 rounded-lg border border-green-200 dark:border-green-800">
-                    ✅ คุณโหวตแล้ว
+                <div className="flex items-center gap-2 rounded-lg border border-green-200 bg-green-50 px-3 py-1.5 text-sm font-semibold text-green-600 dark:border-green-800 dark:bg-green-900/20 dark:text-green-400">
+                    <CheckCircle2 aria-hidden="true" size={16} /> คุณโหวตแล้ว
                 </div>
                 
                 <button 

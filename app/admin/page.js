@@ -5,10 +5,11 @@ import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
 import Link from 'next/link';
 import Image from 'next/image';
-import DeleteButton from './DeleteButton'; // 👈 นำเข้าปุ่มที่เราเพิ่งสร้าง
+import DeleteButton from './DeleteButton';
 import { getCurrentUser, requireAdmin } from '../../lib/auth';
 import { optionalPositiveInteger, positiveInteger } from '../../lib/validation';
 import { deleteCommentCascade, deleteTopicCascade } from '../../lib/moderation';
+import { Activity, AlertTriangle, CheckCircle2, ClipboardList, Eye, FileText, LockKeyhole, MessageCircle, Trash2, Users } from 'lucide-react';
 
 export default async function AdminDashboard() {
   const currentUser = await getCurrentUser();
@@ -21,9 +22,6 @@ export default async function AdminDashboard() {
 
   const isSuperAdmin = myRole === 'super_admin';
 
-  // ============================================================
-  // ⚡ DATA FETCHING ZONE
-  // ============================================================
   const [
     [userCountData],
     [topicCountData],
@@ -63,10 +61,6 @@ export default async function AdminDashboard() {
     `)
   ]);
 
-  // ============================================================
-  // 🛠️ SERVER ACTIONS ZONE
-  // ============================================================
-  
   async function toggleBan(formData) {
     'use server';
     const actor = await requireAdmin();
@@ -127,33 +121,23 @@ export default async function AdminDashboard() {
     revalidatePath('/admin');
   }
 
-  // ============================================================
-  // 🎨 UI ZONE: Red/Black Tech Theme
-  // ============================================================
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-[#0a0a0a] text-gray-900 dark:text-gray-100 p-8 font-sans transition-colors duration-300">
-      
-      {/* Background Ambience */}
-      <div className="fixed top-0 left-0 w-full h-full overflow-hidden pointer-events-none z-0 opacity-0 dark:opacity-100 transition-opacity duration-500">
-         <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] bg-red-900/10 rounded-full blur-[150px]"></div>
-         <div className="absolute bottom-[-20%] right-[-10%] w-[50%] h-[50%] bg-red-900/10 rounded-full blur-[150px]"></div>
-      </div>
-
-      <div className="relative z-10 container mx-auto max-w-7xl">
+    <main className="ithub-page-container mx-auto max-w-7xl pb-24 pt-8 text-[var(--app-text)] md:pb-12 md:pt-12">
+      <div>
         
         {/* Header Section */}
         <div className="flex flex-col md:flex-row justify-between items-end mb-10 border-b border-gray-200 dark:border-red-900/30 pb-6">
             <div>
-                <h1 className="text-4xl font-black tracking-tight flex items-center gap-3 text-gray-900 dark:text-white">
-                    <span className="text-red-600 dark:text-red-500 text-5xl">{'///'}</span> ADMIN CONSOLE
+                <h1 className="flex items-center gap-3 text-3xl font-bold tracking-tight text-gray-900 dark:text-white md:text-4xl">
+                    <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-red-600 text-white"><LockKeyhole aria-hidden="true" size={23} /></span> ศูนย์จัดการระบบ
                 </h1>
                 <p className="text-gray-500 dark:text-gray-400 mt-2 text-sm font-medium">
-                    System Control & Monitoring Center
+                    ตรวจสอบเนื้อหา สมาชิก และสถานะชุมชน
                 </p>
             </div>
             {isSuperAdmin && (
                 <div className="mt-4 md:mt-0 px-4 py-2 bg-yellow-100 border border-yellow-300 text-yellow-800 dark:bg-yellow-900/20 dark:border-yellow-500/50 dark:text-yellow-400 rounded-md text-xs font-bold shadow-sm flex items-center gap-2">
-                   🔐 SUPER ADMIN ACCESS
+                   <LockKeyhole aria-hidden="true" size={15} /> สิทธิ์ผู้ดูแลสูงสุด
                 </div>
             )}
         </div>
@@ -163,65 +147,63 @@ export default async function AdminDashboard() {
            
            {/* Card 1: Users */}
            <Link href="/admin/users" className="block group">
-                <div className="relative bg-white dark:bg-neutral-900 border border-gray-200 dark:border-neutral-800 rounded-xl p-6 shadow-sm hover:shadow-xl hover:border-red-500/50 dark:hover:border-red-500/50 transition-all duration-300 transform hover:-translate-y-1">
+                <div className="relative rounded-xl border border-[var(--app-border)] bg-[var(--app-surface)] p-6 shadow-sm transition hover:-translate-y-0.5 hover:border-red-500/50 hover:shadow-md">
                     <div className="absolute top-4 right-4 w-10 h-10 bg-red-100 dark:bg-red-900/30 rounded-lg flex items-center justify-center text-red-600 dark:text-red-400 group-hover:bg-red-600 group-hover:text-white transition-colors">
-                        👥
+                         <Users aria-hidden="true" size={20} />
                     </div>
-                    <h3 className="text-gray-500 dark:text-gray-400 text-xs font-bold uppercase tracking-wider">Total Users</h3>
-                    <p className="text-4xl font-black text-gray-800 dark:text-white mt-2 group-hover:text-red-600 dark:group-hover:text-red-500 transition-colors">
+                    <h3 className="text-xs font-bold text-gray-500 dark:text-gray-400">สมาชิกทั้งหมด</h3>
+                    <p className="mt-2 text-4xl font-bold text-gray-800 transition-colors group-hover:text-red-600 dark:text-white dark:group-hover:text-red-500">
                         {userCountData[0].count}
                     </p>
                     <div className="mt-4 flex items-center text-xs text-gray-400 font-mono">
-                        <span className="text-green-500 flex items-center mr-1">▲ Online</span> 
-                        Tap to manage users
+                         เปิดหน้าจัดการสมาชิก
                     </div>
                 </div>
            </Link>
 
           {/* Card 2: Topics */}
           <Link href="/admin/topics" className="block group">
-                <div className="relative bg-white dark:bg-neutral-900 border border-gray-200 dark:border-neutral-800 rounded-xl p-6 shadow-sm hover:shadow-xl hover:border-red-500/50 dark:hover:border-red-500/50 transition-all duration-300 transform hover:-translate-y-1">
+                <div className="relative rounded-xl border border-[var(--app-border)] bg-[var(--app-surface)] p-6 shadow-sm transition hover:-translate-y-0.5 hover:border-red-500/50 hover:shadow-md">
                     <div className="absolute top-4 right-4 w-10 h-10 bg-red-100 dark:bg-red-900/30 rounded-lg flex items-center justify-center text-red-600 dark:text-red-400 group-hover:bg-red-600 group-hover:text-white transition-colors">
-                        📝
+                         <FileText aria-hidden="true" size={20} />
                     </div>
-                    <h3 className="text-gray-500 dark:text-gray-400 text-xs font-bold uppercase tracking-wider">Total Topics</h3>
-                    <p className="text-4xl font-black text-gray-800 dark:text-white mt-2 group-hover:text-red-600 dark:group-hover:text-red-500 transition-colors">
+                    <h3 className="text-xs font-bold text-gray-500 dark:text-gray-400">กระทู้ทั้งหมด</h3>
+                    <p className="mt-2 text-4xl font-bold text-gray-800 transition-colors group-hover:text-red-600 dark:text-white dark:group-hover:text-red-500">
                         {topicCountData[0].count}
                     </p>
                      <div className="mt-4 flex items-center text-xs text-gray-400 font-mono">
-                        <span className="text-gray-400 mr-1">● Active</span> 
-                        Tap to manage topics
+                         เปิดหน้าจัดการกระทู้
                     </div>
                 </div>
           </Link>
 
           {/* Card 3: Comments */}
           <Link href="/admin/comments" className="block group">
-                <div className="relative bg-white dark:bg-neutral-900 border border-gray-200 dark:border-neutral-800 rounded-xl p-6 shadow-sm hover:shadow-xl hover:border-red-500/50 dark:hover:border-red-500/50 transition-all duration-300 transform hover:-translate-y-1">
+                <div className="relative rounded-xl border border-[var(--app-border)] bg-[var(--app-surface)] p-6 shadow-sm transition hover:-translate-y-0.5 hover:border-red-500/50 hover:shadow-md">
                     <div className="absolute top-4 right-4 w-10 h-10 bg-red-100 dark:bg-red-900/30 rounded-lg flex items-center justify-center text-red-600 dark:text-red-400 group-hover:bg-red-600 group-hover:text-white transition-colors">
-                        💬
+                         <MessageCircle aria-hidden="true" size={20} />
                     </div>
-                    <h3 className="text-gray-500 dark:text-gray-400 text-xs font-bold uppercase tracking-wider">Comments</h3>
-                    <p className="text-4xl font-black text-gray-800 dark:text-white mt-2 group-hover:text-red-600 dark:group-hover:text-red-500 transition-colors">
+                    <h3 className="text-xs font-bold text-gray-500 dark:text-gray-400">ความคิดเห็น</h3>
+                    <p className="mt-2 text-4xl font-bold text-gray-800 transition-colors group-hover:text-red-600 dark:text-white dark:group-hover:text-red-500">
                         {commentCountData[0].count}
                     </p>
                     <div className="mt-4 flex items-center text-xs text-gray-400 font-mono">
-                        Tap to moderate
+                         เปิดหน้าตรวจสอบความคิดเห็น
                     </div>
                 </div>
           </Link>
 
           {/* Card 4: System Health */}
-          <div className="relative bg-white dark:bg-neutral-900 border border-gray-200 dark:border-neutral-800 rounded-xl p-6 shadow-sm">
-              <h3 className="text-gray-500 dark:text-gray-400 text-xs font-bold uppercase tracking-wider mb-4">System Status</h3>
+          <div className="relative rounded-xl border border-[var(--app-border)] bg-[var(--app-surface)] p-6 shadow-sm">
+              <h3 className="mb-4 flex items-center gap-2 text-xs font-bold text-gray-500 dark:text-gray-400"><Activity aria-hidden="true" size={16} /> สถานะระบบ</h3>
               <div className="space-y-4">
                  <div>
-                    <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 mb-1"><span>Server Load</span><span className="text-red-600 font-bold">12%</span></div>
-                    <div className="h-1.5 w-full bg-gray-100 dark:bg-neutral-800 rounded-full"><div className="h-full bg-red-500 w-[12%] rounded-full shadow-[0_0_10px_rgba(239,68,68,0.5)]"></div></div>
+                    <div className="mb-1 flex justify-between text-xs text-gray-500 dark:text-gray-400"><span>ภาระเซิร์ฟเวอร์</span><span className="font-bold text-red-600">12%</span></div>
+                    <div className="h-1.5 w-full rounded-full bg-gray-100 dark:bg-neutral-800"><div className="h-full w-[12%] rounded-full bg-red-500"></div></div>
                  </div>
                  <div>
-                    <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 mb-1"><span>Database</span><span className="text-green-500 font-bold">Stable</span></div>
-                    <div className="h-1.5 w-full bg-gray-100 dark:bg-neutral-800 rounded-full"><div className="h-full bg-red-500 w-[100%] rounded-full shadow-[0_0_10px_rgba(239,68,68,0.5)]"></div></div>
+                    <div className="mb-1 flex justify-between text-xs text-gray-500 dark:text-gray-400"><span>ฐานข้อมูล</span><span className="font-bold text-green-600 dark:text-green-400">ปกติ</span></div>
+                    <div className="h-1.5 w-full rounded-full bg-gray-100 dark:bg-neutral-800"><div className="h-full w-full rounded-full bg-green-500"></div></div>
                  </div>
               </div>
           </div>
@@ -236,7 +218,7 @@ export default async function AdminDashboard() {
                 <div className="bg-white dark:bg-neutral-900 border border-red-200 dark:border-red-900/50 rounded-xl overflow-hidden shadow-lg shadow-red-500/5 mb-8">
                     <div className="px-6 py-4 border-b border-red-100 dark:border-red-900/30 flex justify-between items-center bg-red-50 dark:bg-red-900/10">
                         <h3 className="font-bold text-red-600 dark:text-red-400 flex items-center gap-2">
-                            🚨 Pending Reports <span className="px-2 py-0.5 bg-red-600 text-white text-xs rounded-full">{reports.length}</span>
+                             <AlertTriangle aria-hidden="true" size={18} /> รายงานที่รอตรวจสอบ <span className="px-2 py-0.5 bg-red-600 text-white text-xs rounded-full">{reports.length}</span>
                         </h3>
                     </div>
                     <div className="overflow-x-auto">
@@ -244,24 +226,24 @@ export default async function AdminDashboard() {
                             <table className="w-full text-left text-sm text-gray-600 dark:text-gray-300">
                                 <thead className="bg-red-50 dark:bg-neutral-800 text-red-700 dark:text-red-400 uppercase font-bold text-xs">
                                 <tr>
-                                    <th className="px-6 py-3">Type</th>
-                                    <th className="px-6 py-3">Content</th>
-                                    <th className="px-6 py-3">Reason</th>
-                                    <th className="px-6 py-3">Reporter</th>
-                                    <th className="px-6 py-3 text-center">Action</th>
+                                    <th className="px-6 py-3">ประเภท</th>
+                                    <th className="px-6 py-3">เนื้อหา</th>
+                                    <th className="px-6 py-3">เหตุผล</th>
+                                    <th className="px-6 py-3">ผู้รายงาน</th>
+                                    <th className="px-6 py-3 text-center">การจัดการ</th>
                                 </tr>
                                 </thead>
                                 <tbody className="divide-y divide-red-100 dark:divide-neutral-800">
                                 {reports.map((r) => (
                                     <tr key={r.id} className="hover:bg-red-50/50 dark:hover:bg-neutral-800 transition">
-                                    <td className="px-6 py-4 text-xs font-mono font-bold">{r.topic_id ? 'TOPIC' : 'COMMENT'}</td>
+                                    <td className="px-6 py-4 text-xs font-bold">{r.topic_id ? 'กระทู้' : 'ความคิดเห็น'}</td>
                                     <td className="px-6 py-4 max-w-xs truncate font-medium">{r.topic_title || r.comment_content}</td>
                                     <td className="px-6 py-4 text-red-600 dark:text-red-400">{r.reason}</td>
                                     <td className="px-6 py-4">{r.reporter_name}</td>
                                     <td className="px-6 py-4 flex justify-center gap-2">
                                         <form action={resolveReport}>
                                             <input type="hidden" name="reportId" value={r.id} />
-                                            <button className="p-2 rounded-lg bg-gray-100 hover:bg-gray-200 dark:bg-neutral-700 dark:hover:bg-neutral-600 text-gray-600 dark:text-gray-300 transition" title="Dismiss">👁️</button>
+                                            <button aria-label="ปิดรายงานโดยไม่ลบเนื้อหา" className="p-2 rounded-lg bg-gray-100 hover:bg-gray-200 dark:bg-neutral-700 dark:hover:bg-neutral-600 text-gray-600 dark:text-gray-300 transition" title="ปิดรายงาน"><Eye aria-hidden="true" size={16} /></button>
                                         </form>
                                         {r.topic_id ? (
                                             <DeleteButton 
@@ -269,9 +251,10 @@ export default async function AdminDashboard() {
                                                 id={r.topic_id} 
                                                 idName="topicId" 
                                                 reportId={r.id}
+                                                ariaLabel="ลบกระทู้ที่ถูกรายงาน"
                                                 className="p-2 rounded-lg bg-red-100 hover:bg-red-600 text-red-600 hover:text-white dark:bg-red-900/30 dark:hover:bg-red-600 dark:text-red-400 dark:hover:text-white transition"
                                             >
-                                                🗑️
+                                                 <Trash2 aria-hidden="true" size={16} />
                                             </DeleteButton>
                                         ) : (
                                             <DeleteButton 
@@ -279,9 +262,10 @@ export default async function AdminDashboard() {
                                                 id={r.comment_id} 
                                                 idName="commentId" 
                                                 reportId={r.id}
+                                                ariaLabel="ลบความคิดเห็นที่ถูกรายงาน"
                                                 className="p-2 rounded-lg bg-orange-100 hover:bg-orange-600 text-orange-600 hover:text-white dark:bg-orange-900/30 dark:hover:bg-orange-600 dark:text-orange-400 dark:hover:text-white transition"
                                             >
-                                                🔥
+                                                 <Trash2 aria-hidden="true" size={16} />
                                             </DeleteButton>
                                         )}
                                     </td>
@@ -291,8 +275,8 @@ export default async function AdminDashboard() {
                             </table>
                         ) : (
                             <div className="p-8 flex flex-col items-center justify-center text-gray-500 dark:text-gray-400 bg-white dark:bg-neutral-900">
-                                <span className="text-4xl mb-3">✅</span>
-                                <p className="text-lg font-bold">All Clear!</p>
+                                 <CheckCircle2 className="mb-3 text-emerald-600" aria-hidden="true" size={34} />
+                                 <p className="text-lg font-bold">ไม่มีรายการค้าง</p>
                                 <p className="text-sm">ไม่มีรายการร้องเรียนที่รอตรวจสอบในขณะนี้</p>
                             </div>
                         )}
@@ -303,16 +287,16 @@ export default async function AdminDashboard() {
                 {/* --- Recent Topics Table --- */}
                 <div className="bg-white dark:bg-neutral-900 border border-gray-200 dark:border-neutral-800 rounded-xl overflow-hidden shadow-sm">
                     <div className="px-6 py-4 border-b border-gray-200 dark:border-neutral-800 flex justify-between items-center">
-                        <h3 className="font-bold text-gray-800 dark:text-gray-200">🔥 Recent Activity</h3>
+                        <h3 className="flex items-center gap-2 font-bold text-gray-800 dark:text-gray-200"><Activity aria-hidden="true" size={18} /> กระทู้ล่าสุด</h3>
                     </div>
                     <div className="overflow-x-auto">
                         <table className="w-full text-left text-sm text-gray-600 dark:text-gray-400">
                         <thead className="bg-gray-50 dark:bg-neutral-950 text-gray-500 dark:text-gray-500 uppercase font-bold text-xs">
                             <tr>
-                            <th className="px-6 py-3">Topic Title</th>
-                            <th className="px-6 py-3">Author</th>
-                            <th className="px-6 py-3">Date</th>
-                            <th className="px-6 py-3 text-right">Option</th>
+                            <th className="px-6 py-3">ชื่อกระทู้</th>
+                            <th className="px-6 py-3">ผู้เขียน</th>
+                            <th className="px-6 py-3">วันที่</th>
+                            <th className="px-6 py-3 text-right">การจัดการ</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-100 dark:divide-neutral-800">
@@ -335,9 +319,10 @@ export default async function AdminDashboard() {
                                         action={deleteTopic} 
                                         id={t.id} 
                                         idName="topicId" 
+                                        ariaLabel={`ลบกระทู้ ${t.title}`}
                                         className="text-xs text-red-500 hover:text-white border border-red-500/30 hover:bg-red-600 px-3 py-1 rounded transition"
                                     >
-                                        Delete
+                                        ลบ
                                     </DeleteButton>
                                 </td>
                             </tr>
@@ -352,7 +337,7 @@ export default async function AdminDashboard() {
             <div className="lg:col-span-1">
                  <div className="bg-white dark:bg-neutral-900 border border-gray-200 dark:border-neutral-800 rounded-xl overflow-hidden shadow-sm h-full flex flex-col">
                     <div className="px-6 py-4 border-b border-gray-200 dark:border-neutral-800 bg-gray-50 dark:bg-neutral-900">
-                        <h3 className="font-bold text-gray-800 dark:text-gray-200">📋 User Management</h3>
+                        <h3 className="flex items-center gap-2 font-bold text-gray-800 dark:text-gray-200"><ClipboardList aria-hidden="true" size={18} /> จัดการสมาชิก</h3>
                     </div>
                     <div className="overflow-y-auto max-h-[600px] p-2 flex-1">
                         <table className="w-full text-left text-sm text-gray-600 dark:text-gray-400">
@@ -387,19 +372,19 @@ export default async function AdminDashboard() {
                                         
                                         {/* Actions Panel (Visible on Hover) */}
                                         {showActions && (
-                                            <div className="mt-3 flex gap-2 justify-end opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <div className="mt-3 flex gap-2 justify-end opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity">
                                                 <form action={toggleAdmin}>
                                                     <input type="hidden" name="userId" value={u.id} />
                                                     <input type="hidden" name="currentRole" value={u.role} />
                                                     <button className="px-2 py-1 rounded bg-gray-100 hover:bg-gray-200 dark:bg-neutral-700 dark:hover:bg-neutral-600 text-gray-600 dark:text-white text-xs transition border border-gray-200 dark:border-neutral-600">
-                                                        {u.role === 'admin' ? '⬇️ User' : '⬆️ Admin'}
+                                                         {u.role === 'admin' ? 'ลดสิทธิ์เป็นสมาชิก' : 'ตั้งเป็นแอดมิน'}
                                                     </button>
                                                 </form>
                                                 <form action={toggleBan}>
                                                     <input type="hidden" name="userId" value={u.id} />
                                                     <input type="hidden" name="currentStatus" value={u.is_banned ? '1' : '0'} />
                                                     <button className={`px-2 py-1 rounded text-white text-xs transition ${u.is_banned ? 'bg-gray-500' : 'bg-red-500 hover:bg-red-600'}`}>
-                                                        {u.is_banned ? 'Unlock' : 'Ban'}
+                                                         {u.is_banned ? 'ปลดระงับ' : 'ระงับ'}
                                                     </button>
                                                 </form>
                                             </div>
@@ -416,6 +401,6 @@ export default async function AdminDashboard() {
 
         </div>
       </div>
-    </div>
+    </main>
   );
 }

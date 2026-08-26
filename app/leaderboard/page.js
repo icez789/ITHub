@@ -1,109 +1,70 @@
-import React from 'react';
-// import Navbar from '../../components/Navbar'; <-- ลบออก
 import db from '../../lib/db';
-import Link from 'next/link';
 import Image from 'next/image';
 import UserBadge from '../../components/UserBadge';
+import { Crown, Medal, Trophy } from 'lucide-react';
+
+const rankStyles = [
+  { Icon: Crown, label: 'อันดับ 1', color: 'border-amber-300 bg-amber-50 text-amber-700 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-300' },
+  { Icon: Medal, label: 'อันดับ 2', color: 'border-zinc-300 bg-zinc-50 text-zinc-700 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300' },
+  { Icon: Medal, label: 'อันดับ 3', color: 'border-orange-300 bg-orange-50 text-orange-700 dark:border-orange-900 dark:bg-orange-950/30 dark:text-orange-300' },
+];
+
+function Avatar({ user, size = 64 }) {
+  return (
+    <div className="relative flex shrink-0 items-center justify-center overflow-hidden rounded-full border border-[var(--app-border)] bg-[var(--app-surface-subtle)] font-bold text-[var(--app-text)]" style={{ width: size, height: size }}>
+      {user.avatar_url ? <Image src={user.avatar_url} alt={`รูปโปรไฟล์ของ ${user.username}`} fill sizes={`${size}px`} className="object-cover" /> : user.username.charAt(0).toUpperCase()}
+    </div>
+  );
+}
 
 export default async function LeaderboardPage() {
-  // ดึง Top 10 ผู้ใช้งานที่โพสต์เยอะที่สุด
   const [users] = await db.query('SELECT * FROM users ORDER BY post_count DESC LIMIT 10');
-
-  // แยก 3 อันดับแรกออกมา
   const top3 = users.slice(0, 3);
   const rest = users.slice(3);
 
   return (
-    // ปรับ div นอกสุดให้เรียบง่าย ไม่ต้องกำหนด min-h-screen ซ้ำ
-    <div className="container mx-auto p-6 max-w-4xl">
-        
-        {/* Header */}
-        <div className="text-center mb-12 mt-4">
-          <h1 className="text-4xl font-extrabold mb-2 bg-clip-text text-transparent bg-gradient-to-r from-yellow-500 via-red-500 to-pink-500 drop-shadow-sm">
-            🏆 Hall of Fame
-          </h1>
-          <p className="text-gray-500 dark:text-gray-400">สุดยอดนักเขียนประจำชุมชน ITHub</p>
+    <main className="ithub-page-container mx-auto max-w-5xl pb-24 pt-8 md:pb-12 md:pt-12">
+      <header className="mb-8 text-center">
+        <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-red-50 text-red-600 dark:bg-red-950/40 dark:text-red-300"><Trophy aria-hidden="true" size={24} /></span>
+        <h1 className="mt-4 text-3xl font-bold text-[var(--app-text)] sm:text-4xl">อันดับสมาชิก</h1>
+        <p className="mt-2 text-[var(--app-text-muted)]">สมาชิกที่ร่วมแบ่งปันความรู้มากที่สุดในชุมชน ITHub</p>
+      </header>
+
+      <section aria-labelledby="top-members-heading">
+        <h2 id="top-members-heading" className="sr-only">สมาชิกสามอันดับแรก</h2>
+        <div className="grid gap-4 md:grid-cols-3">
+          {top3.map((user, index) => {
+            const { Icon, label, color } = rankStyles[index];
+            return (
+              <article key={user.id} className="ithub-card flex items-center gap-4 p-5 md:flex-col md:text-center">
+                <div className={`inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1 text-xs font-semibold ${color}`}><Icon aria-hidden="true" size={14} /> {label}</div>
+                <Avatar user={user} size={index === 0 ? 76 : 68} />
+                <div className="min-w-0 flex-1">
+                  <h3 className="truncate text-lg font-bold text-[var(--app-text)]">{user.username}</h3>
+                  <div className="mt-1 flex justify-start md:justify-center"><UserBadge role={user.role} xp={user.xp} /></div>
+                  <p className="mt-2 text-sm font-semibold text-[var(--app-primary)]">{user.post_count.toLocaleString()} โพสต์</p>
+                </div>
+              </article>
+            );
+          })}
         </div>
+      </section>
 
-        {/* --- 🥇 Podium Section (3 อันดับแรก) --- */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12 items-end">
-          {/* อันดับ 2 (Silver) */}
-          {top3[1] && (
-            <div className="order-2 md:order-1 bg-white p-6 rounded-2xl shadow-lg border-b-4 border-gray-400 flex flex-col items-center transform hover:-translate-y-2 transition-transform dark:bg-neutral-900 dark:border-gray-600">
-              <div className="text-4xl mb-2">🥈</div>
-              <div className="relative w-20 h-20 rounded-full overflow-hidden border-4 border-gray-300 mb-3 bg-gray-100 flex items-center justify-center dark:border-gray-600 dark:bg-black">
-                  {top3[1].avatar_url ? <Image src={top3[1].avatar_url} alt={`รูปโปรไฟล์ของ ${top3[1].username}`} fill sizes="80px" className="object-cover" /> : <span className="text-2xl font-bold">{top3[1].username.charAt(0)}</span>}
-              </div>
-              <h2 className="font-bold text-lg text-gray-700 dark:text-gray-200">{top3[1].username}</h2>
-              <p className="text-sm text-gray-500 dark:text-gray-400">{top3[1].post_count} โพสต์</p>
-            </div>
-          )}
-
-          {/* อันดับ 1 (Gold) - ใหญ่สุด */}
-          {top3[0] && (
-            <div className="order-1 md:order-2 bg-white p-8 rounded-2xl shadow-xl border-b-4 border-yellow-400 flex flex-col items-center transform hover:-translate-y-3 transition-transform relative overflow-hidden dark:bg-neutral-900 dark:border-yellow-600 z-10">
-              <div className="absolute top-0 w-full h-1 bg-gradient-to-r from-yellow-200 to-yellow-500"></div>
-              <div className="text-6xl mb-2 animate-bounce">👑</div>
-              <div className="relative w-24 h-24 rounded-full overflow-hidden border-4 border-yellow-400 mb-3 bg-yellow-50 flex items-center justify-center shadow-lg dark:bg-black">
-                  {top3[0].avatar_url ? <Image src={top3[0].avatar_url} alt={`รูปโปรไฟล์ของ ${top3[0].username}`} fill sizes="96px" className="object-cover" /> : <span className="text-3xl font-bold">{top3[0].username.charAt(0)}</span>}
-              </div>
-              <h2 className="font-bold text-2xl text-gray-800 dark:text-white">{top3[0].username}</h2>
-              <UserBadge role={top3[0].role} postCount={top3[0].post_count} />
-              <p className="text-red-600 font-bold mt-2 text-lg dark:text-red-400">{top3[0].post_count} โพสต์</p>
-            </div>
-          )}
-
-          {/* อันดับ 3 (Bronze) */}
-          {top3[2] && (
-            <div className="order-3 bg-white p-6 rounded-2xl shadow-lg border-b-4 border-orange-700 flex flex-col items-center transform hover:-translate-y-2 transition-transform dark:bg-neutral-900 dark:border-orange-900">
-              <div className="text-4xl mb-2">🥉</div>
-              <div className="relative w-20 h-20 rounded-full overflow-hidden border-4 border-orange-300 mb-3 bg-orange-50 flex items-center justify-center dark:border-orange-900 dark:bg-black">
-                  {top3[2].avatar_url ? <Image src={top3[2].avatar_url} alt={`รูปโปรไฟล์ของ ${top3[2].username}`} fill sizes="80px" className="object-cover" /> : <span className="text-2xl font-bold">{top3[2].username.charAt(0)}</span>}
-              </div>
-              <h2 className="font-bold text-lg text-gray-700 dark:text-gray-200">{top3[2].username}</h2>
-              <p className="text-sm text-gray-500 dark:text-gray-400">{top3[2].post_count} โพสต์</p>
-            </div>
-          )}
-        </div>
-
-        {/* --- 📋 List Section (อันดับ 4-10) --- */}
-        <div className="bg-white rounded-xl shadow-sm overflow-hidden dark:bg-neutral-900 dark:border dark:border-neutral-800">
-          {rest.length > 0 ? (
-            <table className="w-full text-left">
-              <thead className="bg-gray-50 text-gray-500 text-sm uppercase dark:bg-black dark:text-gray-400">
-                <tr>
-                  <th className="px-6 py-3 w-16 text-center">#</th>
-                  <th className="px-6 py-3">สมาชิก</th>
-                  <th className="px-6 py-3 text-right">จำนวนโพสต์</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100 dark:divide-neutral-800">
-                {rest.map((u, index) => (
-                  <tr key={u.id} className="hover:bg-gray-50 transition dark:hover:bg-neutral-800">
-                    <td className="px-6 py-4 text-center font-bold text-gray-400 dark:text-gray-500">
-                      {index + 4}
-                    </td>
-                    <td className="px-6 py-4 flex items-center gap-3">
-                      <div className="relative w-8 h-8 rounded-full overflow-hidden bg-gray-200 flex items-center justify-center text-xs font-bold dark:bg-neutral-700">
-                          {u.avatar_url ? <Image src={u.avatar_url} alt={`รูปโปรไฟล์ของ ${u.username}`} fill sizes="32px" className="object-cover" /> : u.username.charAt(0).toUpperCase()}
-                      </div>
-                      <span className="font-bold text-gray-700 dark:text-gray-200">{u.username}</span>
-                      <UserBadge role={u.role} postCount={u.post_count} />
-                    </td>
-                    <td className="px-6 py-4 text-right font-bold text-red-600 dark:text-red-400">
-                      {u.post_count}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          ) : (
-            <div className="p-8 text-center text-gray-400">
-              ยังไม่มีข้อมูลอันดับเพิ่มเติม
-            </div>
-          )}
-        </div>
-
-    </div>
+      <section className="mt-8 overflow-hidden rounded-xl border border-[var(--app-border)] bg-[var(--app-surface)]" aria-labelledby="more-members-heading">
+        <div className="border-b border-[var(--app-border)] px-5 py-4"><h2 id="more-members-heading" className="font-bold text-[var(--app-text)]">อันดับถัดไป</h2></div>
+        {rest.length > 0 ? (
+          <ol className="divide-y divide-[var(--app-border)]">
+            {rest.map((user, index) => (
+              <li key={user.id} className="flex items-center gap-3 px-4 py-4 sm:px-5">
+                <span className="w-7 shrink-0 text-center text-sm font-semibold text-[var(--app-text-muted)]">{index + 4}</span>
+                <Avatar user={user} size={38} />
+                <div className="min-w-0 flex-1"><p className="truncate font-semibold text-[var(--app-text)]">{user.username}</p><div className="mt-1"><UserBadge role={user.role} xp={user.xp} /></div></div>
+                <span className="shrink-0 text-sm font-semibold text-[var(--app-primary)]">{user.post_count.toLocaleString()} <span className="hidden sm:inline">โพสต์</span></span>
+              </li>
+            ))}
+          </ol>
+        ) : <p className="p-8 text-center text-sm text-[var(--app-text-muted)]">ยังไม่มีข้อมูลอันดับเพิ่มเติม</p>}
+      </section>
+    </main>
   );
 }

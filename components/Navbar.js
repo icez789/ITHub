@@ -1,19 +1,18 @@
-import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import db from '../lib/db'; 
+import { Plus, ShieldCheck } from 'lucide-react';
+import db from '../lib/db';
 import { getCurrentUser } from '../lib/auth';
-import ThemeToggle from './ThemeToggle'; 
+import ThemeToggle from './ThemeToggle';
 import NotificationBell from './NotificationBell';
 import SearchInput from './SearchInput';
-import LogoutButton from './LogoutButton'; // ✅ นำเข้าปุ่มใหม่ที่เราเพิ่งสร้าง
+import LogoutButton from './LogoutButton';
 
 export default async function Navbar() {
-  let user = await getCurrentUser();
+  const user = await getCurrentUser();
   let notifications = [];
   let unreadCount = 0;
 
-  // ✅ Logic ดึงข้อมูลที่ปลอดภัยขึ้น (เว็บไม่ล่มแม้ DB หลุด)
   if (user) {
     try {
       const [notisResult, countResult] = await Promise.all([
@@ -28,82 +27,78 @@ export default async function Navbar() {
   }
 
   return (
-    <header className="bg-white border-b border-gray-200 px-3 sm:px-6 py-3 md:py-4 flex flex-wrap items-center gap-3 md:gap-6 shadow-sm z-50 sticky top-0 dark:bg-black dark:border-neutral-800 transition-colors duration-300">
-      
-      {/* LOGO */}
-      <Link href="/" className="flex shrink-0 items-center gap-3" aria-label="ITHub หน้าแรก">
-         <div className="w-12 h-12 bg-gradient-to-br from-red-600 to-red-800 rounded-lg flex items-center justify-center text-white font-bold text-xl shadow-lg">
-           IT
-         </div>
-         <span className="font-bold text-xl tracking-tight hidden sm:block text-gray-900 dark:text-white">IT<span className="text-red-600">Hub</span></span>
-      </Link>
-      
-      {/* Search Bar */}
-      <SearchInput className="hidden md:block flex-1 max-w-xl" />
+    <header className="ithub-surface z-50 shrink-0 border-b px-3 py-2.5 shadow-[0_1px_0_rgba(24,24,27,0.03)] sm:px-5 lg:px-6">
+      <div className="mx-auto flex max-w-[96rem] flex-wrap items-center gap-3 lg:gap-5">
+        <Link href="/" className="flex shrink-0 items-center gap-2.5" aria-label="ITHub หน้าแรก">
+          <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-red-600 text-base font-bold text-white shadow-sm">
+            IT
+          </span>
+          <span className="hidden text-xl font-bold tracking-tight text-zinc-950 sm:block dark:text-white">
+            IT<span className="text-red-600 dark:text-red-400">Hub</span>
+          </span>
+        </Link>
 
-      {/* Menu Icons */}
-      <nav aria-label="บัญชีผู้ใช้" className="ml-auto flex gap-2 sm:gap-3 items-center">
-        
-        <ThemeToggle />
+        <SearchInput className="hidden min-w-0 flex-1 md:block md:max-w-2xl" />
 
-        {user ? (
-          <div className="flex items-center gap-2 sm:gap-4">
-              
-              <NotificationBell 
-                count={unreadCount} 
-                notifications={notifications} 
-                currentUserId={user.id} 
+        <nav aria-label="บัญชีผู้ใช้" className="ml-auto flex items-center gap-1.5 sm:gap-2.5">
+          <ThemeToggle />
+
+          {user ? (
+            <>
+              <NotificationBell
+                count={unreadCount}
+                notifications={notifications}
+                currentUserId={user.id}
               />
 
-              {/* ปุ่ม Admin (เฉพาะแอดมิน) */}
               {(user.role === 'admin' || user.role === 'super_admin') && (
-                <Link 
-                  href="/admin" 
-                  className="hidden md:flex items-center gap-1 text-sm font-bold text-gray-700 hover:text-black border border-gray-300 px-3 py-2 rounded-lg transition bg-white shadow-sm dark:bg-neutral-900 dark:text-gray-200 dark:border-neutral-700 dark:hover:bg-neutral-800"
+                <Link
+                  href="/admin"
+                  className="hidden items-center gap-2 rounded-xl border border-[var(--app-border)] px-3 py-2 text-sm font-semibold text-zinc-700 transition-colors hover:bg-zinc-100 lg:flex dark:text-zinc-200 dark:hover:bg-zinc-800"
                 >
-                  🛡️ ผู้ดูแล
+                  <ShieldCheck aria-hidden="true" className="h-4 w-4" />
+                  ผู้ดูแล
                 </Link>
               )}
 
-              {/* ปุ่มสร้างกระทู้ */}
-              <Link 
-                href="/create" 
-                className="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white px-3 sm:px-4 py-2 rounded-lg font-bold shadow-md transition-all transform hover:scale-105 active:scale-95 text-sm"
+              <Link
+                href="/create"
+                className="flex items-center gap-2 rounded-xl bg-red-600 px-3 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-red-700 sm:px-4"
               >
-                <span>+</span> <span className="hidden sm:inline">สร้างกระทู้</span>
+                <Plus aria-hidden="true" className="h-4 w-4" />
+                <span className="hidden sm:inline">สร้างกระทู้</span>
               </Link>
 
-              {/* ชื่อ User */}
-              <Link href="/profile" className="text-right hidden sm:block cursor-pointer hover:opacity-80 transition-opacity group">
-                 <p className="text-xs text-gray-400 font-medium group-hover:text-red-500 transition-colors">ยินดีต้อนรับ,</p>
-                 <p className="text-sm font-bold text-gray-800 group-hover:text-red-600 transition-colors dark:text-gray-200">{user.username}</p>
+              <Link href="/profile" className="hidden items-center gap-3 rounded-xl px-1.5 py-1 transition-colors hover:bg-zinc-100 sm:flex dark:hover:bg-zinc-800">
+                <span className="hidden text-right lg:block">
+                  <span className="block text-[11px] font-medium text-zinc-500 dark:text-zinc-400">บัญชีของฉัน</span>
+                  <span className="block max-w-28 truncate text-sm font-semibold text-zinc-900 dark:text-zinc-100">{user.username}</span>
+                </span>
+                <span className="relative flex h-9 w-9 items-center justify-center overflow-hidden rounded-full border border-[var(--app-border)] bg-zinc-100 dark:bg-zinc-800">
+                  {user.avatar_url ? (
+                    <Image src={user.avatar_url} alt={`รูปโปรไฟล์ของ ${user.username}`} fill sizes="36px" className="object-cover" />
+                  ) : (
+                    <span className="text-sm font-bold text-red-600 dark:text-red-400">{user.username.charAt(0).toUpperCase()}</span>
+                  )}
+                </span>
               </Link>
-              
-              {/* รูป Profile */}
-              <Link href="/profile">
-                <div className="relative w-10 h-10 rounded-full overflow-hidden border border-red-200 cursor-pointer hover:shadow-md transition-all bg-gray-100 flex items-center justify-center dark:bg-neutral-800 dark:border-neutral-700">
-                   {user.avatar_url ? (
-                     <Image src={user.avatar_url} alt={`รูปโปรไฟล์ของ ${user.username}`} fill sizes="40px" className="object-cover" />
-                   ) : (
-                     <span className="font-bold text-red-600">{user.username.charAt(0).toUpperCase()}</span>
-                   )}
-                </div>
-              </Link>
-              
-              {/* ✅ ใส่ปุ่ม Logout แบบใหม่ตรงนี้ */}
+
               <LogoutButton />
+            </>
+          ) : (
+            <>
+              <Link href="/register" className="hidden rounded-xl px-3 py-2 text-sm font-semibold text-zinc-600 transition-colors hover:bg-zinc-100 hover:text-zinc-950 sm:inline-flex dark:text-zinc-300 dark:hover:bg-zinc-800 dark:hover:text-white">
+                สมัครสมาชิก
+              </Link>
+              <Link href="/login" className="whitespace-nowrap rounded-xl bg-red-600 px-3.5 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-red-700 sm:px-4">
+                เข้าสู่ระบบ
+              </Link>
+            </>
+          )}
+        </nav>
 
-          </div>
-        ) : (
-          /* กรณีไม่ได้ Login */
-          <>
-            <Link href="/register" className="hidden sm:inline-flex text-gray-600 hover:text-red-600 font-medium px-3 py-2 transition-colors dark:text-gray-300">สมัครสมาชิก</Link>
-            <Link href="/login" className="whitespace-nowrap bg-red-600 hover:bg-red-700 text-white px-3 sm:px-5 py-2 rounded-md text-sm font-medium shadow-md transition-all hover:shadow-red-500/30">เข้าสู่ระบบ</Link>
-          </>
-        )}
-      </nav>
-
-      <SearchInput className="order-last block w-full max-w-none md:hidden" />
+        <SearchInput className="order-last block w-full md:hidden" />
+      </div>
     </header>
   );
 }

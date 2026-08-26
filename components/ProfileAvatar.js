@@ -3,6 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { Bookmark, Settings } from 'lucide-react';
 
 export default function ProfileAvatar({ user, updateAvatar, myTopicsCount }) {
   return (
@@ -41,13 +42,13 @@ export default function ProfileAvatar({ user, updateAvatar, myTopicsCount }) {
       {/* กลุ่มปุ่ม Action */}
       <div className="flex flex-col gap-3 mb-6">
           {/* ปุ่มแก้ไข */}
-          <Link href="/profile/edit" className="w-full py-2 px-4 bg-white border border-gray-300 text-gray-700 font-bold rounded-lg hover:bg-gray-50 transition dark:bg-neutral-800 dark:border-neutral-700 dark:text-gray-200 dark:hover:bg-neutral-700">
-            ⚙️ แก้ไขข้อมูลส่วนตัว
+          <Link href="/profile/edit" className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-[var(--app-border)] bg-[var(--app-surface)] px-4 py-2 font-semibold text-[var(--app-text)] transition-colors hover:bg-[var(--app-surface-subtle)]">
+            <Settings aria-hidden="true" size={17} /> แก้ไขข้อมูลส่วนตัว
           </Link>
 
           {/* ปุ่มดูรายการที่บันทึก (Saved Topics) */}
-          <Link href="/profile/saved" className="w-full py-2 px-4 bg-blue-50 border border-blue-200 text-blue-700 font-bold rounded-lg hover:bg-blue-100 transition dark:bg-blue-900/20 dark:border-blue-800 dark:text-blue-300 dark:hover:bg-blue-900/40">
-            🔖 รายการที่บันทึกไว้
+          <Link href="/profile/saved" className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-blue-200 bg-blue-50 px-4 py-2 font-semibold text-blue-700 transition-colors hover:bg-blue-100 dark:border-blue-900 dark:bg-blue-950/30 dark:text-blue-300">
+            <Bookmark aria-hidden="true" size={17} /> รายการที่บันทึกไว้
           </Link>
       </div>
       

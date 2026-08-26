@@ -3,6 +3,87 @@
 /* 1. Base Config */
 @variant dark (&:where(.dark, .dark *));
 
+@theme inline {
+  --font-sans: var(--font-ithub-sans);
+}
+
+:root {
+  color-scheme: light;
+  --app-background: #f7f7f8;
+  --app-surface: #ffffff;
+  --app-surface-subtle: #f4f4f5;
+  --app-text: #18181b;
+  --app-text-muted: #71717a;
+  --app-border: #e4e4e7;
+  --app-primary: #dc2626;
+  --app-primary-hover: #b91c1c;
+}
+
+html.dark {
+  color-scheme: dark;
+  --app-background: #09090b;
+  --app-surface: #18181b;
+  --app-surface-subtle: #27272a;
+  --app-text: #fafafa;
+  --app-text-muted: #a1a1aa;
+  --app-border: #3f3f46;
+  --app-primary: #ef4444;
+  --app-primary-hover: #dc2626;
+}
+
+html,
+body {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--app-background);
+  color: var(--app-text);
+  font-family: var(--font-ithub-sans), system-ui, sans-serif;
+  font-size: 16px;
+  line-height: 1.65;
+}
+
+::selection {
+  background: rgba(220, 38, 38, 0.18);
+}
+
+.ithub-surface {
+  background: var(--app-surface);
+  border-color: var(--app-border);
+}
+
+.ithub-card {
+  background: var(--app-surface);
+  border: 1px solid var(--app-border);
+  border-radius: 1rem;
+  box-shadow: 0 1px 2px rgba(24, 24, 27, 0.04);
+}
+
+.ithub-muted {
+  color: var(--app-text-muted);
+}
+
+.ithub-page-container {
+  width: 100%;
+  max-width: 80rem;
+  margin-inline: auto;
+  padding-inline: 1rem;
+}
+
+@media (min-width: 640px) {
+  .ithub-page-container {
+    padding-inline: 1.5rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .ithub-page-container {
+    padding-inline: 2rem;
+  }
+}
+
 /* 2. Animations */
 @keyframes rainbow-move {
   0% { background-position: 0% 50%; }

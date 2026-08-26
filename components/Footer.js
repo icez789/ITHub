@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { CircleHelp, Mail, MapPin, Phone } from 'lucide-react';
 
 const footerLinkClass = 'hover:text-red-600 transition-colors';
 
@@ -6,7 +7,7 @@ export default function Footer() {
   const currentYear = new Date().getFullYear();
 
   return (
-    <footer className="bg-white border-t border-gray-200 pt-14 pb-24 md:pb-8 dark:bg-black dark:border-neutral-800 transition-colors duration-300 mt-12">
+    <footer className="mt-12 border-t border-[var(--app-border)] bg-[var(--app-surface)] pb-24 pt-12 transition-colors md:pb-8">
       <div className="max-w-7xl mx-auto px-6 md:px-8">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10 mb-12">
           <section aria-labelledby="footer-brand" className="space-y-4">
@@ -51,10 +52,10 @@ export default function Footer() {
           <section aria-labelledby="footer-contact">
             <h2 id="footer-contact" className="font-bold text-gray-800 mb-4 dark:text-white">ติดต่อและช่วยเหลือ</h2>
             <ul className="space-y-3 text-sm text-gray-500 dark:text-gray-400">
-              <li className="flex items-start gap-3"><span aria-hidden="true">📍</span><span>วิทยาลัยเทคนิคเชียงใหม่<br />ถนนเวียงแก้ว ต.ศรีภูมิ อ.เมือง จ.เชียงใหม่</span></li>
-              <li><a href="mailto:contact@cmtc.ac.th" className={`inline-flex items-center gap-3 ${footerLinkClass}`}><span aria-hidden="true">📧</span>contact@cmtc.ac.th</a></li>
-              <li><a href="tel:+6653217708" className={`inline-flex items-center gap-3 ${footerLinkClass}`}><span aria-hidden="true">📞</span>053-217-708</a></li>
-              <li><Link href="/help" className={`inline-flex items-center gap-3 ${footerLinkClass}`}><span aria-hidden="true">❓</span>ศูนย์ช่วยเหลือ</Link></li>
+              <li className="flex items-start gap-3"><MapPin aria-hidden="true" className="mt-0.5 shrink-0" size={16} /><span>วิทยาลัยเทคนิคเชียงใหม่<br />ถนนเวียงแก้ว ต.ศรีภูมิ อ.เมือง จ.เชียงใหม่</span></li>
+              <li><a href="mailto:contact@cmtc.ac.th" className={`inline-flex items-center gap-3 ${footerLinkClass}`}><Mail aria-hidden="true" size={16} />contact@cmtc.ac.th</a></li>
+              <li><a href="tel:+6653217708" className={`inline-flex items-center gap-3 ${footerLinkClass}`}><Phone aria-hidden="true" size={16} />053-217-708</a></li>
+              <li><Link href="/help" className={`inline-flex items-center gap-3 ${footerLinkClass}`}><CircleHelp aria-hidden="true" size={16} />ศูนย์ช่วยเหลือ</Link></li>
             </ul>
           </section>
         </div>

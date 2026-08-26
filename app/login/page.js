@@ -5,6 +5,7 @@ import { redirect } from 'next/navigation';
 import bcrypt from 'bcryptjs';
 import Link from 'next/link';
 import RippleButton from '../../components/RippleButton';
+import AuthShell from '../../components/AuthShell';
 import {
   getCurrentUser,
   isSessionConfigurationError,
@@ -69,13 +70,7 @@ export default async function LoginPage({ searchParams }) {
   }
 
   return (
-    <div className="flex items-center justify-center min-h-[80vh] p-4">
-      <div className="bg-white p-8 rounded-2xl shadow-xl w-full max-w-md border border-gray-200 relative overflow-hidden dark:bg-neutral-900 dark:border-neutral-800">
-        <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-red-600 to-red-800"></div>
-        
-        <h1 className="text-3xl font-bold text-center mb-2 text-gray-800 dark:text-white">เข้าสู่ระบบ</h1>
-        <p className="text-center text-gray-500 mb-8 dark:text-gray-400">ยินดีต้อนรับกลับสู่ ITHub</p>
-
+    <AuthShell title="เข้าสู่ระบบ" subtitle="ยินดีต้อนรับกลับสู่ชุมชน ITHub" footer={<>ยังไม่มีบัญชี? <Link href="/register" className="font-semibold text-[var(--app-primary)] hover:underline">สมัครสมาชิก</Link></>}>
         {/* แสดงแจ้งเตือน Error */}
         {notify === 'login_failed' && (
             <div className="mb-4 p-3 bg-red-50 text-red-600 border border-red-200 rounded-lg text-sm text-center">
@@ -100,26 +95,22 @@ export default async function LoginPage({ searchParams }) {
 
         <form action={login} className="flex flex-col gap-4">
           <div>
-            <label htmlFor="login-email" className="block text-sm font-medium text-gray-700 mb-1 dark:text-gray-300">อีเมล</label>
-            <input id="login-email" name="email" type="email" required autoComplete="email" placeholder="name@example.com" className="w-full bg-gray-50 border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-red-500 focus:outline-none dark:bg-black dark:border-neutral-700 dark:text-white" />
+            <label htmlFor="login-email" className="mb-1.5 block text-sm font-medium text-[var(--app-text)]">อีเมล</label>
+            <input id="login-email" name="email" type="email" required autoComplete="email" placeholder="name@example.com" className="w-full rounded-lg border border-[var(--app-border)] bg-[var(--app-surface-subtle)] p-3 text-[var(--app-text)] outline-none transition-shadow focus:ring-2 focus:ring-red-500" />
           </div>
           <div>
-            <label htmlFor="login-password" className="block text-sm font-medium text-gray-700 mb-1 dark:text-gray-300">รหัสผ่าน</label>
-            <input id="login-password" name="password" type="password" required minLength={8} maxLength={128} autoComplete="current-password" placeholder="••••••••" className="w-full bg-gray-50 border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-red-500 focus:outline-none dark:bg-black dark:border-neutral-700 dark:text-white" />
+            <label htmlFor="login-password" className="mb-1.5 block text-sm font-medium text-[var(--app-text)]">รหัสผ่าน</label>
+            <input id="login-password" name="password" type="password" required minLength={8} maxLength={128} autoComplete="current-password" placeholder="••••••••" className="w-full rounded-lg border border-[var(--app-border)] bg-[var(--app-surface-subtle)] p-3 text-[var(--app-text)] outline-none transition-shadow focus:ring-2 focus:ring-red-500" />
           </div>
           
           <RippleButton 
             type="submit" 
-            className="mt-4 w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 rounded-lg shadow-lg dark:bg-red-700 dark:hover:bg-red-600"
+            className="mt-2 w-full rounded-lg bg-[var(--app-primary)] py-3 font-semibold text-white hover:bg-[var(--app-primary-hover)]"
           >
             เข้าสู่ระบบ
           </RippleButton>
         </form>
 
-        <p className="text-center mt-6 text-gray-500 text-sm dark:text-gray-400">
-          ยังไม่มีบัญชี? <Link href="/register" className="text-red-600 hover:underline font-bold dark:text-red-400">สมัครสมาชิก</Link>
-        </p>
-      </div>
-    </div>
+    </AuthShell>
   );
 }

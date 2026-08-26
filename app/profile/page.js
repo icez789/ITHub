@@ -6,6 +6,7 @@ import ProfileAvatar from '../../components/ProfileAvatar';
 import UserBadge from '../../components/UserBadge'; // ✅ 1. เพิ่ม UserBadge
 import { getCurrentUser } from '../../lib/auth';
 import { updateAvatar } from '../../lib/actions';
+import { Eye, FileText, Inbox, Plus, Trophy } from 'lucide-react';
 
 export default async function ProfilePage() {
   const userSession = await getCurrentUser();
@@ -52,7 +53,7 @@ export default async function ProfilePage() {
   const xpProgress = Math.min(100, Math.max(0, ((fullUserData.xp - currentRankXP) / (nextRankXP - currentRankXP)) * 100));
 
   return (
-    <div className="container mx-auto p-6 max-w-5xl">
+    <main className="ithub-page-container mx-auto max-w-5xl pb-24 pt-8 md:pb-12 md:pt-12">
         
         {/* Header Section */}
         <div className="flex flex-col md:flex-row justify-between items-center mb-8 border-b pb-6 border-gray-200 dark:border-neutral-800">
@@ -79,7 +80,7 @@ export default async function ProfilePage() {
             {/* ✅ 4. Stats Card (XP & Solved) */}
             <div className="bg-white dark:bg-neutral-900 p-6 rounded-xl border border-gray-200 dark:border-neutral-800 shadow-sm">
                 <h3 className="font-bold text-gray-800 dark:text-white mb-4 flex items-center gap-2">
-                    🏆 สถิติเลเวล
+                    <Trophy aria-hidden="true" size={19} /> สถิติสมาชิก
                 </h3>
                 
                 <div className="mb-4">
@@ -98,11 +99,11 @@ export default async function ProfilePage() {
                 <div className="grid grid-cols-2 gap-3">
                     <div className="bg-green-50 dark:bg-green-900/20 p-3 rounded-lg border border-green-100 dark:border-green-800/50 text-center">
                         <div className="text-2xl font-bold text-green-600 dark:text-green-400">{solvedCount}</div>
-                        <div className="text-[10px] text-green-800 dark:text-green-300 uppercase font-bold">Solved</div>
+                        <div className="text-[10px] font-bold text-green-800 dark:text-green-300">คำตอบที่ถูกเลือก</div>
                     </div>
                     <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg border border-blue-100 dark:border-blue-800/50 text-center">
                         <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">{myTopics.length}</div>
-                        <div className="text-[10px] text-blue-800 dark:text-blue-300 uppercase font-bold">Posts</div>
+                        <div className="text-[10px] font-bold text-blue-800 dark:text-blue-300">กระทู้</div>
                     </div>
                 </div>
             </div>
@@ -111,7 +112,7 @@ export default async function ProfilePage() {
           {/* Right Column: Topics List */}
           <div className="md:col-span-2">
             <h3 className="text-xl font-bold mb-4 flex items-center gap-2 dark:text-gray-200 border-b pb-2 border-gray-100 dark:border-neutral-800">
-              📝 กระทู้ล่าสุดของคุณ
+              <FileText aria-hidden="true" size={20} /> กระทู้ล่าสุดของคุณ
             </h3>
 
             <div className="space-y-4">
@@ -131,7 +132,7 @@ export default async function ProfilePage() {
                           {topic.title}
                         </Link>
                         <div className="text-xs text-gray-400 mt-1 flex items-center gap-3">
-                            <span className="flex items-center gap-1">👁️ {topic.views}</span>
+                            <span className="flex items-center gap-1"><Eye aria-hidden="true" size={14} /> {topic.views}</span>
                             {/* ถ้าอยากโชว์คอมเมนต์ต้อง join table เพิ่ม แต่เอาแค่นี้ก่อนก็สวยแล้ว */}
                         </div>
                      </div>
@@ -147,10 +148,10 @@ export default async function ProfilePage() {
                 ))
               ) : (
                 <div className="bg-white p-12 rounded-xl text-center border border-dashed border-gray-300 dark:bg-neutral-900 dark:border-neutral-800">
-                  <div className="text-4xl mb-4">📭</div>
+                  <Inbox className="mx-auto mb-4 text-[var(--app-text-muted)]" aria-hidden="true" size={34} />
                   <p className="text-gray-400 text-lg mb-6">คุณยังไม่เคยตั้งกระทู้เลย...</p>
                   <Link href="/create" className="bg-red-600 text-white px-6 py-3 rounded-lg hover:bg-red-700 transition inline-flex items-center gap-2 font-bold shadow-md shadow-red-500/20 dark:bg-red-700 dark:hover:bg-red-600">
-                    + เริ่มตั้งกระทู้แรก
+                    <Plus aria-hidden="true" size={18} /> เริ่มตั้งกระทู้แรก
                   </Link>
                 </div>
               )}
@@ -159,6 +160,6 @@ export default async function ProfilePage() {
 
         </div>
 
-    </div>
+    </main>
   );
 }

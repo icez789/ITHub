@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { createTopicWithPoll } from '../../lib/actions'; // เดี๋ยวเราไปสร้างฟังก์ชันนี้กัน
 import Editor from '../../components/Editor'; 
 import Swal from 'sweetalert2';
+import { BarChart3, LoaderCircle, Plus, Send, Trash2 } from 'lucide-react';
 
 export default function CreateTopicPage() {
   const router = useRouter();
@@ -87,10 +88,10 @@ export default function CreateTopicPage() {
   };
 
   return (
-    <div className="container mx-auto p-6 max-w-3xl">
-      <div className="bg-white p-8 rounded-xl shadow-lg border-t-4 border-red-600 dark:bg-neutral-900 dark:border-red-700">
+    <main className="ithub-page-container mx-auto max-w-3xl pb-24 pt-8 md:pb-12 md:pt-12">
+      <div className="rounded-2xl border border-[var(--app-border)] bg-[var(--app-surface)] p-5 shadow-sm sm:p-8">
         <h1 className="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-2 dark:text-white">
-          <span className="text-red-600 text-3xl">+</span> ตั้งกระทู้ใหม่
+          <Plus className="text-red-600" aria-hidden="true" size={25} /> ตั้งกระทู้ใหม่
         </h1>
         
         <form action={handleSubmit} className="flex flex-col gap-6">
@@ -133,7 +134,7 @@ export default function CreateTopicPage() {
                         onChange={(e) => setHasPoll(e.target.checked)} 
                         className="w-5 h-5 text-red-600 rounded focus:ring-red-500"
                     />
-                    📊 เพิ่มโพลสำรวจ
+                    <BarChart3 className="text-red-600" aria-hidden="true" size={19} /> เพิ่มโพลสำรวจ
                 </label>
              </div>
 
@@ -164,7 +165,7 @@ export default function CreateTopicPage() {
                                     className="flex-1 bg-white border border-gray-300 rounded p-2 text-sm dark:bg-black dark:border-neutral-600 dark:text-white"
                                 />
                                 {pollOptions.length > 2 && (
-                                    <button type="button" aria-label={`ลบตัวเลือกโพลที่ ${idx + 1}`} onClick={() => removeOption(idx)} className="text-red-500 hover:text-red-700 px-2">✕</button>
+                                    <button type="button" aria-label={`ลบตัวเลือกโพลที่ ${idx + 1}`} onClick={() => removeOption(idx)} className="rounded-md px-2 text-red-500 hover:bg-red-50 hover:text-red-700"><Trash2 aria-hidden="true" size={17} /></button>
                                 )}
                             </div>
                         ))}
@@ -172,18 +173,18 @@ export default function CreateTopicPage() {
 
                     {pollOptions.length < 8 && (
                         <button type="button" onClick={addOption} className="mt-3 text-sm text-red-600 hover:text-red-700 font-bold flex items-center gap-1">
-                            + เพิ่มตัวเลือก
+                            <Plus aria-hidden="true" size={16} /> เพิ่มตัวเลือก
                         </button>
                     )}
                  </div>
              )}
           </div>
 
-          <button type="submit" disabled={isSubmitting} className="bg-red-600 hover:bg-red-700 text-white font-bold py-4 rounded-lg shadow-md transition-all mt-2 transform hover:scale-[1.01] active:scale-95 disabled:cursor-wait disabled:opacity-60 dark:bg-red-700 dark:hover:bg-red-600">
-              {isSubmitting ? 'กำลังโพสต์...' : 'โพสต์กระทู้ทันที 🚀'}
+          <button type="submit" disabled={isSubmitting} className="mt-2 inline-flex items-center justify-center gap-2 rounded-lg bg-[var(--app-primary)] py-4 font-semibold text-white transition-colors hover:bg-[var(--app-primary-hover)] disabled:cursor-wait disabled:opacity-60">
+              {isSubmitting ? <><LoaderCircle className="animate-spin" aria-hidden="true" size={18} /> กำลังโพสต์...</> : <><Send aria-hidden="true" size={18} /> โพสต์กระทู้</>}
           </button>
         </form>
       </div>
-    </div>
+    </main>
   );
 }

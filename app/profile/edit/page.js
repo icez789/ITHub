@@ -5,6 +5,7 @@ import bcrypt from 'bcryptjs'; // ✅ อย่าลืม install: npm install
 import Link from 'next/link';
 import { getCurrentUser, requireUser } from '../../../lib/auth';
 import { requiredText } from '../../../lib/validation';
+import { AlertCircle, ArrowLeft, LockKeyhole, Settings } from 'lucide-react';
 
 export const metadata = {
   title: 'แก้ไขข้อมูลส่วนตัว | ITHub',
@@ -101,37 +102,37 @@ export default async function EditProfilePage({ searchParams }) {
   }
 
   return (
-    <div className="container mx-auto p-6 max-w-2xl">
+    <main className="ithub-page-container mx-auto max-w-2xl pb-24 pt-8 md:pb-12 md:pt-12">
       
       {/* Header & Back Button */}
       <div className="mb-8">
         <Link href="/profile" className="text-gray-500 hover:text-red-600 dark:text-gray-400 dark:hover:text-red-400 mb-4 inline-flex items-center gap-1 transition-colors">
-            &larr; กลับหน้าโปรไฟล์
+            <ArrowLeft aria-hidden="true" size={17} /> กลับหน้าโปรไฟล์
         </Link>
         <h1 className="text-3xl font-bold text-gray-800 dark:text-white flex items-center gap-2">
-            ⚙️ แก้ไขข้อมูลส่วนตัว
+            <Settings aria-hidden="true" size={25} /> แก้ไขข้อมูลส่วนตัว
         </h1>
       </div>
 
       {/* แจ้งเตือน Error (Alerts) */}
       {notify === 'wrong_old_password' && (
           <div className="mb-6 p-4 bg-red-50 text-red-600 border border-red-200 rounded-lg text-center font-bold flex items-center justify-center gap-2">
-              ❌ รหัสผ่านเดิมไม่ถูกต้อง
+              <AlertCircle aria-hidden="true" size={18} /> รหัสผ่านเดิมไม่ถูกต้อง
           </div>
       )}
       {notify === 'password_mismatch' && (
           <div className="mb-6 p-4 bg-red-50 text-red-600 border border-red-200 rounded-lg text-center font-bold flex items-center justify-center gap-2">
-              ❌ รหัสผ่านใหม่ไม่ตรงกัน
+              <AlertCircle aria-hidden="true" size={18} /> รหัสผ่านใหม่ไม่ตรงกัน
           </div>
       )}
       {notify === 'missing_password' && (
           <div className="mb-6 p-4 bg-yellow-50 text-yellow-700 border border-yellow-200 rounded-lg text-center flex items-center justify-center gap-2">
-              ⚠️ กรุณากรอกรหัสผ่านให้ครบถ้วน
+              <AlertCircle aria-hidden="true" size={18} /> กรุณากรอกรหัสผ่านให้ครบถ้วน
           </div>
       )}
       {notify === 'error_username' && (
-          <div className="mb-6 p-4 bg-red-50 text-red-600 border border-red-200 rounded-lg text-center font-bold">
-              ❌ ชื่อผู้ใช้นี้ถูกใช้งานแล้ว หรือเกิดข้อผิดพลาด
+          <div className="mb-6 flex items-center justify-center gap-2 rounded-lg border border-red-200 bg-red-50 p-4 text-center font-bold text-red-600">
+              <AlertCircle aria-hidden="true" size={18} /> ชื่อผู้ใช้นี้ถูกใช้งานแล้ว หรือเกิดข้อผิดพลาด
           </div>
       )}
 
@@ -175,7 +176,7 @@ export default async function EditProfilePage({ searchParams }) {
             {/* ส่วนเปลี่ยนรหัสผ่าน */}
             <div className="bg-gray-50 p-6 rounded-lg border border-gray-200 dark:bg-neutral-800 dark:border-neutral-700">
                 <h2 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2 dark:text-gray-200">
-                    🔒 เปลี่ยนรหัสผ่าน <span className="text-sm font-normal text-gray-500">(ถ้าต้องการ)</span>
+                     <LockKeyhole aria-hidden="true" size={19} /> เปลี่ยนรหัสผ่าน <span className="text-sm font-normal text-gray-500">(ถ้าต้องการ)</span>
                 </h2>
 
                 <div className="mb-4">
@@ -224,7 +225,7 @@ export default async function EditProfilePage({ searchParams }) {
                 <Link href="/profile" className="px-6 py-3 rounded-lg border border-gray-300 text-gray-700 font-bold hover:bg-gray-100 transition dark:text-gray-300 dark:border-neutral-600 dark:hover:bg-neutral-800">
                     ยกเลิก
                 </Link>
-                <button type="submit" className="px-8 py-3 rounded-lg bg-red-600 text-white font-bold hover:bg-red-700 shadow-md transition hover:scale-105 active:scale-95 dark:bg-red-700 dark:hover:bg-red-600">
+                <button type="submit" className="rounded-lg bg-[var(--app-primary)] px-8 py-3 font-semibold text-white transition-colors hover:bg-[var(--app-primary-hover)]">
                     บันทึกการแก้ไข
                 </button>
             </div>
@@ -232,6 +233,6 @@ export default async function EditProfilePage({ searchParams }) {
         </form>
 
       </div>
-    </div>
+    </main>
   );
 }

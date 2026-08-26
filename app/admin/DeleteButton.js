@@ -3,7 +3,7 @@
 
 import React from 'react';
 
-export default function DeleteButton({ action, id, idName, reportId, className, children }) {
+export default function DeleteButton({ action, id, idName, reportId, className, children, ariaLabel = 'ลบข้อมูล' }) {
   return (
     <form action={action}>
       <input type="hidden" name={idName} value={id} />
@@ -12,6 +12,7 @@ export default function DeleteButton({ action, id, idName, reportId, className, 
       <button 
         type="submit" 
         className={className}
+        aria-label={ariaLabel}
         onClick={(e) => {
           // แจ้งเตือนยืนยันก่อนลบ
           if (!confirm('ยืนยันที่จะลบข้อมูลนี้? (การกระทำนี้ไม่สามารถย้อนกลับได้)')) {

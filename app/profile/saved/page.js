@@ -5,6 +5,8 @@ import { redirect } from 'next/navigation';
 import { getCurrentUser } from '../../../lib/auth';
 import Link from 'next/link';
 import TopicCard from '../../../components/TopicCard';
+import { ArrowLeft, Bookmark } from 'lucide-react';
+import { plainText } from '../../../lib/content';
 
 export default async function SavedTopicsPage() {
   const user = await getCurrentUser();
@@ -13,7 +15,9 @@ export default async function SavedTopicsPage() {
   // 3. ดึงข้อมูลกระทู้ที่ User นี้กด Bookmark ไว้
   // (ต้อง JOIN ตาราง topics กับ bookmarks เพื่อเอาข้อมูลกระทู้มาโชว์)
   const [savedTopics] = await db.query(`
-    SELECT topics.*, users.username 
+    SELECT topics.*, users.username,
+      (SELECT COUNT(*) FROM comments WHERE comments.topic_id = topics.id) AS comment_count,
+      (SELECT COUNT(*) FROM likes WHERE likes.topic_id = topics.id) AS like_count
     FROM bookmarks
     JOIN topics ON bookmarks.topic_id = topics.id
     LEFT JOIN users ON topics.user_id = users.id
@@ -22,20 +26,20 @@ export default async function SavedTopicsPage() {
   `, [user.id]);
 
   return (
-    <div className="container mx-auto p-6 max-w-5xl">
+    <main className="ithub-page-container mx-auto max-w-4xl pb-24 pt-8 md:pb-12 md:pt-12">
         
         {/* Header */}
         <div className="flex items-center gap-4 mb-8">
-            <Link href="/profile" className="text-gray-500 hover:text-red-600 dark:text-gray-400 dark:hover:text-red-400 text-2xl transition-colors">
-                &larr;
+            <Link href="/profile" aria-label="กลับไปหน้าโปรไฟล์" className="rounded-lg p-2 text-[var(--app-text-muted)] transition-colors hover:bg-[var(--app-surface-subtle)] hover:text-[var(--app-primary)]">
+                <ArrowLeft aria-hidden="true" size={20} />
             </Link>
-            <h1 className="text-3xl font-bold text-gray-800 border-l-8 border-blue-600 pl-4 dark:text-white dark:border-blue-500">
-                🔖 กระทู้ที่บันทึกไว้
+            <h1 className="flex items-center gap-2 text-3xl font-bold text-[var(--app-text)]">
+                <Bookmark aria-hidden="true" className="text-blue-600" size={26} /> กระทู้ที่บันทึกไว้
             </h1>
         </div>
 
         {/* รายการกระทู้ */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
+        <section aria-label="รายการกระทู้ที่บันทึกไว้" className="mb-12 space-y-3">
             {savedTopics.length > 0 ? (
                 savedTopics.map((topic, index) => (
                     <TopicCard 
@@ -43,9 +47,14 @@ export default async function SavedTopicsPage() {
                         index={index}
                         id={topic.id} 
                         title={topic.title}
+                        category={topic.category}
+                        excerpt={plainText(topic.content).slice(0, 180)}
                         username={topic.username}
-                        created_at={topic.created_at}
-                        image_url={topic.image_url}
+                        createdAt={topic.created_at}
+                        imageUrl={topic.image_url}
+                        views={topic.views}
+                        commentCount={topic.comment_count}
+                        likeCount={topic.like_count}
                     />
                 ))
             ) : (
@@ -56,8 +65,8 @@ export default async function SavedTopicsPage() {
                     </Link>
                 </div>
             )}
-        </div>
+        </section>
 
-    </div>
+    </main>
   );
 }

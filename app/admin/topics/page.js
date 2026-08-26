@@ -9,6 +9,7 @@ import { getCurrentUser, requireAdmin } from '../../../lib/auth';
 import { positiveInteger } from '../../../lib/validation';
 import { deleteTopicCascade } from '../../../lib/moderation';
 import AdminPagination from '../AdminPagination';
+import { ArrowLeft, CalendarDays, Eye, FileText, MessageCircle, Search, Trash2 } from 'lucide-react';
 
 export default async function TopicsManagementPage({ searchParams }) {
   const currentUser = await getCurrentUser();
@@ -48,40 +49,41 @@ export default async function TopicsManagementPage({ searchParams }) {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-[#0a0a0a] text-gray-900 dark:text-gray-100 p-8 font-sans">
-       <div className="container mx-auto max-w-6xl">
+    <main className="ithub-page-container mx-auto max-w-6xl pb-24 pt-8 text-[var(--app-text)] md:pb-12 md:pt-12">
+       <div>
          <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
             <div>
-                <Link href="/admin" className="text-sm text-gray-500 hover:text-red-500 mb-2 inline-block">← Back to Dashboard</Link>
-                <h1 className="text-3xl font-black flex items-center gap-3">
-                    <span className="text-red-600 text-4xl">📝</span> Topic Management
+                <Link href="/admin" className="mb-3 inline-flex items-center gap-2 text-sm font-semibold text-[var(--app-muted)] hover:text-red-600"><ArrowLeft aria-hidden="true" size={16} /> กลับศูนย์จัดการ</Link>
+                <h1 className="flex items-center gap-3 text-3xl font-bold">
+                    <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-red-600 text-white"><FileText aria-hidden="true" size={22} /></span> จัดการกระทู้
                 </h1>
             </div>
             <form className="relative w-full md:w-96">
-                <input name="q" defaultValue={q} placeholder="Search topics..." className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-300 dark:border-neutral-800 bg-white dark:bg-neutral-900 focus:ring-2 focus:ring-red-500 outline-none transition"/>
-                <span className="absolute left-3 top-2.5 text-gray-400">🔍</span>
+                <label htmlFor="topic-search" className="sr-only">ค้นหากระทู้</label>
+                <input id="topic-search" name="q" defaultValue={q} placeholder="ค้นหากระทู้..." className="w-full rounded-xl border border-[var(--app-border)] bg-[var(--app-surface)] py-2.5 pl-10 pr-4 outline-none transition focus:border-red-500 focus:ring-2 focus:ring-red-500/20"/>
+                <Search className="absolute left-3 top-3 text-[var(--app-muted)]" aria-hidden="true" size={17} />
             </form>
          </div>
 
          <div className="grid gap-4">
             {topics.map((t) => (
-                <div key={t.id} className="bg-white dark:bg-neutral-900 border border-gray-200 dark:border-neutral-800 rounded-xl p-5 shadow-sm hover:border-red-500/30 transition flex justify-between items-start">
+                <article key={t.id} className="flex items-start justify-between rounded-2xl border border-[var(--app-border)] bg-[var(--app-surface)] p-5 shadow-sm transition hover:border-red-500/40">
                     <div className="flex-1">
                         <Link href={`/topic/${t.id}`} target="_blank" className="text-lg font-bold text-gray-900 dark:text-white hover:text-red-600 transition block mb-1">
                             {t.title}
                         </Link>
                         <p className="text-sm text-gray-500 dark:text-gray-400 line-clamp-2 mb-3">{t.content}</p>
                         
-                        <div className="flex items-center gap-4 text-xs text-gray-400 font-mono">
+                        <div className="flex flex-wrap items-center gap-4 text-xs text-[var(--app-muted)]">
                             <span className="flex items-center gap-1 text-gray-600 dark:text-gray-300">
                                 <span className="relative w-5 h-5 rounded-full bg-gray-200 flex items-center justify-center text-[10px] overflow-hidden">
                                     {t.avatar_url ? <Image src={t.avatar_url} alt={`รูปโปรไฟล์ของ ${t.username}`} fill sizes="20px" className="object-cover" /> : t.username.charAt(0)}
                                 </span>
                                 {t.username}
                             </span>
-                            <span>📅 {new Date(t.created_at).toLocaleDateString('th-TH')}</span>
-                            <span className="flex items-center gap-1">💬 {t.comment_count}</span>
-                            <span className="flex items-center gap-1">👁️ {t.views}</span>
+                            <span className="flex items-center gap-1"><CalendarDays aria-hidden="true" size={14} /> {new Date(t.created_at).toLocaleDateString('th-TH')}</span>
+                            <span className="flex items-center gap-1"><MessageCircle aria-hidden="true" size={14} /> {t.comment_count}</span>
+                            <span className="flex items-center gap-1"><Eye aria-hidden="true" size={14} /> {t.views}</span>
                         </div>
                     </div>
                     
@@ -90,17 +92,18 @@ export default async function TopicsManagementPage({ searchParams }) {
                             action={deleteTopic} 
                             id={t.id} 
                             idName="topicId" 
-                            className="px-3 py-1.5 bg-red-50 dark:bg-red-900/10 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-900/30 rounded hover:bg-red-600 hover:text-white transition text-xs font-bold"
+                            ariaLabel={`ลบกระทู้ ${t.title}`}
+                            className="inline-flex items-center gap-1.5 rounded-lg border border-red-200 bg-red-50 px-3 py-1.5 text-xs font-bold text-red-600 transition hover:bg-red-600 hover:text-white dark:border-red-900/40 dark:bg-red-950/30 dark:text-red-400"
                         >
-                            Delete
+                            <Trash2 aria-hidden="true" size={14} /> ลบ
                         </DeleteButton>
                     </div>
-                </div>
+                </article>
             ))}
-            {topics.length === 0 && <div className="text-center py-10 text-gray-500">No topics found.</div>}
+            {topics.length === 0 && <div className="py-10 text-center text-[var(--app-muted)]">ไม่พบกระทู้</div>}
          </div>
          <AdminPagination path="/admin/topics" page={page} totalPages={totalPages} query={q} />
        </div>
-    </div>
+    </main>
   );
 }

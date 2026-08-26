@@ -1,44 +1,26 @@
 import Link from 'next/link';
 import React from 'react';
+import { Home, MapPinOff } from 'lucide-react';
 
 export default function NotFound() {
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gray-100 font-sans text-gray-800 dark:bg-black dark:text-gray-100 transition-colors duration-300 p-4">
-      
-      {/* Animation 404 */}
-      <div className="relative">
-        <h1 className="text-9xl font-extrabold text-gray-200 dark:text-neutral-800 tracking-widest select-none animate-pulse">
-          404
-        </h1>
-        <div className="absolute inset-0 flex items-center justify-center">
-          <span className="bg-red-600 text-white px-4 py-1 rounded text-sm font-bold rotate-12 shadow-lg transform hover:rotate-0 transition-transform duration-300 cursor-default">
-            Page Not Found
-          </span>
+    <main className="ithub-page-container mx-auto flex min-h-[65vh] max-w-2xl items-center justify-center py-16 text-[var(--app-text)]">
+      <section className="w-full rounded-3xl border border-[var(--app-border)] bg-[var(--app-surface)] p-8 text-center shadow-sm md:p-12">
+        <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-red-50 text-red-600 dark:bg-red-950/40 dark:text-red-400">
+          <MapPinOff aria-hidden="true" size={30} />
         </div>
-      </div>
-
-      <h2 className="text-2xl font-bold mt-8 mb-4 text-center">
-        อ้าว... หลงทางซะแล้ว! 🗺️
-      </h2>
-      
-      <p className="text-gray-500 dark:text-gray-400 text-center max-w-md mb-8">
-        หน้าที่คุณกำลังตามหาอาจถูกลบ เปลี่ยนชื่อ หรือไม่มีอยู่จริงในจักรวาลนี้
-      </p>
-
-      {/* ปุ่มกลับบ้าน (Bouncy) */}
+        <p className="text-sm font-bold uppercase tracking-[0.2em] text-red-600 dark:text-red-400">404</p>
+        <h1 className="mt-2 text-3xl font-bold">ไม่พบหน้าที่คุณต้องการ</h1>
+        <p className="mx-auto mb-8 mt-3 max-w-md text-[var(--app-muted)]">
+          หน้านี้อาจถูกลบ เปลี่ยนที่อยู่ หรือไม่มีอยู่ในระบบ ลองกลับไปสำรวจกระทู้จากหน้าแรก
+        </p>
       <Link 
         href="/"
-        className="px-8 py-3 bg-red-600 hover:bg-red-700 text-white font-bold rounded-full shadow-lg hover:shadow-red-500/30 transition-all transform hover:scale-105 active:scale-95 flex items-center gap-2"
+        className="inline-flex items-center gap-2 rounded-xl bg-red-600 px-6 py-3 font-bold text-white transition hover:bg-red-700"
       >
-        🏠 กลับหน้าหลัก
+        <Home aria-hidden="true" size={18} /> กลับหน้าแรก
       </Link>
-
-      {/* Decoration พื้นหลัง */}
-      <div className="fixed top-0 left-0 w-full h-full pointer-events-none overflow-hidden z-[-1]">
-         <div className="absolute top-10 left-10 w-32 h-32 bg-red-500/10 rounded-full blur-3xl"></div>
-         <div className="absolute bottom-10 right-10 w-64 h-64 bg-blue-500/10 rounded-full blur-3xl"></div>
-      </div>
-
-    </div>
+      </section>
+    </main>
   );
 }

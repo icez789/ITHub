@@ -9,6 +9,7 @@ import { getCurrentUser, requireAdmin } from '../../../lib/auth';
 import { positiveInteger } from '../../../lib/validation';
 import { deleteCommentCascade } from '../../../lib/moderation';
 import AdminPagination from '../AdminPagination';
+import { ArrowLeft, MessageCircle, Search, Trash2 } from 'lucide-react';
 
 export default async function CommentsManagementPage({ searchParams }) {
   const currentUser = await getCurrentUser();
@@ -52,22 +53,23 @@ export default async function CommentsManagementPage({ searchParams }) {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-[#0a0a0a] text-gray-900 dark:text-gray-100 p-8 font-sans">
-       <div className="container mx-auto max-w-6xl">
+    <main className="ithub-page-container mx-auto max-w-6xl pb-24 pt-8 text-[var(--app-text)] md:pb-12 md:pt-12">
+       <div>
          <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
             <div>
-                <Link href="/admin" className="text-sm text-gray-500 hover:text-red-500 mb-2 inline-block">← Back to Dashboard</Link>
-                <h1 className="text-3xl font-black flex items-center gap-3">
-                    <span className="text-red-600 text-4xl">💬</span> Comment Manager
+                <Link href="/admin" className="mb-3 inline-flex items-center gap-2 text-sm font-semibold text-[var(--app-muted)] hover:text-red-600"><ArrowLeft aria-hidden="true" size={16} /> กลับศูนย์จัดการ</Link>
+                <h1 className="flex items-center gap-3 text-3xl font-bold">
+                    <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-red-600 text-white"><MessageCircle aria-hidden="true" size={22} /></span> จัดการความคิดเห็น
                 </h1>
             </div>
             <form className="relative w-full md:w-96">
-                <input name="q" defaultValue={q} placeholder="Search comments..." className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-300 dark:border-neutral-800 bg-white dark:bg-neutral-900 focus:ring-2 focus:ring-red-500 outline-none transition"/>
-                <span className="absolute left-3 top-2.5 text-gray-400">🔍</span>
+                <label htmlFor="comment-search" className="sr-only">ค้นหาความคิดเห็น</label>
+                <input id="comment-search" name="q" defaultValue={q} placeholder="ค้นหาความคิดเห็น..." className="w-full rounded-xl border border-[var(--app-border)] bg-[var(--app-surface)] py-2.5 pl-10 pr-4 outline-none transition focus:border-red-500 focus:ring-2 focus:ring-red-500/20"/>
+                <Search className="absolute left-3 top-3 text-[var(--app-muted)]" aria-hidden="true" size={17} />
             </form>
          </div>
 
-         <div className="bg-white dark:bg-neutral-900 border border-gray-200 dark:border-neutral-800 rounded-xl overflow-hidden shadow-sm">
+         <div className="overflow-hidden rounded-2xl border border-[var(--app-border)] bg-[var(--app-surface)] shadow-sm">
              <div className="divide-y divide-gray-100 dark:divide-neutral-800">
                 {comments.map((c) => (
                     <div key={c.id} className="p-6 hover:bg-gray-50 dark:hover:bg-neutral-800/30 transition flex gap-4">
@@ -80,7 +82,7 @@ export default async function CommentsManagementPage({ searchParams }) {
                             <div className="flex justify-between items-start">
                                 <div>
                                     <span className="font-bold text-gray-900 dark:text-white mr-2">{c.username}</span>
-                                    <span className="text-xs text-gray-400">commented on </span>
+                                    <span className="text-xs text-gray-400">แสดงความคิดเห็นใน </span>
                                     <Link href={`/topic/${c.topic_id}`} target="_blank" className="text-xs font-bold text-red-500 hover:underline">
                                         {c.topic_title}
                                     </Link>
@@ -97,19 +99,20 @@ export default async function CommentsManagementPage({ searchParams }) {
                                     action={deleteComment} 
                                     id={c.id} 
                                     idName="commentId" 
-                                    className="text-xs text-red-500 hover:text-red-700 font-bold"
+                                    ariaLabel={`ลบความคิดเห็นของ ${c.username}`}
+                                    className="inline-flex items-center gap-1.5 text-xs font-bold text-red-600 hover:text-red-700"
                                 >
-                                    Remove Comment
+                                    <Trash2 aria-hidden="true" size={14} /> ลบความคิดเห็น
                                 </DeleteButton>
                             </div>
                         </div>
                     </div>
                 ))}
-                {comments.length === 0 && <div className="text-center py-10 text-gray-500">No comments found.</div>}
+                {comments.length === 0 && <div className="py-10 text-center text-[var(--app-muted)]">ไม่พบความคิดเห็น</div>}
              </div>
          </div>
          <AdminPagination path="/admin/comments" page={page} totalPages={totalPages} query={q} />
        </div>
-    </div>
+    </main>
   );
 }

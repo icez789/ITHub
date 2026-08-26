@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useSyncExternalStore } from 'react';
 import { usePathname, useSearchParams } from 'next/navigation';
+import { Bell, Flame, Home, Plus, UserRound } from 'lucide-react';
 
 const subscribeToHydration = () => () => {};
 const getClientHydrationSnapshot = () => true;
@@ -20,37 +21,48 @@ export default function BottomNav() {
   const currentCategory = searchParams.get('category');
 
   const menus = [
-    { label: 'หน้าแรก', href: '/', icon: '🏠', active: isHydrated && pathname === '/' && !currentSort && !currentCategory },
+    { label: 'หน้าแรก', href: '/', icon: Home, active: isHydrated && pathname === '/' && !currentSort && !currentCategory },
     {
       label: 'มาแรง',
       href: { pathname: '/', query: { sort: 'likes' } },
-      icon: '🔥',
+      icon: Flame,
       active: isHydrated && pathname === '/' && currentSort === 'likes',
     },
-    { label: 'สร้าง', href: '/create', icon: '➕', active: isHydrated && pathname === '/create', isSpecial: true },
-    { label: 'แจ้งเตือน', href: '/notifications', icon: '🔔', active: isHydrated && pathname === '/notifications' },
-    { label: 'ฉัน', href: '/profile', icon: '👤', active: isHydrated && pathname.startsWith('/profile') },
+    { label: 'สร้าง', href: '/create', icon: Plus, active: isHydrated && pathname === '/create', isPrimary: true },
+    { label: 'แจ้งเตือน', href: '/notifications', icon: Bell, active: isHydrated && pathname === '/notifications' },
+    { label: 'ฉัน', href: '/profile', icon: UserRound, active: isHydrated && pathname.startsWith('/profile') },
   ];
 
   return (
-    <nav aria-label="เมนูมือถือ" className="fixed bottom-0 left-0 z-50 w-full h-16 bg-white border-t border-gray-200 flex justify-around items-center md:hidden dark:bg-black dark:border-neutral-800">
-      {menus.map((item) => item.isSpecial ? (
-        <Link key={item.label} href={item.href} aria-label={item.label} aria-current={item.active ? 'page' : undefined} className="relative -top-5">
-          <span className="w-14 h-14 bg-red-600 rounded-full flex items-center justify-center text-white text-2xl shadow-lg border-4 border-gray-100 dark:border-black" aria-hidden="true">
-            {item.icon}
-          </span>
-        </Link>
-      ) : (
-        <Link
-          key={item.label}
-          href={item.href}
-          aria-current={item.active ? 'page' : undefined}
-          className={`flex flex-col items-center justify-center w-full h-full ${item.active ? 'text-red-600' : 'text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300'}`}
-        >
-          <span className="text-xl mb-1" aria-hidden="true">{item.icon}</span>
-          <span className="text-[10px]">{item.label}</span>
-        </Link>
-      ))}
+    <nav
+      aria-label="เมนูมือถือ"
+      className="ithub-surface fixed inset-x-0 bottom-0 z-50 flex h-[calc(4rem+env(safe-area-inset-bottom))] items-start border-t pb-[env(safe-area-inset-bottom)] md:hidden"
+    >
+      {menus.map((item) => {
+        const Icon = item.icon;
+        if (item.isPrimary) {
+          return (
+            <Link key={item.label} href={item.href} aria-label={item.label} aria-current={item.active ? 'page' : undefined} className="relative flex h-16 flex-1 items-center justify-center">
+              <span className="absolute -top-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-red-600 text-white shadow-md shadow-red-600/20 ring-4 ring-[var(--app-background)]">
+                <Icon aria-hidden="true" className="h-5 w-5" strokeWidth={2.25} />
+              </span>
+              <span className="sr-only">{item.label}</span>
+            </Link>
+          );
+        }
+
+        return (
+          <Link
+            key={item.label}
+            href={item.href}
+            aria-current={item.active ? 'page' : undefined}
+            className={`flex h-16 flex-1 flex-col items-center justify-center gap-1 text-[10px] font-semibold transition-colors ${item.active ? 'text-red-600 dark:text-red-400' : 'text-zinc-500 hover:text-zinc-900 dark:text-zinc-500 dark:hover:text-zinc-200'}`}
+          >
+            <Icon aria-hidden="true" className="h-5 w-5" />
+            <span>{item.label}</span>
+          </Link>
+        );
+      })}
     </nav>
   );
 }

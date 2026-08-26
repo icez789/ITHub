@@ -1,34 +1,36 @@
-import React from 'react';
+import { Code2, Crown, Rocket, ShieldCheck, Sprout } from 'lucide-react';
 
-export default function UserBadge({ role, xp = 0 }) { // รับ xp แทน postCount
-  
-  // Admin ยศใหญ่สุดเสมอ
+export default function UserBadge({ role, xp = 0 }) {
   if (role === 'admin' || role === 'super_admin') {
     return (
-      <span className="bg-red-500 text-white text-[10px] px-2 py-0.5 rounded border border-red-600 font-bold shadow-sm">
-        🛡️ Admin
+      <span className="inline-flex items-center gap-1 rounded-md border border-red-300 bg-red-50 px-2 py-0.5 text-[10px] font-semibold text-red-700 dark:border-red-900 dark:bg-red-950/40 dark:text-red-300">
+        <ShieldCheck aria-hidden="true" size={11} /> Admin
       </span>
     );
   }
 
-  // คำนวณยศตาม XP
-  let badgeLabel = '🌱 Newbie';
-  let badgeColor = 'bg-gray-100 text-gray-600 border-gray-300 dark:bg-neutral-800 dark:text-gray-400 dark:border-neutral-700';
+  let label = 'สมาชิกใหม่';
+  let Icon = Sprout;
+  let color = 'border-[var(--app-border)] bg-[var(--app-surface-subtle)] text-[var(--app-text-muted)]';
 
   if (xp >= 500) {
-    badgeLabel = '👑 Tech Lead';
-    badgeColor = 'bg-yellow-100 text-yellow-700 border-yellow-300 dark:bg-yellow-900/30 dark:text-yellow-400 dark:border-yellow-600';
+    label = 'Tech Lead';
+    Icon = Crown;
+    color = 'border-amber-300 bg-amber-50 text-amber-700 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-300';
   } else if (xp >= 200) {
-    badgeLabel = '🚀 Senior Dev';
-    badgeColor = 'bg-purple-100 text-purple-700 border-purple-300 dark:bg-purple-900/30 dark:text-purple-400 dark:border-purple-600';
+    label = 'Senior Dev';
+    Icon = Rocket;
+    color = 'border-violet-300 bg-violet-50 text-violet-700 dark:border-violet-900 dark:bg-violet-950/40 dark:text-violet-300';
   } else if (xp >= 50) {
-    badgeLabel = '💻 Junior Dev';
-    badgeColor = 'bg-blue-100 text-blue-700 border-blue-300 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-600';
+    label = 'Junior Dev';
+    Icon = Code2;
+    color = 'border-blue-300 bg-blue-50 text-blue-700 dark:border-blue-900 dark:bg-blue-950/40 dark:text-blue-300';
   }
 
   return (
-    <span className={`text-[10px] px-2 py-0.5 rounded border font-bold shadow-sm ${badgeColor}`}>
-      {badgeLabel} <span className="opacity-50 ml-1 text-[9px]">({xp} XP)</span>
+    <span className={`inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-[10px] font-semibold ${color}`}>
+      <Icon aria-hidden="true" size={11} /> {label}
+      <span className="opacity-60">{xp} XP</span>
     </span>
   );
 }

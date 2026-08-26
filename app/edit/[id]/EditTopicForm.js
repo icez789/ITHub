@@ -7,6 +7,7 @@ import Editor from '../../../components/Editor';
 import Swal from 'sweetalert2';
 import Link from 'next/link';
 import Image from 'next/image';
+import { ImagePlus, RefreshCw, Save, X } from 'lucide-react';
 
 export default function EditTopicForm({ topic }) {
   const router = useRouter();
@@ -88,13 +89,13 @@ export default function EditTopicForm({ topic }) {
                     <div className="relative inline-block w-fit group">
                         <Image src={imagePreview} alt="ตัวอย่างรูปภาพกระทู้" width={320} height={192} unoptimized className="h-48 w-auto rounded-lg border border-gray-300 object-cover bg-white" />
                         <button type="button" onClick={handleRemoveImage} aria-label="ลบรูปปกกระทู้" className="absolute -top-2 -right-2 bg-red-600 text-white rounded-full p-1.5 shadow-md hover:bg-red-700 transition-transform hover:scale-110" title="ลบรูปนี้">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                            <X aria-hidden="true" size={16} />
                         </button>
                     </div>
                     
                     <div className="flex items-center gap-2">
-                        <label htmlFor="imageInput" className="cursor-pointer px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-bold text-gray-600 hover:bg-gray-50 transition dark:bg-black dark:border-neutral-600 dark:text-gray-300">
-                            🔄 เปลี่ยนรูปใหม่
+                        <label htmlFor="imageInput" className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-600 transition-colors hover:bg-gray-50 dark:border-neutral-600 dark:bg-black dark:text-gray-300">
+                            <RefreshCw aria-hidden="true" size={16} /> เปลี่ยนรูปใหม่
                         </label>
                         <span className="text-xs text-gray-400">ไฟล์เดิมจะถูกแทนที่</span>
                     </div>
@@ -103,8 +104,8 @@ export default function EditTopicForm({ topic }) {
                 // 🅱️ กรณีไม่มีรูป (หรือถูกลบไปแล้ว)
                 <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-yellow-500 transition-colors bg-white dark:bg-black dark:border-neutral-700">
                     <div className="text-gray-400 mb-3">ยังไม่มีรูปภาพปก</div>
-                    <label htmlFor="imageInput" className="cursor-pointer inline-flex items-center gap-2 px-6 py-3 bg-yellow-50 text-yellow-700 rounded-lg font-bold hover:bg-yellow-100 transition border border-yellow-200 dark:bg-yellow-900/20 dark:text-yellow-400 dark:border-yellow-800">
-                        <span>➕ เพิ่มรูปภาพปก</span>
+                    <label htmlFor="imageInput" className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-yellow-200 bg-yellow-50 px-6 py-3 font-semibold text-yellow-700 transition-colors hover:bg-yellow-100 dark:border-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400">
+                        <ImagePlus aria-hidden="true" size={18} /> เพิ่มรูปภาพปก
                     </label>
                 </div>
             )}
@@ -124,8 +125,8 @@ export default function EditTopicForm({ topic }) {
             <Link href={`/topic/${topic.id}`} className="flex-1 py-3 text-center border border-gray-300 rounded-lg text-gray-600 font-bold hover:bg-gray-100 transition dark:text-gray-300 dark:border-neutral-600 dark:hover:bg-neutral-800">
                 ยกเลิก
             </Link>
-            <button type="submit" className="flex-[2] bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-3 rounded-lg shadow-md transition-all dark:bg-yellow-600 dark:hover:bg-yellow-500">
-                บันทึกการแก้ไข 💾
+            <button type="submit" className="inline-flex flex-[2] items-center justify-center gap-2 rounded-lg bg-[var(--app-primary)] py-3 font-semibold text-white transition-colors hover:bg-[var(--app-primary-hover)]">
+                <Save aria-hidden="true" size={18} /> บันทึกการแก้ไข
             </button>
         </div>
     </form>

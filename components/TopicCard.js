@@ -1,68 +1,76 @@
-'use client';
-
-import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { motion } from 'framer-motion';
+import { Eye, Heart, MessageCircle, UserRound } from 'lucide-react';
 
-export default function TopicCard({ id, title, username, created_at, image_url, index }) {
+export default function TopicCard({
+  id,
+  title,
+  category,
+  excerpt,
+  username,
+  createdAt,
+  imageUrl,
+  views = 0,
+  commentCount = 0,
+  likeCount = 0,
+  index = 0,
+}) {
+  const formattedDate = new Date(createdAt).toLocaleDateString('th-TH', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  });
+
   return (
-    <motion.div
-      // 1. ตอนโผล่มา (Entrance Animation)
-      initial={{ opacity: 0, y: 50 }}
-      whileInView={{ opacity: 1, y: 0 }} // เปลี่ยนเป็น whileInView เพื่อให้เลื่อนลงมาเจอแล้วค่อยเด้ง
-      viewport={{ once: true }}          // เล่นครั้งเดียวพอ
-      transition={{ duration: 0.5, delay: index * 0.1, type: "spring", stiffness: 100 }}
-      
-      // 2. ✨ ลูกเล่นตอนชี้ (Hover Effect) แบบ IT CMTC Style
-      whileHover={{ 
-        y: -10, // ลอยขึ้น 10px
-        transition: { type: "spring", stiffness: 300, damping: 20 },
-        boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)" // เงาฟุ้งๆ
-      }}
-      
-      whileTap={{ scale: 0.98 }} // ตอนกดให้ยุบลงนิดนึง
-      
-      className="h-full"
-    >
-      <Link href={`/topic/${id}`}>
-        {/* เพิ่ม transition-all เพื่อให้สีขอบเปลี่ยนนุ่มนวล */}
-        <div className="bg-white rounded-xl border border-gray-200 p-5 h-full flex flex-col relative overflow-hidden group transition-all duration-300 
-                        hover:border-red-500 dark:bg-neutral-900 dark:border-neutral-800 dark:hover:border-red-500">
-          
-          {/* แถบสีแดงด้านล่าง (จะโผล่มาตอน Hover) */}
-          <div className="absolute bottom-0 left-0 w-full h-1 bg-red-600 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></div>
-
-          {/* Decoration */}
-          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-red-500 to-transparent opacity-0 group-hover:opacity-20 transition-opacity"></div>
-          <div className="absolute top-3 right-3 w-2 h-2 bg-gray-300 rounded-full group-hover:bg-red-500 transition-colors z-10 dark:bg-neutral-700"></div>
-          
-          {/* รูปภาพ */}
-          <div className="h-52 bg-gray-100 rounded-lg mb-4 flex items-center justify-center text-gray-400 overflow-hidden relative dark:bg-black">
-               {image_url ? (
-                 <Image src={image_url} alt={`ภาพประกอบกระทู้ ${title}`} fill sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw" loading={index < 3 ? 'eager' : 'lazy'} className="object-cover transform group-hover:scale-110 transition-transform duration-500" />
-               ) : (
-                 <span className="text-5xl group-hover:text-red-500 transition-colors">⚡</span>
-               )}
+    <article className="group">
+      <Link
+        href={`/topic/${id}`}
+        className="ithub-card flex min-w-0 gap-3 p-3.5 transition-[border-color,transform,box-shadow] duration-200 hover:-translate-y-0.5 hover:border-red-300 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500/40 sm:gap-4 sm:p-4"
+      >
+        <div className="min-w-0 flex-1">
+          <div className="mb-1.5 flex flex-wrap items-center gap-2">
+            <span className="rounded-lg bg-red-50 px-2 py-0.5 text-[11px] font-bold text-red-700 dark:bg-red-950/35 dark:text-red-300">
+              {category}
+            </span>
+            <span className="text-xs text-zinc-500 dark:text-zinc-400">{formattedDate}</span>
           </div>
-          
-          {/* หัวข้อ */}
-          <h3 className="font-bold text-xl text-gray-800 group-hover:text-red-600 transition-colors mb-3 line-clamp-2 flex-1 leading-tight dark:text-gray-100">
+
+          <h3 className="line-clamp-2 text-base font-bold leading-snug text-zinc-950 transition-colors group-hover:text-red-700 sm:text-lg dark:text-zinc-50 dark:group-hover:text-red-300">
             {title}
           </h3>
-          
-          {/* Footer ของการ์ด */}
-          <div className="mt-auto pt-4 border-t border-gray-100 text-xs text-gray-500 flex justify-between items-center dark:border-neutral-800 dark:text-gray-400">
-             <span className="flex items-center gap-2 bg-gray-50 px-2 py-1 rounded-full dark:bg-black">
-               <span className="w-2 h-2 bg-green-500 rounded-full"></span>
-               {username || 'ไม่ระบุตัวตน'}
-             </span>
-             <span>
-               {new Date(created_at).toLocaleDateString('th-TH')}
-             </span>
+
+          {excerpt && (
+            <p className="mt-1.5 hidden line-clamp-2 text-sm leading-6 text-zinc-600 sm:block dark:text-zinc-400">
+              {excerpt}
+            </p>
+          )}
+
+          <div className="mt-3 flex flex-wrap items-center justify-between gap-x-4 gap-y-2 text-xs text-zinc-500 dark:text-zinc-400">
+            <span className="flex min-w-0 items-center gap-1.5">
+              <UserRound aria-hidden="true" className="h-3.5 w-3.5 shrink-0" />
+              <span className="max-w-36 truncate">{username || 'ไม่ระบุผู้เขียน'}</span>
+            </span>
+            <span className="flex items-center gap-3" aria-label={`${views} ครั้ง, ${commentCount} ความคิดเห็น, ${likeCount} ถูกใจ`}>
+              <span className="flex items-center gap-1"><Eye aria-hidden="true" className="h-3.5 w-3.5" />{Number(views).toLocaleString('th-TH')}</span>
+              <span className="flex items-center gap-1"><MessageCircle aria-hidden="true" className="h-3.5 w-3.5" />{Number(commentCount).toLocaleString('th-TH')}</span>
+              <span className="flex items-center gap-1"><Heart aria-hidden="true" className="h-3.5 w-3.5" />{Number(likeCount).toLocaleString('th-TH')}</span>
+            </span>
           </div>
         </div>
+
+        {imageUrl && (
+          <div className="relative h-[66px] w-[88px] shrink-0 overflow-hidden rounded-xl bg-zinc-100 sm:h-24 sm:w-36 dark:bg-zinc-800">
+            <Image
+              src={imageUrl}
+              alt=""
+              fill
+              sizes="(max-width: 639px) 88px, 144px"
+              preload={index === 0}
+              className="object-cover transition-transform duration-200 group-hover:scale-[1.02]"
+            />
+          </div>
+        )}
       </Link>
-    </motion.div>
+    </article>
   );
 }

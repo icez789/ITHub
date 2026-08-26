@@ -3,6 +3,7 @@ import db from '../../../lib/db';
 import { redirect } from 'next/navigation';
 import EditTopicForm from './EditTopicForm'; // ✅ นำเข้า Form ที่เราเพิ่งสร้าง
 import { getCurrentUser, isAdmin } from '../../../lib/auth';
+import { Edit3 } from 'lucide-react';
 
 export const metadata = {
   title: 'แก้ไขกระทู้ | ITHub',
@@ -25,16 +26,16 @@ export default async function EditTopicPage({ params }) {
   }
 
   return (
-    <div className="container mx-auto p-6 max-w-3xl">
-       <div className="bg-white p-8 rounded-xl shadow-lg border-t-4 border-yellow-500 dark:bg-neutral-900 dark:border-yellow-600">
+    <main className="ithub-page-container mx-auto max-w-3xl pb-24 pt-8 md:pb-12 md:pt-12">
+       <div className="rounded-2xl border border-[var(--app-border)] bg-[var(--app-surface)] p-5 shadow-sm sm:p-8">
           <h1 className="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-2 dark:text-white">
-            <span className="text-yellow-500 text-3xl">✏️</span> แก้ไขกระทู้
+            <Edit3 className="text-amber-600" aria-hidden="true" size={24} /> แก้ไขกระทู้
           </h1>
           
           {/* ✅ ส่งข้อมูลไปให้ Client Component จัดการต่อ */}
           <EditTopicForm topic={topic} />
           
        </div>
-    </div>
+    </main>
   );
 }

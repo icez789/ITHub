@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { notificationChannelName } from '../lib/pusherChannels';
 // 1. ✅ Import Server Action ที่เราเพิ่งสร้าง
 import { markNotificationsAsRead } from '../lib/actions'; 
+import { Bell, BellOff } from 'lucide-react';
 
 export default function NotificationBell({ count: initialCount, notifications: initialNotifications, currentUserId }) {
   const [unreadCount, setUnreadCount] = useState(initialCount);
@@ -54,11 +55,11 @@ export default function NotificationBell({ count: initialCount, notifications: i
   return (
      <div className="relative">
         {/* 3. ✅ เปลี่ยน onClick ให้มาใช้ฟังก์ชันใหม่ของเรา */}
-        <button type="button" onClick={handleBellClick} data-user-id={currentUserId || undefined} aria-label="เปิดการแจ้งเตือน" aria-expanded={isOpen} className="relative p-2 text-gray-600 hover:text-red-600 transition-colors dark:text-gray-300 dark:hover:text-red-400">
-           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+        <button type="button" onClick={handleBellClick} data-user-id={currentUserId || undefined} aria-label="เปิดการแจ้งเตือน" aria-expanded={isOpen} className="relative rounded-lg p-2 text-[var(--app-text-muted)] transition-colors hover:bg-[var(--app-surface-subtle)] hover:text-[var(--app-primary)]">
+           <Bell aria-hidden="true" size={21} />
            
            {unreadCount > 0 && (
-             <span className="absolute top-0 right-0 bg-red-600 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center animate-pulse shadow-sm border-2 border-white dark:border-black">
+             <span className="absolute -right-0.5 -top-0.5 flex h-5 min-w-5 items-center justify-center rounded-full border-2 border-[var(--app-surface)] bg-red-600 px-1 text-[10px] font-bold text-white">
                {unreadCount > 9 ? '9+' : unreadCount}
              </span>
            )}
@@ -78,8 +79,8 @@ export default function NotificationBell({ count: initialCount, notifications: i
                        </Link>
                     ))
                  ) : (
-                    <div className="p-8 text-center text-gray-400 text-sm flex flex-col items-center gap-2">
-                        <span>🔕</span>
+                    <div className="flex flex-col items-center gap-2 p-8 text-center text-sm text-[var(--app-text-muted)]">
+                        <BellOff aria-hidden="true" size={20} />
                         <span>ไม่มีการแจ้งเตือนใหม่</span>
                     </div>
                  )}
