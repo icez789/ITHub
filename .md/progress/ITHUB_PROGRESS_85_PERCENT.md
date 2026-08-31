@@ -5,7 +5,7 @@
 > Pull Request: `https://github.com/icez789/ITHub/pull/1`
 > Vercel Preview: `https://ithub-git-codex-ithub-85-milestone-thiraphat-s-projects.vercel.app`
 > Preview deployment: `dpl_CDcQkPtCywnByB1635A4YXFWSbdT` จาก SHA `2e87560`
-> สถานะ: Local acceptance, PR, Preview isolation และ Preview smoke test ผ่าน; Production rollout ยังรอ safety prerequisites
+> สถานะ: Local/Preview acceptance และ Production migration ผ่าน; PR merge และ Production deployment รอดำเนินการ
 
 ## สรุป
 
@@ -64,7 +64,10 @@ Local acceptance ผ่านแล้วบนฐาน `test_e2e`: migration/c
 | Preview member smoke | PASS — login บัญชี E2E, like และ bookmark ทำงาน พร้อมคืนสถานะเดิม |
 | Preview logs | PASS — ไม่พบ runtime error/warning/fatal จาก deployment; build สำเร็จ มีเพียง dependency/install-script warnings |
 | Post-smoke database check | PASS — 11/11 tables, duplicate/orphan ทุกชนิด 0 และ reconcile drift 0 |
-| ฐานที่ `.env` ชี้อยู่: preflight แบบ read-only | BLOCKED ตามคาด — พบ `rate_limits` หาย, migration 002 ยัง absent, orphan likes 5 และ orphan notifications 9 |
+| Production migration 001/002 | PASS — สร้าง `rate_limits`, ลบ orphan likes 5 และ notifications 9 ตามอนุมัติ |
+| Production migration recovery | PASS — ตรวจ exact partial fingerprint 18/25, ลบ orphan polls/options/votes 3/11/6 ตามอนุมัติ และเพิ่ม schema objects จนครบ 25/25 |
+| Production final preflight/check | PASS — 11/11 tables, migration 002 complete และ orphan ทุกชนิด 0 |
+| Production reconcile dry-run | REVIEWED — พบ legacy counter drift 5 บัญชี; ไม่ apply เพราะจะลด XP/อันดับอย่างมีนัยสำคัญและไม่ใช่ผลจาก migration |
 
 ## Safety gate และ rollout
 
@@ -72,9 +75,10 @@ Local acceptance ผ่านแล้วบนฐาน `test_e2e`: migration/c
 2. Playwright serial ผ่านครบ Chromium, Firefox และ WebKit ที่ 90/90 โดย 0 skip/0 failure
 3. Branch ถูก push, PR #1 เปิดแล้ว และ Preview จาก SHA `2e87560` ผ่าน build/smoke test
 4. ตัวแปร Preview ถูกจำกัดไว้ที่ branch `codex/ithub-85-milestone` และชี้ฐาน `test_e2e`; Production values ไม่ถูกแก้
-5. ยืนยัน automatic TiDB snapshot ที่ restore ได้ก่อนแตะ Production
-6. Preflight ของฐานที่ `.env` ชี้อยู่พบข้อมูลกำพร้าที่ migration 002 ถูกออกแบบให้ลบ จึงต้องยืนยันว่าเป็น Production, มี backup evidence และ review จำนวน 14 rows ก่อนรัน
-7. หลัง migration/check ผ่าน ให้ merge และสร้าง Production deployment ใหม่จาก SHA เดียวกับที่ตรวจ Preview
+5. ยืนยัน TiDB Starter automatic snapshot สถานะ `Succeeded` ที่ `2026-08-30 18:01 UTC` ก่อน migration แล้ว
+6. Production migration เคยหยุดที่ partial 18/25 เพราะ legacy orphan polls ที่ preflight เดิมไม่ครอบคลุม จึงเพิ่ม exact-fingerprint recovery guard และ integrity checks สำหรับ polls/options/votes
+7. หลัง recovery แล้ว final preflight/check ผ่าน; คง legacy XP/post counters ไว้เพราะ drift 5 บัญชีเป็นข้อมูลเดิมและการ reconcile จะเปลี่ยนอันดับผู้ใช้อย่างมาก
+8. ขั้นถัดไปคือ push recovery code, ตรวจ Preview SHA ล่าสุด, merge PR และสร้าง Production deployment
 
 ## ข้อสังเกตจาก Preview
 

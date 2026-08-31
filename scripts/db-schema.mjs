@@ -173,7 +173,9 @@ export const integrityChecks = {
   orphan_likes: 'SELECT COUNT(*) AS count FROM likes l LEFT JOIN users u ON u.id = l.user_id LEFT JOIN topics t ON t.id = l.topic_id WHERE u.id IS NULL OR t.id IS NULL',
   orphan_bookmarks: 'SELECT COUNT(*) AS count FROM bookmarks b LEFT JOIN users u ON u.id = b.user_id LEFT JOIN topics t ON t.id = b.topic_id WHERE u.id IS NULL OR t.id IS NULL',
   orphan_notifications: 'SELECT COUNT(*) AS count FROM notifications n LEFT JOIN users u ON u.id = n.user_id LEFT JOIN users a ON a.id = n.actor_id LEFT JOIN topics t ON t.id = n.topic_id WHERE u.id IS NULL OR a.id IS NULL OR t.id IS NULL',
-  orphan_poll_votes: 'SELECT COUNT(*) AS count FROM poll_votes v LEFT JOIN polls p ON p.id = v.poll_id LEFT JOIN users u ON u.id = v.user_id LEFT JOIN poll_options o ON o.id = v.option_id WHERE p.id IS NULL OR u.id IS NULL OR o.id IS NULL OR o.poll_id <> v.poll_id',
+  orphan_polls: 'SELECT COUNT(*) AS count FROM polls p LEFT JOIN topics t ON t.id = p.topic_id WHERE t.id IS NULL',
+  orphan_poll_options: 'SELECT COUNT(*) AS count FROM poll_options o LEFT JOIN polls p ON p.id = o.poll_id LEFT JOIN topics t ON t.id = p.topic_id WHERE p.id IS NULL OR t.id IS NULL',
+  orphan_poll_votes: 'SELECT COUNT(*) AS count FROM poll_votes v LEFT JOIN polls p ON p.id = v.poll_id LEFT JOIN topics t ON t.id = p.topic_id LEFT JOIN users u ON u.id = v.user_id LEFT JOIN poll_options o ON o.id = v.option_id WHERE p.id IS NULL OR t.id IS NULL OR u.id IS NULL OR o.id IS NULL OR o.poll_id <> v.poll_id',
 };
 
 export async function runIntegrityChecks(db) {
