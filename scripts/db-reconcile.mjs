@@ -1,4 +1,5 @@
 import db from '../lib/db.js';
+import { assertE2eFlag } from './e2e-safety.mjs';
 
 const apply = process.argv.includes('--apply');
 
@@ -28,6 +29,7 @@ const expectedScoresSql = `
 `;
 
 async function main() {
+  const e2e = assertE2eFlag({ requireCredentials: true, requireWriteOptIn: true });
   const [expectedRows] = await db.query(expectedScoresSql);
   const [currentRows] = await db.query('SELECT id, post_count, xp FROM users');
   const currentById = new Map(currentRows.map((row) => [row.id, row]));
@@ -40,6 +42,9 @@ async function main() {
   console.log(`Users with counter drift: ${mismatches.length}`);
   if (!apply) {
     console.log('Dry run only. Re-run with --apply after reviewing the count.');
+    if (e2e && mismatches.length) {
+      throw new Error(`E2E counter reconciliation found ${mismatches.length} unexplained mismatches`);
+    }
     return;
   }
 
