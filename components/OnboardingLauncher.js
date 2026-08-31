@@ -7,7 +7,7 @@ export default function OnboardingLauncher({ className = '', label = 'เปิ�
   const { openTour } = useOnboarding();
 
   return (
-    <button type="button" onClick={(event) => openTour(event.currentTarget)} className={className}>
+    <button type="button" data-onboarding-trigger="help-launcher" onClick={(event) => openTour(event.currentTarget)} className={className}>
       <PlayCircle aria-hidden="true" size={18} />
       <span>{label}</span>
     </button>

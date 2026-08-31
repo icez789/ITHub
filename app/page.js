@@ -178,7 +178,7 @@ export default async function HomePage({ searchParams }) {
             </div>
           </div>
 
-          <section id="topic-feed" aria-label="รายการกระทู้" className="scroll-mt-4 space-y-3">
+          <section id="topic-feed" data-tour="topic-list" aria-label="รายการกระทู้" className="scroll-mt-4 space-y-3">
             {topics.length > 0 ? topics.map((topic, index) => (
               <TopicCard
                 key={topic.id}

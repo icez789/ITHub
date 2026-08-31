@@ -22,9 +22,10 @@ export default function TopicCard({
   });
 
   return (
-    <article className="group">
+    <article className="group" data-tour="topic-card">
       <Link
         href={`/topic/${id}`}
+        data-tour="topic-link"
         className="ithub-card flex min-w-0 gap-3 p-3.5 transition-[border-color,transform,box-shadow] duration-200 hover:-translate-y-0.5 hover:border-red-300 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500/40 sm:gap-4 sm:p-4"
       >
         <div className="min-w-0 flex-1">
