@@ -2,6 +2,8 @@
 
 > วันที่: 31 สิงหาคม 2026 (Asia/Bangkok)
 > สาขา: `codex/ithub-85-milestone`
+> Feature SHA ที่ตรวจแล้ว: `efce139fcd799277f36ffd2a60f84363ffc1750b`
+> Vercel Preview: `https://ithub-git-codex-ithub-85-milestone-thiraphat-s-projects.vercel.app`
 > สถานะ: Implementation complete; E2E database, Preview และ Production rollout รอ safety prerequisites
 
 ## สรุป
@@ -46,6 +48,9 @@
 | `npm run build` | PASS — Next.js 16.3.0, 20 routes |
 | E2E guard เมื่อไม่มี `.env.e2e.local` | PASS — หยุดก่อนเปิด server พร้อมแจ้ง DB suffix, write opt-in และ credentials ที่ขาด |
 | Playwright discovery | PASS — พบ 90 tests (30 ต่อ browser) และไม่มี `test.skip` |
+| Git push | PASS — push 5 commits ไป `origin/codex/ithub-85-milestone` แล้ว |
+| Vercel Preview build | PASS — deployment ของ `efce139` แสดงสถานะ Ready |
+| Vercel Preview isolation | BLOCKED — พบ `DB_NAME` แต่ไม่พบหลักฐาน suffix `_e2e`; ไม่พบ `ITHUB_E2E_ALLOW_WRITES`, `ITHUB_E2E_EMAIL` และ `ITHUB_E2E_PASSWORD` |
 | ฐานที่ `.env` ชี้อยู่: preflight แบบ read-only | BLOCKED ตามคาด — พบ `rate_limits` หาย, migration 002 ยัง absent, orphan likes 5 และ orphan notifications 9 |
 | Authenticated Playwright Chromium/Firefox/WebKit | PENDING — ไม่มี safe `_e2e` configuration ที่ยืนยันแล้ว |
 
@@ -54,7 +59,7 @@
 1. เติม `.env.e2e.local` และยืนยันฐาน `_e2e`
 2. รัน preflight → migrate → seed → check → reconcile dry-run
 3. รัน Playwright serial ครบ Chromium, Firefox และ WebKit โดย 0 skip/0 failure
-4. Push branch, เปิด PR และตรวจ Vercel Preview ที่ใช้ฐาน `_e2e`
+4. Branch ถูก push และ Preview build ผ่านแล้ว; ต้องแยกตัวแปร Preview ให้ชี้ฐาน `_e2e` ก่อนเปิดแอปหรือรัน smoke test
 5. ยืนยัน automatic TiDB snapshot ที่ restore ได้ก่อนแตะ Production
 6. Preflight ของฐานที่ `.env` ชี้อยู่พบข้อมูลกำพร้าที่ migration 002 ถูกออกแบบให้ลบ จึงต้องยืนยันว่าเป็น Production, มี backup evidence และ review จำนวน 14 rows ก่อนรัน
 7. หลัง migration/check ผ่าน ให้ merge และสร้าง Production deployment ใหม่จาก SHA เดียวกับที่ตรวจ Preview
