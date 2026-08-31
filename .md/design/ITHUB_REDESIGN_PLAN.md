@@ -196,8 +196,8 @@
 
 ### Onboarding และ Help
 
-- ยกเลิก modal onboarding สี่ขั้นที่เปิดทันที
-- ใช้ welcome prompt แบบไม่บังหน้า มีข้อความสั้นและสอง action: “สำรวจกระทู้” กับ “เปิดคู่มือ”
+- ยกเลิก modal onboarding สี่ขั้นแบบเดิม
+- **Addendum 2026-08-31:** แผน milestone 85% ที่ผู้ใช้อนุมัติให้แทน welcome prompt ด้วย Spotlight Tour v2 แบบ 6 ขั้น ซึ่งหรี่และเบลอฉากหลังแต่คง target จริงให้คม โดยล็อก interaction และไม่แก้ข้อมูลจริง
 - เก็บคู่มือฉบับเต็มและตัวเรียก onboarding ไว้ในหน้า Help
 - ใช้หน้า Help เป็น reference ของ section hierarchy, content width และ CTA grouping แต่ปรับ token ให้ตรงกับ foundation ใหม่
 
@@ -328,6 +328,14 @@ YYYY-MM-DD — Phase N — ผู้ดำเนินการ
 - Tests:
 - ค้างอยู่:
 ```
+
+### 2026-08-31 — Milestone 85 Spotlight addendum — Codex
+
+- เปลี่ยนแปลง: พอร์ต Animated Spotlight Tour v2 บน redesign ปัจจุบัน, เพิ่ม DOM contract `data-tour` 6 กลุ่ม, overlay สี่แผง blur 10px/หรี่ 58% พร้อม fallback 82%, route/scroll/focus restoration, `inert`, focus trap, Reduced Motion และ fallback เมื่อ target หาย
+- การตัดสินใจ/เหตุผล: ใช้แผน milestone 85% ล่าสุดแทน welcome prompt เดิมโดยไม่ merge branch เก่าที่จะย้อนทับ redesign; ใช้ Lucide icons และ token ปัจจุบันเพื่อรักษาภาษาภาพ Clean Technical Community
+- Viewport/theme ที่กำหนดทดสอบ: 375×812, 390×844, 768×900, 1024×900, 1280×800 และ 1440×1000; Light/Dark/Reduced Motion
+- Tests: lint/build ผ่าน; เพิ่ม Playwright สำหรับ 6 steps, blur/fallback, target blocking, route/hash/history restoration, focus trap/restoration, guest/member และ responsive; execution รอ safe `_e2e` environment
+- ค้างอยู่: ยังไม่มี `.env.e2e.local` ที่ยืนยันฐาน `_e2e` จึงไม่รัน authenticated browser suite และยังไม่เปิด Preview/Production
 
 ### 2026-08-26 — Phase 1–6 — Codex
 

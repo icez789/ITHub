@@ -18,7 +18,9 @@ async function main() {
     failures.push(`migration 002 is partial (${state.found002.length}/${state.expected002Count} expected objects)`);
   }
 
-  const integrityFailures = state.missingTables.length === 0 && state.missingColumns.length === 0
+  const integrityTables = ['users', 'topics', 'comments', 'likes', 'bookmarks', 'notifications', 'polls', 'poll_options', 'poll_votes'];
+  const canCheckIntegrity = integrityTables.every((table) => state.tables.has(table)) && state.missingColumns.length === 0;
+  const integrityFailures = canCheckIntegrity
     ? await runIntegrityChecks(db)
     : [];
   failures.push(...integrityFailures);

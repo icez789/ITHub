@@ -52,9 +52,11 @@ async function main() {
         throw new Error(`${name} checksum mismatch; migration files must be immutable`);
       }
 
-      const state = await inspectSchema(db);
-      if (name.startsWith('001_')) assertBaselineShape(state);
-      if (name.startsWith('002_')) assertMigration002Complete(state);
+      if (name.startsWith('001_')) {
+        for (const statement of splitStatements(sql)) await db.query(statement);
+        assertBaselineShape(await inspectSchema(db));
+      }
+      if (name.startsWith('002_')) assertMigration002Complete(await inspectSchema(db));
       if (!recordedChecksum) {
         await db.query('UPDATE schema_migrations SET checksum = ? WHERE name = ?', [checksum, name]);
         console.log(`adopt checksum ${name}`);

@@ -1,16 +1,14 @@
 // @ts-check
 import { defineConfig, devices } from '@playwright/test';
 import { loadEnvConfig } from '@next/env';
+import { assertE2eSafety } from './scripts/e2e-safety.mjs';
 
 /**
  * Read environment variables from file.
  * https://github.com/motdotla/dotenv
  */
 loadEnvConfig(process.cwd(), true);
-
-if (process.env.CI && (!process.env.ITHUB_E2E_EMAIL || !process.env.ITHUB_E2E_PASSWORD)) {
-  throw new Error('CI requires ITHUB_E2E_EMAIL and ITHUB_E2E_PASSWORD');
-}
+assertE2eSafety();
 
 /**
  * @see https://playwright.dev/docs/test-configuration

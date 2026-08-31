@@ -8,7 +8,6 @@
     "start": "next start",
     "lint": "eslint app components lib tests scripts playwright.config.js eslint.config.mjs next.config.mjs",
     "test:e2e": "node --env-file-if-exists=.env.e2e.local scripts/run-e2e.mjs",
-    "test:e2e:unsafe-public": "playwright test",
     "db:preflight": "node --env-file-if-exists=.env scripts/db-preflight.mjs",
     "db:preflight:e2e": "node --env-file-if-exists=.env.e2e.local scripts/db-preflight.mjs --e2e",
     "db:migrate": "node --env-file-if-exists=.env scripts/db-migrate.mjs",

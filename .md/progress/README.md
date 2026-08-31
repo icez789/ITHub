@@ -4,6 +4,7 @@
 
 ## รายงานปัจจุบัน
 
+- [`ITHUB_PROGRESS_85_PERCENT.md`](./ITHUB_PROGRESS_85_PERCENT.md) — milestone 85% พร้อมสถานะ implementation, safety gates, test evidence และ rollout blocker
 - [`ITHUB_PROGRESS_75_PERCENT.md`](./ITHUB_PROGRESS_75_PERCENT.md) — ภาพรวมฟีเจอร์ สถานะ 75% ผลการทดสอบ ช่องว่าง และแผนไปสู่ 100% ณ วันที่ 31 สิงหาคม 2026
 
 ## เอกสารที่เกี่ยวข้อง
@@ -22,4 +23,3 @@
 3. คำสั่งทดสอบและผลจริง
 4. งานค้าง ความเสี่ยง และผู้รับผิดชอบ
 5. คะแนนความคืบหน้าพร้อมเกณฑ์ที่ใช้
-

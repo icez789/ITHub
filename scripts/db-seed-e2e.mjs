@@ -30,6 +30,22 @@ async function main() {
     [BASELINE_TOPIC_TITLE, BASELINE_TOPIC_CONTENT, user.id, BASELINE_TOPIC_TITLE, user.id],
   );
 
+  const [[counters]] = await db.query(
+    `SELECT
+       (SELECT COUNT(*) FROM topics WHERE user_id = ?) AS post_count,
+       (SELECT COUNT(*) * 10 FROM topics WHERE user_id = ?)
+       + (SELECT COUNT(*) * 2 FROM comments WHERE user_id = ?)
+       + (SELECT COUNT(*) * 20 FROM comments c INNER JOIN topics t ON t.id = c.topic_id
+          WHERE c.user_id = ? AND c.is_solution = 1 AND c.user_id <> t.user_id)
+       + (SELECT COUNT(*) FROM poll_votes WHERE user_id = ?) AS xp`,
+    [user.id, user.id, user.id, user.id, user.id],
+  );
+  await db.query('UPDATE users SET post_count = ?, xp = ? WHERE id = ?', [
+    Number(counters.post_count),
+    Number(counters.xp),
+    user.id,
+  ]);
+
   console.log('Seeded deterministic E2E member and baseline topic.');
 }
 

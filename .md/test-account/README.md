@@ -16,19 +16,22 @@
 ตัวแปรที่ tests อ่าน:
 
 ```dotenv
+DB_NAME=ithub_e2e
+ITHUB_E2E_ALLOW_WRITES=true
+ITHUB_E2E_ENVIRONMENT=e2e
 ITHUB_E2E_EMAIL=your-test-account@example.com
 ITHUB_E2E_PASSWORD=replace-with-test-password
 ```
 
-ให้ใส่ค่าจริงใน `.env.local` ที่ root ของโครงการ ซึ่งถูก `.gitignore` ไว้แล้ว ไม่ต้องใส่รหัสผ่านลงใน Markdown
+ให้คัดลอก `.env.e2e.example` เป็น `.env.e2e.local` ที่ root ของโครงการและใส่ค่าจริงในไฟล์นั้น ซึ่งถูก `.gitignore` ไว้แล้ว ไม่ต้องใส่รหัสผ่านลงใน Markdown
 
 ## ขั้นตอนสำหรับเจ้าของโครงการ
 
 1. สร้างฐานข้อมูลหรือ environment สำหรับ E2E โดยเฉพาะ
 2. รัน migration และ seed กับฐานข้อมูลทดสอบ
-3. สร้างบัญชีสมาชิกธรรมดาที่ไม่ใช้ข้อมูลส่วนตัวจริง
-4. ใส่ email/password ใน `C:\client\.env.local`
-5. ยืนยันว่า `.env.local` ไม่ปรากฏใน `git status`
+3. ใส่ email/password สำหรับบัญชีสมมติที่ไม่ใช้ข้อมูลส่วนตัวจริงใน `C:\client\.env.e2e.local`
+4. รัน `npm run db:seed:e2e` เพื่อสร้างสมาชิกและกระทู้ baseline แบบ idempotent
+5. ยืนยันว่า `.env.e2e.local` ไม่ปรากฏใน `git status`
 6. แจ้งผู้ทดสอบว่า environment พร้อม โดยไม่ต้องส่งรหัสผ่านผ่านแชตถ้าผู้ทดสอบเข้าถึงไฟล์ local ได้อยู่แล้ว
 
 ## สิ่งที่ชุดทดสอบจะเปลี่ยน

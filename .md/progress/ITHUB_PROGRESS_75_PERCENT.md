@@ -1,8 +1,8 @@
 # ITHub — รายงานความคืบหน้า 75%
 
-> วันที่ตรวจ: 31 สิงหาคม 2026 (Asia/Bangkok)  
-> สาขา: `main`  
-> Commit ที่ตรวจ: `7d050042179049f92b31841c14b1bbc6b67c9142` (`feat: redesign ITHub interface`)  
+> วันที่ตรวจ: 31 สิงหาคม 2026 (Asia/Bangkok)
+> สาขา: `main`
+> Commit ที่ตรวจ: `7d050042179049f92b31841c14b1bbc6b67c9142` (`feat: redesign ITHub interface`)
 > สถานะ Git ก่อนจัดทำเอกสาร: `main` ตรงกับ `origin/main`; พบ `output/` และ `tmp/` เป็นไฟล์ untracked เดิมและไม่ได้แก้ไข
 
 ## สรุปสำหรับตัดสินใจ
@@ -116,39 +116,39 @@ ITHub มีแกนผลิตภัณฑ์เว็บบอร์ดใ�
 
 ### P1 — ควรแก้ก่อนถือว่า production-complete
 
-1. **ฐานข้อมูลที่ environment ปัจจุบันชี้ไป migrate ไม่ครบ**  
+1. **ฐานข้อมูลที่ environment ปัจจุบันชี้ไป migrate ไม่ครบ**
    `npm run db:check` ล้มเหลวเพราะไม่มี `rate_limits` และ `schema_migrations` ทำให้ shared rate limiting ถอยไปใช้ in-memory fallback ต่อ instance และไม่สามารถยืนยันประวัติ migration ได้ ต้องสำรองข้อมูล ตรวจปลายทาง แล้วรัน migration/check/reconcile ตามลำดับก่อน release ถัดไป
 
-2. **authenticated regression tests ยังไม่มีหลักฐานรอบปัจจุบัน**  
+2. **authenticated regression tests ยังไม่มีหลักฐานรอบปัจจุบัน**
    Playwright ข้าม 15 tests (5 flow × 3 engines): login, create/delete topic, private Pusher owner authorization, profile atomic update และ like/bookmark จึงยังยืนยันบัคที่ผู้ใช้เคยพบด้วยบัญชีจริงไม่ได้
 
-3. **Animated Spotlight Tour ยังไม่อยู่บน `main`**  
+3. **Animated Spotlight Tour ยังไม่อยู่บน `main`**
    `main` มี modal onboarding v1 เท่านั้น ส่วน branch `origin/codex/animated-spotlight-tour` มี commit `b8e9e12` และ `e3c9ab7` แต่แยกจาก redesign ปัจจุบันแล้ว การ merge ตรง ๆ มี diff ย้อนทับงานดีไซน์จำนวนมาก จึงควร port/rebase เฉพาะ behavior และทดสอบกับ UI ปัจจุบัน
 
-4. **ชุด E2E ไม่มี test database guard**  
+4. **ชุด E2E ไม่มี test database guard**
    Playwright โหลดค่า DB ชุดเดียวกับแอป และ authenticated test มีการสร้าง/ลบกระทู้ เปลี่ยน like/bookmark และส่ง profile form ห้ามใส่บัญชี production จนกว่าจะชี้ environment ไปฐานข้อมูลทดสอบเฉพาะหรือเพิ่ม safety guard ที่หยุดทันทีเมื่อ DB เป็น production
 
 ### P2 — ควรจัดใน milestone 75% → 90%
 
-5. **ขอบเขตการค้นหาไม่ตรงกับข้อความใน UI/คู่มือ**  
+5. **ขอบเขตการค้นหาไม่ตรงกับข้อความใน UI/คู่มือ**
    `components/SearchInput.js` ระบุค้นหัวข้อหรือเนื้อหา แต่ `app/page.js` ใช้ `topics.title LIKE ?` เท่านั้น ควรเพิ่ม content search หรือแก้คำอธิบายให้ตรงกัน และพิจารณา FULLTEXT index เมื่อข้อมูลโต
 
-6. **Leaderboard อ่านข้อมูลผู้ใช้เกินจำเป็น**  
+6. **Leaderboard อ่านข้อมูลผู้ใช้เกินจำเป็น**
    `app/leaderboard/page.js` ใช้ `SELECT * FROM users` ทำให้ password hash/email ถูกโหลดเข้า server memory แม้ไม่ส่งออก UI ควรเลือกเฉพาะ `id, username, avatar_url, role, xp, post_count`
 
-7. **session ที่ถูกขโมยไม่ถูก revoke เมื่อเปลี่ยนรหัสผ่าน**  
+7. **session ที่ถูกขโมยไม่ถูก revoke เมื่อเปลี่ยนรหัสผ่าน**
    token มีเพียง userId/เวลาและยังใช้ได้สูงสุด 24 ชั่วโมง การเปลี่ยนรหัสผ่านไม่หมุน `session_version` ควรเพิ่ม version หรือ server-side session store และออก token ใหม่หลังเปลี่ยนรหัสผ่าน
 
-8. **login rate limit ผูกกับ email อย่างเดียว**  
+8. **login rate limit ผูกกับ email อย่างเดียว**
    ผู้โจมตีสามารถยิงอีเมลของเหยื่อให้ชน limit และรบกวนการล็อกอินได้ ควรแยก limit ต่อ IP และต่อคู่ IP+account พร้อมบันทึกเหตุการณ์ผิดปกติ
 
-9. **ประวัติ AI chat พึ่ง `localStorage` โดยไม่ป้องกันทุกจุด**  
+9. **ประวัติ AI chat พึ่ง `localStorage` โดยไม่ป้องกันทุกจุด**
    การอ่านมี try/catch แต่การเขียนใน effect และ clear action ไม่มี fallback และไม่มีการจำกัดจำนวนข้อความ เมื่อ storage ถูกบล็อกหรือเต็ม component อาจผิดพลาด ควรครอบการเขียนและจำกัด history ฝั่ง UI
 
-10. **build ยังพึ่งเครือข่าย Google Fonts**  
+10. **build ยังพึ่งเครือข่าย Google Fonts**
     build ใน environment ปิดเครือข่ายล้มเหลวที่ IBM Plex Sans Thai แต่ผ่านเมื่ออนุญาตอินเทอร์เน็ต ควร self-host font ด้วย `next/font/local` เพื่อให้ CI/rebuild ทำซ้ำได้แน่นอน
 
-11. **ยังไม่มี CI workflow และ test pyramid**  
+11. **ยังไม่มี CI workflow และ test pyramid**
     ไม่พบ `.github/workflows`; tests ทั้งหมดอยู่ใน spec E2E เดียว ควรเพิ่ม CI lint/build/E2E, unit tests สำหรับ validation/auth/content และ integration tests สำหรับ transaction/database helpers
 
 ### P3 — งานเก็บรายละเอียดก่อน 100%
@@ -200,4 +200,3 @@ ITHub มีแกนผลิตภัณฑ์เว็บบอร์ดใ�
 ## ข้อสรุป
 
 ระบบปัจจุบันเหมาะกับสถานะ **beta 75%**: ฟีเจอร์ผู้ใช้หลักและโครง UI พร้อมใช้งานและ public regression suite ผ่าน แต่เงื่อนไข “production-complete” ยังไม่ผ่านจนกว่าฐานข้อมูลจะ migrate ครบ, authenticated tests ใช้บัญชี/ฐานข้อมูลทดสอบแยกและผ่านทั้งหมด, spotlight onboarding ถูก port เข้าสู่ main และมี CI/release evidence ที่ทำซ้ำได้
-
