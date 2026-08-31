@@ -91,9 +91,11 @@ Migration runner บันทึก SHA-256 ของไฟล์ migration, ado
 
 ### ฐานทดสอบ E2E แยก
 
-คัดลอก `.env.e2e.example` เป็น `.env.e2e.local` และใช้ฐานที่ชื่อจบด้วย `_e2e` เท่านั้น จากนั้นรันตามลำดับ:
+สร้าง `.env.e2e.local` ที่ Git ignore จาก environment ปัจจุบัน หรือคัดลอก `.env.e2e.example` แล้วกรอกเอง จากนั้นใช้ฐานที่ชื่อจบด้วย `_e2e` เท่านั้น:
 
 ```bash
+npm run e2e:setup          # สร้างค่า local และบัญชีสังเคราะห์โดยไม่แสดง secret
+npm run db:create:e2e      # สร้างเฉพาะฐาน _e2e; ไม่ลบฐานที่มีอยู่
 npm run db:preflight:e2e
 npm run db:migrate:e2e
 npm run db:seed:e2e
@@ -126,7 +128,7 @@ npm run test:e2e  # Chromium, Firefox และ WebKit แบบ serial
 npm run check     # lint และ build
 ```
 
-Playwright ใช้ `.env.e2e.local` และ safety guard เดียวกับคำสั่งฐานข้อมูล ชุดทดสอบ authenticated ไม่มีการ skip เมื่อ config ไม่ครบจึง fail-fast ก่อนเปิด dev server
+Playwright ใช้ `.env.e2e.local` และ safety guard เดียวกับคำสั่งฐานข้อมูล ชุดทดสอบ authenticated ไม่มีการ skip เมื่อ config ไม่ครบจึง fail-fast ก่อน build และเปิด production-mode server ด้วย `next start` เพื่อให้พฤติกรรมใกล้ Vercel มากกว่า dev mode
 
 ## โครงสร้างสำคัญ
 

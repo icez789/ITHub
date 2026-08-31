@@ -331,11 +331,11 @@ YYYY-MM-DD — Phase N — ผู้ดำเนินการ
 
 ### 2026-08-31 — Milestone 85 Spotlight addendum — Codex
 
-- เปลี่ยนแปลง: พอร์ต Animated Spotlight Tour v2 บน redesign ปัจจุบัน, เพิ่ม DOM contract `data-tour` 6 กลุ่ม, overlay สี่แผง blur 10px/หรี่ 58% พร้อม fallback 82%, route/scroll/focus restoration, `inert`, focus trap, Reduced Motion และ fallback เมื่อ target หาย
-- การตัดสินใจ/เหตุผล: ใช้แผน milestone 85% ล่าสุดแทน welcome prompt เดิมโดยไม่ merge branch เก่าที่จะย้อนทับ redesign; ใช้ Lucide icons และ token ปัจจุบันเพื่อรักษาภาษาภาพ Clean Technical Community
-- Viewport/theme ที่กำหนดทดสอบ: 375×812, 390×844, 768×900, 1024×900, 1280×800 และ 1440×1000; Light/Dark/Reduced Motion
-- Tests: lint/build ผ่าน; เพิ่ม Playwright สำหรับ 6 steps, blur/fallback, target blocking, route/hash/history restoration, focus trap/restoration, guest/member และ responsive; execution รอ safe `_e2e` environment
-- ค้างอยู่: ยังไม่มี `.env.e2e.local` ที่ยืนยันฐาน `_e2e` จึงไม่รัน authenticated browser suite และยังไม่เปิด Preview/Production
+- เปลี่ยนแปลง: พอร์ต Animated Spotlight Tour v2 บน redesign ปัจจุบัน, เพิ่ม DOM contract `data-tour` 6 กลุ่ม, overlay สี่แผง blur 10px/หรี่ 58% พร้อม fallback 82%, route/scroll/focus restoration, `inert`, focus trap, Reduced Motion และ fallback เมื่อ target หาย; แยก focus target ภายใน topic title/engagement control เพื่อไม่ให้ tooltip ซ้อน card ขนาดใหญ่
+- การตัดสินใจ/เหตุผล: ใช้แผน milestone 85% ล่าสุดแทน welcome prompt เดิมโดยไม่ merge branch เก่า; จำสถานะ member ตอนเริ่มทัวร์และ refresh client route ก่อนหา member target เพื่อป้องกัน auth UI จาก router cache; รอ launcher ตัวใหม่หลัง route restoration และปลด `inert` ก่อนคืน focus
+- Viewport/theme ที่ตรวจ: 375×812, 390×844, 768×900, 1024×900, 1280×800 และ 1440×1000; Light/Dark/Reduced Motion
+- Tests: lint/build ผ่าน; Playwright production-mode แบบ serial ผ่าน 90/90 บน Chromium, Firefox และ WebKit โดย 0 skip/0 failure ครอบคลุม 6 steps, blur/fallback, target blocking, route/hash/history restoration, focus trap/restoration, guest/member, search, authenticated flows และ responsive
+- ค้างอยู่: Vercel Preview ยังไม่ได้ผูกฐาน `_e2e`; Production rollout ยังรอ PR, Preview smoke test และหลักฐาน TiDB restore point
 
 ### 2026-08-26 — Phase 1–6 — Codex
 
