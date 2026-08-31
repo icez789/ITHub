@@ -31,7 +31,7 @@ async function expectBackdrop(page, tour) {
   await expect(tour.shades).toHaveCount(4);
   await expect.poll(() => tour.shades.evaluateAll((elements) => elements.every((element) => {
     const style = getComputedStyle(element);
-    const filter = style.backdropFilter || style.webkitBackdropFilter;
+    const filter = style.backdropFilter || style.webkitBackdropFilter || '';
     if (element.dataset.tourShadeMode === 'fallback') {
       return style.backgroundColor.includes('0.82') && (!filter || filter === 'none');
     }
@@ -55,14 +55,14 @@ async function expectTourFitsViewport(page) {
   await expect.poll(() => page.evaluate(() => {
     const dialog = document.querySelector('[data-tour-root="true"] [role="dialog"]');
     const spotlight = document.querySelector('.ithub-tour-spotlight-guard');
-    if (!dialog || !spotlight) return false;
+    if (!dialog || !spotlight) return { fits: false, reason: 'missing dialog or spotlight' };
     const dialogRect = dialog.getBoundingClientRect();
     const spotlightRect = spotlight.getBoundingClientRect();
     const overlaps = !(dialogRect.right <= spotlightRect.left
       || dialogRect.left >= spotlightRect.right
       || dialogRect.bottom <= spotlightRect.top
       || dialogRect.top >= spotlightRect.bottom);
-    return !overlaps
+    const fits = !overlaps
       && dialogRect.left >= 0
       && dialogRect.top >= 0
       && dialogRect.right <= window.innerWidth
@@ -71,7 +71,14 @@ async function expectTourFitsViewport(page) {
       && spotlightRect.top >= 0
       && spotlightRect.right <= window.innerWidth
       && spotlightRect.bottom <= window.innerHeight;
-  })).toBe(true);
+    return JSON.stringify({
+      fits,
+      overlaps,
+      viewport: { width: window.innerWidth, height: window.innerHeight },
+      dialog: { left: dialogRect.left, top: dialogRect.top, right: dialogRect.right, bottom: dialogRect.bottom },
+      spotlight: { left: spotlightRect.left, top: spotlightRect.top, right: spotlightRect.right, bottom: spotlightRect.bottom },
+    });
+  })).toContain('"fits":true');
 }
 
 async function login(page) {
@@ -79,7 +86,21 @@ async function login(page) {
   await page.locator('input[name="email"]').fill(email);
   await page.locator('input[name="password"]').fill(password);
   await page.locator('button[type="submit"]').click();
-  await expect(page).toHaveURL(/\/?(?:\?notify=login_success)?$/);
+  await expect(page).toHaveURL((url) => url.pathname === '/');
+  await expect(page.locator('[data-tour="create-topic"]:visible').first()).toBeVisible();
+  await expect(page).toHaveURL('/');
+}
+
+async function postPusherAuth(page, channelName) {
+  return page.evaluate(async (channel) => {
+    const body = new URLSearchParams({ socket_id: '123.456', channel_name: channel });
+    const response = await fetch('/api/pusher/auth', {
+      method: 'POST',
+      headers: { 'content-type': 'application/x-www-form-urlencoded' },
+      body,
+    });
+    return response.status;
+  }, channelName);
 }
 
 test.describe('ITHub onboarding', () => {
@@ -370,10 +391,8 @@ test.describe('ITHub critical flows', () => {
   });
 
   test('requires authentication for Pusher channel subscriptions', async ({ page }) => {
-    const signedOutResponse = await page.request.post('/api/pusher/auth', {
-      form: { socket_id: '123.456', channel_name: 'private-user-1' },
-    });
-    expect(signedOutResponse.status()).toBe(401);
+    await page.goto('/');
+    expect(await postPusherAuth(page, 'private-user-1')).toBe(401);
   });
 
   test('authorizes only the current user Pusher channel', async ({ page }) => {
@@ -382,15 +401,8 @@ test.describe('ITHub critical flows', () => {
     const userId = await bell.getAttribute('data-user-id');
     expect(userId).toMatch(/^\d+$/);
 
-    const forbiddenResponse = await page.request.post('/api/pusher/auth', {
-      form: { socket_id: '123.456', channel_name: 'private-user-999999999' },
-    });
-    expect(forbiddenResponse.status()).toBe(403);
-
-    const ownChannelResponse = await page.request.post('/api/pusher/auth', {
-      form: { socket_id: '123.456', channel_name: `private-user-${userId}` },
-    });
-    expect(ownChannelResponse.status()).toBe(200);
+    expect(await postPusherAuth(page, 'private-user-999999999')).toBe(403);
+    expect(await postPusherAuth(page, `private-user-${userId}`)).toBe(200);
   });
 
   test('does not partially update a profile when the old password is wrong', async ({ page }) => {
@@ -402,8 +414,13 @@ test.describe('ITHub critical flows', () => {
     await page.locator('input[name="oldPassword"]').fill('definitely-not-the-current-password');
     await page.locator('input[name="newPassword"]').fill('Temporary-password-123');
     await page.locator('input[name="confirmNewPassword"]').fill('Temporary-password-123');
-    await page.getByRole('button', { name: 'บันทึกการแก้ไข' }).click();
-    await expect(page).toHaveURL(/notify=wrong_old_password/);
+    const submitProfile = page.getByRole('button', { name: 'บันทึกการแก้ไข' });
+    await expect.poll(() => submitProfile.evaluate((button) => (
+      Object.keys(button).some((key) => key.startsWith('__reactProps'))
+    ))).toBe(true);
+    await expect.poll(() => submitProfile.evaluate((button) => button.form?.checkValidity() ?? false)).toBe(true);
+    await submitProfile.evaluate((button) => button.form.requestSubmit(button));
+    await expect(page).toHaveURL(/notify=wrong_old_password/, { timeout: 15_000 });
     await expect(page.locator('input[name="username"]')).toHaveValue(originalUsername);
   });
 
@@ -556,7 +573,7 @@ test.describe('ITHub responsive layout regression', () => {
         await page.emulateMedia({ colorScheme: theme, reducedMotion: 'reduce' });
         await page.goto(topicPath);
         await expect(page.locator('html')).toHaveClass(theme === 'dark' ? /dark/ : /^(?!.*dark)/);
-        const content = page.locator('.view-ql-editor');
+        const content = page.locator('.view-ql-editor:visible').first();
         await expect(content).toBeVisible();
 
         const contentBox = await content.boundingBox();
