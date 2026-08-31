@@ -1,17 +1,21 @@
 # ITHub — รายงาน Milestone 85%
 
-> วันที่: 31 สิงหาคม 2026 (Asia/Bangkok)
-> สาขา: `codex/ithub-85-milestone`
+> วันที่: 1 กันยายน 2026 (Asia/Bangkok)
+> สาขาที่เผยแพร่: `main`
 > Pull Request: `https://github.com/icez789/ITHub/pull/1`
 > Vercel Preview: `https://ithub-git-codex-ithub-85-milestone-thiraphat-s-projects.vercel.app`
-> Preview deployment: `dpl_CDcQkPtCywnByB1635A4YXFWSbdT` จาก SHA `2e87560`
-> สถานะ: Local/Preview acceptance และ Production migration ผ่าน; PR merge และ Production deployment รอดำเนินการ
+> Preview deployment: `dpl_74qARKg136JpvxYLp234ZVZ3usXY` จาก SHA `c7d7c9e`
+> Production: `https://ithub-puce.vercel.app`
+> Production deployment: `dpl_Cdh4AcK78pqg4R4yWDMCsqYkAdKi` จาก merge SHA `8651ef4`
+> สถานะ: Milestone 85% เผยแพร่ Production สำเร็จ
 
 ## สรุป
 
 โค้ดของ milestone 85% ปิดช่องว่างหลักด้านฐานทดสอบ, migration safety, search/data minimization และ Animated Spotlight Tour v2 แล้ว โดยออกแบบให้คำสั่งที่เขียนข้อมูลหยุดทันทีหาก environment ไม่ใช่ฐาน `_e2e` ที่ยืนยันสิทธิ์เขียนไว้
 
-Local acceptance ผ่านแล้วบนฐาน `test_e2e`: migration/check/reconcile สำเร็จ และ Playwright ผ่าน 90/90 แบบ serial ครบสาม browser โดยไม่มี skip หลังจากนั้นเปิด PR #1, ผูกค่าทดสอบแบบ branch-scoped เฉพาะ `codex/ithub-85-milestone` และ redeploy Preview จาก SHA เดียวกันสำเร็จ Smoke test ทั้ง guest/member ผ่านและไม่มี runtime error แต่ยังไม่ rollout Production จนกว่าจะยืนยัน restore point ของ TiDB และตรวจข้อมูลกำพร้าเดิม 14 แถวก่อน migration
+Local acceptance ผ่านบนฐาน `test_e2e`: migration/check/reconcile สำเร็จ และ Playwright ผ่าน 90/90 แบบ serial ครบสาม browser โดยไม่มี skip จากนั้น Preview แบบ branch-scoped ผ่านทั้ง guest/member และไม่พบ runtime error ก่อนนำขึ้น Production
+
+Production migration ทำงานแบบหยุดเมื่อพบความเสี่ยงจริง หลังได้รับอนุมัติจึงลบ orphan likes/notifications 14 แถว และซ่อม partial migration ด้วยการลบ orphan polls/options/votes อีก 20 แถวตามลำดับ dependency ปัจจุบัน migration 002 ครบ 25/25, ตารางครบ 11/11 และ orphan ทุกชนิดเป็น 0 จากนั้น merge PR #1 และเผยแพร่ Production สำเร็จพร้อม smoke test หลัง deploy
 
 ## สิ่งที่เปลี่ยน
 
@@ -57,7 +61,7 @@ Local acceptance ผ่านแล้วบนฐาน `test_e2e`: migration/c
 | Authenticated Playwright Chromium/Firefox/WebKit | PASS — 90/90, serial, 0 skip, 0 failure บน production-mode server |
 | Test cleanup | PASS — cleanup assertion ผ่าน และ post-run check/reconcile ยังเป็น 0 |
 | Git push และ PR | PASS — branch `origin/codex/ithub-85-milestone` ถูก push และเปิด PR #1 แล้ว |
-| Vercel Preview build | PASS — deployment `dpl_CDcQkPtCywnByB1635A4YXFWSbdT` จาก `2e87560` เป็น Ready |
+| Vercel Preview build | PASS — deployment `dpl_74qARKg136JpvxYLp234ZVZ3usXY` จาก `c7d7c9e` เป็น Ready |
 | Vercel Preview isolation | PASS — override 18 ตัวแปรเฉพาะ Preview branch; `DB_NAME` ชี้ฐาน `_e2e` และ Production values เดิมยังแยกอยู่ |
 | Preview guest smoke | PASS — หน้าแรกโหลด baseline 1 กระทู้, Tour ครบ 6 ขั้นและคืน URL เดิม |
 | Preview search smoke | PASS — ค้น `content-only-needle` จากเนื้อหาได้ 1 ผล และเปิด `/topic/1` โดยไม่ย้อนกลับหน้าค้นหา |
@@ -68,17 +72,25 @@ Local acceptance ผ่านแล้วบนฐาน `test_e2e`: migration/c
 | Production migration recovery | PASS — ตรวจ exact partial fingerprint 18/25, ลบ orphan polls/options/votes 3/11/6 ตามอนุมัติ และเพิ่ม schema objects จนครบ 25/25 |
 | Production final preflight/check | PASS — 11/11 tables, migration 002 complete และ orphan ทุกชนิด 0 |
 | Production reconcile dry-run | REVIEWED — พบ legacy counter drift 5 บัญชี; ไม่ apply เพราะจะลด XP/อันดับอย่างมีนัยสำคัญและไม่ใช่ผลจาก migration |
+| GitHub merge | PASS — PR #1 merge เข้า `main` ด้วย SHA `8651ef4`, checks 2/2 ผ่านและไม่มี conflict |
+| Vercel Production deploy | PASS — `dpl_Cdh4AcK78pqg4R4yWDMCsqYkAdKi` เป็น Ready และ alias `ithub-puce.vercel.app` ชี้ deployment ใหม่ |
+| Production public routes | PASS — `/`, `/help`, `/privacy`, `/terms`, search และ `/topic/660001` ตอบ 200 |
+| Production search/navigation | PASS — ค้นคำ `ข้อเสีย` ซึ่งอยู่ในเนื้อหาได้ 1 ผล และเปิด `/topic/660001` โดยไม่ย้อนกลับหน้าค้นหา |
+| Production onboarding | PASS — เปิด Spotlight Tour จาก `/help`, แสดงขั้น 1/6 และคืน `/help` หลังปิด |
+| Production authorization | PASS — guest POST `/api/pusher/auth` ถูกปฏิเสธด้วย 401 โดยไม่มีการเขียนข้อมูล |
+| Production headers | PASS WITH NOTE — `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`, `X-Frame-Options: DENY`; CSP/HSTS ยังอยู่ในงานหลัง 85% |
+| Production observability | PASS — ไม่พบ runtime error และไม่พบ error/warning/fatal log ของ deployment ระหว่าง smoke test |
 
 ## Safety gate และ rollout
 
 1. Local `.env.e2e.local`, ฐาน `test_e2e`, migration, seed, check และ reconcile ผ่านแล้ว
 2. Playwright serial ผ่านครบ Chromium, Firefox และ WebKit ที่ 90/90 โดย 0 skip/0 failure
-3. Branch ถูก push, PR #1 เปิดแล้ว และ Preview จาก SHA `2e87560` ผ่าน build/smoke test
+3. Branch ถูก push, PR #1 merge เข้า `main` แล้ว และ Preview จาก SHA `c7d7c9e` ผ่าน build/smoke test
 4. ตัวแปร Preview ถูกจำกัดไว้ที่ branch `codex/ithub-85-milestone` และชี้ฐาน `test_e2e`; Production values ไม่ถูกแก้
 5. ยืนยัน TiDB Starter automatic snapshot สถานะ `Succeeded` ที่ `2026-08-30 18:01 UTC` ก่อน migration แล้ว
 6. Production migration เคยหยุดที่ partial 18/25 เพราะ legacy orphan polls ที่ preflight เดิมไม่ครอบคลุม จึงเพิ่ม exact-fingerprint recovery guard และ integrity checks สำหรับ polls/options/votes
 7. หลัง recovery แล้ว final preflight/check ผ่าน; คง legacy XP/post counters ไว้เพราะ drift 5 บัญชีเป็นข้อมูลเดิมและการ reconcile จะเปลี่ยนอันดับผู้ใช้อย่างมาก
-8. ขั้นถัดไปคือ push recovery code, ตรวจ Preview SHA ล่าสุด, merge PR และสร้าง Production deployment
+8. Production deployment `dpl_Cdh4AcK78pqg4R4yWDMCsqYkAdKi` จาก merge SHA `8651ef4` เป็น Ready และ post-deploy smoke test ผ่าน
 
 ## ข้อสังเกตจาก Preview
 
@@ -87,9 +99,9 @@ Local acceptance ผ่านแล้วบนฐาน `test_e2e`: migration/c
 
 ## Rollback point
 
-- Code rollback: Vercel deployment ก่อนหน้าและ commit ก่อน milestone นี้
-- Database rollback: restore automatic snapshot ไป TiDB instance ใหม่ แล้วสลับ Production environment variables
-- ห้าม migrate Production หากยังไม่มี snapshot ที่พร้อม restore
+- Code rollback: Vercel Production deployment ก่อนหน้า `dpl_9s2kbtNyaPpE68H6MwALfpJmWQGW` จาก `7d05004`
+- Database rollback ที่ตรวจไว้ก่อน migration: TiDB automatic snapshot เวลา `2026-08-30 18:01 UTC` มีสถานะ `Succeeded` และยังไม่หมดอายุขณะเริ่ม migration; การ restore ของ Starter จะสร้าง instance ใหม่ก่อนสลับ Production environment variables
+- Migration เป็น additive schema change และลบเฉพาะ orphan ที่ตรวจจำนวนแน่นอนและได้รับอนุมัติแล้ว; legacy XP/post counter drift 5 บัญชียังคงเดิม
 
 ## งานหลัง 85%
 
