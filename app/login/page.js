@@ -38,7 +38,10 @@ export default async function LoginPage({ searchParams }) {
       redirect(`/login?notify=login_failed${nextQuery}`);
     }
 
-    const [users] = await db.query('SELECT * FROM users WHERE email = ?', [email]);
+    const [users] = await db.query(
+      'SELECT id, password, is_banned FROM users WHERE email = ? LIMIT 1',
+      [email],
+    );
     const user = users[0];
 
     // ตรวจสอบรหัสผ่าน

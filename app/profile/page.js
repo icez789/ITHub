@@ -23,7 +23,7 @@ export default async function ProfilePage() {
 
   // ดึงกระทู้ที่ตั้ง
   const [myTopics] = await db.query(
-    'SELECT * FROM topics WHERE user_id = ? ORDER BY created_at DESC', 
+    'SELECT id, title, category, views, created_at FROM topics WHERE user_id = ? ORDER BY created_at DESC',
     [userSession.id]
   );
 

@@ -41,8 +41,8 @@ export default async function HomePage({ searchParams }) {
   const conditions = [];
   const sqlParams = [];
   if (search) {
-    conditions.push('topics.title LIKE ?');
-    sqlParams.push(`%${search}%`);
+    conditions.push('(INSTR(topics.title, ?) > 0 OR INSTR(COALESCE(topics.content, \'\'), ?) > 0)');
+    sqlParams.push(search, search);
   }
   if (category) {
     conditions.push('topics.category = ?');
