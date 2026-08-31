@@ -15,7 +15,10 @@ export default async function EditTopicPage({ params }) {
   if (!user) redirect('/login');
 
   // 2. ดึงข้อมูลกระทู้เดิม
-  const [topics] = await db.query('SELECT * FROM topics WHERE id = ?', [id]);
+  const [topics] = await db.query(
+    'SELECT id, title, category, content, image_url, user_id FROM topics WHERE id = ?',
+    [id],
+  );
   const topic = topics[0];
 
   // 3. เช็คความปลอดภัย

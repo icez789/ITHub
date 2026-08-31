@@ -53,7 +53,7 @@ export default function NotificationBell({ count: initialCount, notifications: i
   };
 
   return (
-     <div className="relative">
+     <div className="relative" data-tour="personal-nav">
         {/* 3. ✅ เปลี่ยน onClick ให้มาใช้ฟังก์ชันใหม่ของเรา */}
         <button type="button" onClick={handleBellClick} data-user-id={currentUserId || undefined} aria-label="เปิดการแจ้งเตือน" aria-expanded={isOpen} className="relative rounded-lg p-2 text-[var(--app-text-muted)] transition-colors hover:bg-[var(--app-surface-subtle)] hover:text-[var(--app-primary)]">
            <Bell aria-hidden="true" size={21} />

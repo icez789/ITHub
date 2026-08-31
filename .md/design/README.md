@@ -13,9 +13,9 @@
 ## แผนที่กำลังใช้งาน
 
 - **ชื่อ:** ITHub Design Redesign Plan
-- **สถานะ:** Implemented — core verification complete; baseline archive pending
+- **สถานะ:** Implemented — Spotlight Tour v2 addendum in verification
 - **ทิศทาง:** Clean Technical Community
-- **อัปเดตล่าสุด:** 2026-08-26
+- **อัปเดตล่าสุด:** 2026-08-31
 - **ไฟล์:** [`ITHUB_REDESIGN_PLAN.md`](./ITHUB_REDESIGN_PLAN.md)
 
 ## กติกาสำหรับงานดีไซน์

@@ -154,7 +154,7 @@ export default function Sidebar() {
 
         <hr className="mx-2 my-4 border-[var(--app-border)]" />
         <p className={sectionLabelClass}>พื้นที่ของฉัน</p>
-        <nav aria-label="พื้นที่ส่วนตัว" className="space-y-1">
+        <nav aria-label="พื้นที่ส่วนตัว" data-tour="personal-nav" className="space-y-1">
           {personalMenus.map((item) => <SidebarItem key={item.label} {...item} labelClass={labelClass} tooltipClass={tooltipClass} />)}
         </nav>
 

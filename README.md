@@ -12,7 +12,7 @@ ITHub คือเว็บบอร์ดชุมชนด้านไอท�
 - Pusher private channel ที่ตรวจสิทธิ์ด้วย session ของผู้ใช้
 - หน้าผู้ดูแลสำหรับสมาชิก กระทู้ คอมเมนต์ และรายงาน พร้อม pagination
 - Dark mode, responsive navigation, skip link และ keyboard accessibility
-- คำแนะนำผู้ใช้ครั้งแรกแบบ 4 ขั้น และหน้าคู่มือฉบับเต็มที่ `/help`
+- Animated Spotlight Tour 6 ขั้นที่พาไปยัง UI จริง พร้อม blur, focus trap, route restoration และหน้าคู่มือฉบับเต็มที่ `/help`
 - AI assistant ผ่าน Gemini และรูปภาพผ่าน Cloudinary
 
 ## เทคโนโลยี
@@ -70,7 +70,9 @@ npm run dev
 | `PUSHER_APP_ID`, `PUSHER_SECRET` | การส่ง event และ authorize private channel ฝั่ง server |
 | `GEMINI_API_KEY` | AI assistant |
 | `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET` | อัปโหลดรูปภาพ |
-| `ITHUB_E2E_EMAIL`, `ITHUB_E2E_PASSWORD` | บัญชี E2E แยกจากบัญชีจริง |
+| `ITHUB_E2E_ALLOW_WRITES` | ต้องเป็น `true` เพื่อยืนยันการเขียนลงฐาน E2E |
+| `ITHUB_E2E_ENVIRONMENT` | ต้องไม่เป็น `production`, `prod` หรือ `live` |
+| `ITHUB_E2E_EMAIL`, `ITHUB_E2E_PASSWORD`, `ITHUB_E2E_USERNAME` | บัญชี E2E แยกจากบัญชีจริง |
 | `ITHUB_SEED_EMAIL`, `ITHUB_SEED_PASSWORD`, `ITHUB_SEED_USERNAME` | บัญชีเริ่มต้นสำหรับ development |
 
 ห้าม commit `.env`, credentials, token หรือไฟล์ข้อมูลส่วนตัวขึ้น Git
@@ -84,6 +86,25 @@ npm run db:migrate     # ใช้ migration ที่ยังไม่เค�
 npm run db:check       # ตรวจตารางและข้อมูลกำพร้า
 npm run db:seed        # สร้าง/อัปเดตบัญชี development จาก ITHUB_SEED_*
 ```
+
+Migration runner บันทึก SHA-256 ของไฟล์ migration, adopt schema ที่ migration 002 ครบถ้วนแล้ว และหยุดเมื่อพบสถานะ partial หรือ fingerprint ไม่ตรง ห้ามแก้ไฟล์ migration ที่เคยเผยแพร่แล้ว
+
+### ฐานทดสอบ E2E แยก
+
+สร้าง `.env.e2e.local` ที่ Git ignore จาก environment ปัจจุบัน หรือคัดลอก `.env.e2e.example` แล้วกรอกเอง จากนั้นใช้ฐานที่ชื่อจบด้วย `_e2e` เท่านั้น:
+
+```bash
+npm run e2e:setup          # สร้างค่า local และบัญชีสังเคราะห์โดยไม่แสดง secret
+npm run db:create:e2e      # สร้างเฉพาะฐาน _e2e; ไม่ลบฐานที่มีอยู่
+npm run db:preflight:e2e
+npm run db:migrate:e2e
+npm run db:seed:e2e
+npm run db:check:e2e
+npm run db:reconcile:e2e
+npm run test:e2e
+```
+
+ทุกคำสั่ง E2E จะหยุดก่อนเชื่อมต่อหรือเขียนข้อมูล หากชื่อฐานไม่ลงท้าย `_e2e`, ไม่ได้ตั้ง `ITHUB_E2E_ALLOW_WRITES=true`, ไม่มีบัญชีทดสอบ หรือ environment ถูกระบุเป็น production
 
 ตรวจ XP และจำนวนกระทู้ที่คลาดเคลื่อนโดยไม่แก้ข้อมูล:
 
@@ -107,7 +128,7 @@ npm run test:e2e  # Chromium, Firefox และ WebKit แบบ serial
 npm run check     # lint และ build
 ```
 
-Playwright โหลด `.env` ด้วย Next environment loader ใน CI จะหยุดทันทีหากไม่มี `ITHUB_E2E_EMAIL` หรือ `ITHUB_E2E_PASSWORD` เพื่อป้องกัน critical authenticated tests ถูกข้ามโดยไม่ตั้งใจ
+Playwright ใช้ `.env.e2e.local` และ safety guard เดียวกับคำสั่งฐานข้อมูล ชุดทดสอบ authenticated ไม่มีการ skip เมื่อ config ไม่ครบจึง fail-fast ก่อน build และเปิด production-mode server ด้วย `next start` เพื่อให้พฤติกรรมใกล้ Vercel มากกว่า dev mode
 
 ## โครงสร้างสำคัญ
 

@@ -48,7 +48,9 @@ export default async function TopicDetailPage({ params }) {
   
   // Query กระทู้ (ดึง XP มาด้วย)
   const topicQuery = db.query(`
-    SELECT topics.*, users.username, users.role, users.post_count, users.xp 
+    SELECT topics.id, topics.title, topics.category, topics.content, topics.image_url,
+           topics.user_id, topics.views, topics.created_at,
+           users.username, users.role, users.xp
     FROM topics 
     LEFT JOIN users ON topics.user_id = users.id 
     WHERE topics.id = ?
@@ -56,7 +58,9 @@ export default async function TopicDetailPage({ params }) {
 
   // Query คอมเมนต์ (ดึง XP มาด้วย)
   const commentsQuery = db.query(`
-    SELECT comments.*, users.username, users.role, users.post_count, users.xp 
+    SELECT comments.id, comments.topic_id, comments.content, comments.user_id,
+           comments.parent_id, comments.created_at, comments.is_solution,
+           users.username, users.role, users.xp
     FROM comments 
     LEFT JOIN users ON comments.user_id = users.id 
     WHERE topic_id = ? 
@@ -64,16 +68,16 @@ export default async function TopicDetailPage({ params }) {
   `, [id]);
 
   // Query โพล (ถ้ามี)
-  const pollQuery = db.query('SELECT * FROM polls WHERE topic_id = ?', [id]);
+  const pollQuery = db.query('SELECT id, topic_id, question FROM polls WHERE topic_id = ?', [id]);
 
   const likeCountQuery = db.query('SELECT COUNT(*) as count FROM likes WHERE topic_id = ?', [id]);
 
   const userLikeQuery = currentUser 
-    ? db.query('SELECT * FROM likes WHERE topic_id = ? AND user_id = ?', [id, currentUser.id])
+    ? db.query('SELECT 1 FROM likes WHERE topic_id = ? AND user_id = ? LIMIT 1', [id, currentUser.id])
     : Promise.resolve([[]]); 
 
   const bookmarkQuery = currentUser
-    ? db.query('SELECT * FROM bookmarks WHERE topic_id = ? AND user_id = ?', [id, currentUser.id])
+    ? db.query('SELECT 1 FROM bookmarks WHERE topic_id = ? AND user_id = ? LIMIT 1', [id, currentUser.id])
     : Promise.resolve([[]]);
 
   // --- 2. รัน Query พร้อมกัน (Parallel Fetching) ---
@@ -108,7 +112,10 @@ export default async function TopicDetailPage({ params }) {
 
   if (poll) {
       // ดึงตัวเลือกโพล
-      const [options] = await db.query('SELECT * FROM poll_options WHERE poll_id = ?', [poll.id]);
+      const [options] = await db.query(
+        'SELECT id, label, vote_count FROM poll_options WHERE poll_id = ? ORDER BY id ASC',
+        [poll.id],
+      );
       pollOptions = options;
 
       // เช็คว่า User เคยโหวตไหม
@@ -120,7 +127,8 @@ export default async function TopicDetailPage({ params }) {
 
   // --- 4. ดึงกระทู้ที่เกี่ยวข้อง ---
   const [relatedTopics] = await db.query(`
-    SELECT topics.*, users.username 
+    SELECT topics.id, topics.title, topics.category, topics.content, topics.image_url,
+           topics.views, topics.created_at, users.username
     FROM topics 
     LEFT JOIN users ON topics.user_id = users.id
     WHERE topics.category = ? AND topics.id != ?

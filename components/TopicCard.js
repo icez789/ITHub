@@ -22,9 +22,10 @@ export default function TopicCard({
   });
 
   return (
-    <article className="group">
+    <article className="group" data-tour="topic-card">
       <Link
         href={`/topic/${id}`}
+        data-tour="topic-link"
         className="ithub-card flex min-w-0 gap-3 p-3.5 transition-[border-color,transform,box-shadow] duration-200 hover:-translate-y-0.5 hover:border-red-300 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500/40 sm:gap-4 sm:p-4"
       >
         <div className="min-w-0 flex-1">
@@ -36,7 +37,7 @@ export default function TopicCard({
           </div>
 
           <h3 className="line-clamp-2 text-base font-bold leading-snug text-zinc-950 transition-colors group-hover:text-red-700 sm:text-lg dark:text-zinc-50 dark:group-hover:text-red-300">
-            {title}
+            <span data-tour="topic-card-focus">{title}</span>
           </h3>
 
           {excerpt && (

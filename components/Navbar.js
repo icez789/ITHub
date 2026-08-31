@@ -16,7 +16,10 @@ export default async function Navbar() {
   if (user) {
     try {
       const [notisResult, countResult] = await Promise.all([
-        db.query('SELECT * FROM notifications WHERE user_id = ? ORDER BY created_at DESC LIMIT 10', [user.id]),
+        db.query(
+          'SELECT id, topic_id, message, created_at FROM notifications WHERE user_id = ? ORDER BY created_at DESC LIMIT 10',
+          [user.id],
+        ),
         db.query('SELECT COUNT(*) as count FROM notifications WHERE user_id = ? AND is_read = 0', [user.id]),
       ]);
       notifications = notisResult[0] || [];
@@ -40,7 +43,7 @@ export default async function Navbar() {
 
         <SearchInput className="hidden min-w-0 flex-1 md:block md:max-w-2xl" />
 
-        <nav aria-label="บัญชีผู้ใช้" className="ml-auto flex items-center gap-1.5 sm:gap-2.5">
+        <nav aria-label="บัญชีผู้ใช้" data-tour="account-area" className="ml-auto flex items-center gap-1.5 sm:gap-2.5">
           <ThemeToggle />
 
           {user ? (
@@ -63,13 +66,15 @@ export default async function Navbar() {
 
               <Link
                 href="/create"
+                data-tour="create-topic"
+                data-tour-session="member"
                 className="flex items-center gap-2 rounded-xl bg-red-600 px-3 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-red-700 sm:px-4"
               >
                 <Plus aria-hidden="true" className="h-4 w-4" />
                 <span className="hidden sm:inline">สร้างกระทู้</span>
               </Link>
 
-              <Link href="/profile" className="hidden items-center gap-3 rounded-xl px-1.5 py-1 transition-colors hover:bg-zinc-100 sm:flex dark:hover:bg-zinc-800">
+              <Link href="/profile" data-tour="personal-nav" className="hidden items-center gap-3 rounded-xl px-1.5 py-1 transition-colors hover:bg-zinc-100 sm:flex dark:hover:bg-zinc-800">
                 <span className="hidden text-right lg:block">
                   <span className="block text-[11px] font-medium text-zinc-500 dark:text-zinc-400">บัญชีของฉัน</span>
                   <span className="block max-w-28 truncate text-sm font-semibold text-zinc-900 dark:text-zinc-100">{user.username}</span>
@@ -90,7 +95,7 @@ export default async function Navbar() {
               <Link href="/register" className="hidden rounded-xl px-3 py-2 text-sm font-semibold text-zinc-600 transition-colors hover:bg-zinc-100 hover:text-zinc-950 sm:inline-flex dark:text-zinc-300 dark:hover:bg-zinc-800 dark:hover:text-white">
                 สมัครสมาชิก
               </Link>
-              <Link href="/login" className="whitespace-nowrap rounded-xl bg-red-600 px-3.5 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-red-700 sm:px-4">
+              <Link href="/login" data-tour="auth-action" className="whitespace-nowrap rounded-xl bg-red-600 px-3.5 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-red-700 sm:px-4">
                 เข้าสู่ระบบ
               </Link>
             </>

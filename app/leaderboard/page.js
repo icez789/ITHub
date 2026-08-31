@@ -18,7 +18,9 @@ function Avatar({ user, size = 64 }) {
 }
 
 export default async function LeaderboardPage() {
-  const [users] = await db.query('SELECT * FROM users ORDER BY post_count DESC LIMIT 10');
+  const [users] = await db.query(
+    'SELECT id, username, avatar_url, role, xp, post_count FROM users ORDER BY post_count DESC LIMIT 10',
+  );
   const top3 = users.slice(0, 3);
   const rest = users.slice(3);
 
