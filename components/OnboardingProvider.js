@@ -38,7 +38,7 @@ const steps = [
     id: 'explore', Icon: Compass, eyebrow: 'สำรวจชุมชน', title: 'เลือกดูกระทู้ที่น่าสนใจ',
     description: 'การ์ดแต่ละใบสรุปหมวดหมู่ ผู้เขียน และกิจกรรมจากชุมชน คุณสามารถเปิดอ่านรายละเอียดได้จากตรงนี้',
     points: ['เรียงตามล่าสุด ยอดนิยม หรือถูกใจมาก', 'กรองหมวด Hardware, Software, Network, AI & Data และ General'],
-    selectors: ['[data-tour="topic-card"]', '[data-tour="topic-list"]'],
+    selectors: ['[data-tour="topic-card-focus"]', '[data-tour="topic-card"]', '[data-tour="topic-list"]'],
   },
   {
     id: 'create', Icon: PenLine, eyebrow: 'ถามและแบ่งปัน', title: 'เข้าสู่ระบบแล้วสร้างกระทู้',
@@ -50,7 +50,7 @@ const steps = [
     id: 'engage', Icon: Heart, eyebrow: 'มีส่วนร่วม', title: 'ถูกใจและบันทึกเก็บไว้',
     description: 'ใช้ปุ่มเหล่านี้เพื่อบอกว่ากระทู้มีประโยชน์หรือเก็บไว้อ่านภายหลัง ทัวร์นี้เป็นเพียงการสาธิตและจะไม่เปลี่ยนข้อมูลจริง',
     points: ['ต้องเข้าสู่ระบบก่อนใช้งาน', 'กระทู้ที่บันทึกจะอยู่ในหน้าโปรไฟล์'],
-    selectors: ['[data-tour="engagement-actions"]'],
+    selectors: ['[data-tour="engagement-focus"]', '[data-tour="engagement-actions"]'],
     fallbackSelectors: ['[data-tour="topic-card"]', '[data-tour="topic-list"]'],
   },
   {
@@ -221,6 +221,7 @@ export default function OnboardingProvider({ children }) {
   const returnScrollRef = useRef({ main: 0, x: 0, y: 0 });
   const triggerRef = useRef(null);
   const topicUrlRef = useRef('');
+  const wasMemberRef = useRef(false);
   const closingRef = useRef(false);
   const isMounted = useSyncExternalStore(subscribeToHydration, getClientHydrationSnapshot, getServerHydrationSnapshot);
   const [isOpen, setIsOpen] = useState(false);
@@ -236,6 +237,7 @@ export default function OnboardingProvider({ children }) {
     returnScrollRef.current = { main: mainContent?.scrollTop || 0, x: window.scrollX, y: window.scrollY };
     triggerRef.current = triggerElement instanceof HTMLElement ? triggerElement : document.activeElement instanceof HTMLElement ? document.activeElement : null;
     topicUrlRef.current = '';
+    wasMemberRef.current = Boolean(document.querySelector('[data-tour-session="member"]'));
     closingRef.current = false;
     setCurrentStep(0);
     setTargetRect(null);
@@ -254,8 +256,16 @@ export default function OnboardingProvider({ children }) {
     const mainContent = document.getElementById('main-content');
     if (mainContent) mainContent.scrollTop = returnScrollRef.current.main;
     window.scrollTo(returnScrollRef.current.x, returnScrollRef.current.y);
+    if (appShellRef.current) appShellRef.current.inert = false;
     let focusTarget = triggerRef.current?.isConnected ? triggerRef.current : null;
-    if (!focusTarget && triggerRef.current) focusTarget = document.querySelector('[data-onboarding-trigger="help-launcher"]');
+    const triggerName = triggerRef.current?.getAttribute('data-onboarding-trigger');
+    if (!focusTarget && triggerName) {
+      const focusStartedAt = window.performance.now();
+      while (!focusTarget && window.performance.now() - focusStartedAt < TARGET_TIMEOUT_MS) {
+        focusTarget = document.querySelector(`[data-onboarding-trigger="${triggerName}"]`);
+        if (!focusTarget) await new Promise((resolve) => window.setTimeout(resolve, 50));
+      }
+    }
     if (!focusTarget) focusTarget = mainContent;
     window.requestAnimationFrame(() => focusTarget?.focus());
   }, [router]);
@@ -321,7 +331,14 @@ export default function OnboardingProvider({ children }) {
       }
       if (controller.signal.aborted) return;
       const step = steps[currentStep];
-      let target = await waitForVisibleTarget(step.selectors, controller.signal);
+      const selectors = step.id === 'create' && wasMemberRef.current
+        ? ['[data-tour-session="member"]']
+        : step.selectors;
+      if (step.id === 'create' && wasMemberRef.current) {
+        router.refresh();
+        await new Promise((resolve) => window.requestAnimationFrame(() => window.requestAnimationFrame(resolve)));
+      }
+      let target = await waitForVisibleTarget(selectors, controller.signal);
       let fallback = false;
       if (!target && currentStep === 3 && topicUrlRef.current && !controller.signal.aborted) {
         topicUrlRef.current = '';

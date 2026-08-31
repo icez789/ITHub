@@ -67,6 +67,7 @@ export default async function Navbar() {
               <Link
                 href="/create"
                 data-tour="create-topic"
+                data-tour-session="member"
                 className="flex items-center gap-2 rounded-xl bg-red-600 px-3 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-red-700 sm:px-4"
               >
                 <Plus aria-hidden="true" className="h-4 w-4" />

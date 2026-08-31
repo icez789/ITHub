@@ -37,7 +37,7 @@ export default function TopicCard({
           </div>
 
           <h3 className="line-clamp-2 text-base font-bold leading-snug text-zinc-950 transition-colors group-hover:text-red-700 sm:text-lg dark:text-zinc-50 dark:group-hover:text-red-300">
-            {title}
+            <span data-tour="topic-card-focus">{title}</span>
           </h3>
 
           {excerpt && (
