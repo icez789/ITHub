@@ -8,9 +8,9 @@ ITHub คือเว็บบอร์ดชุมชนด้านไอท�
 - สร้าง แก้ไข ค้นหา กรอง และจัดเรียงกระทู้
 - Rich-text editor พร้อม code block และการเลือกภาษา
 - คอมเมนต์แบบตอบกลับ เลือกคำตอบที่ถูกต้อง และระบบ XP
-- โพล การถูกใจ บุ๊กมาร์ก รายงานเนื้อหา และการแจ้งเตือน
+- โพล การถูกใจ บุ๊กมาร์ก รายงานเนื้อหา และศูนย์การแจ้งเตือนแบบแบ่งหน้า/อ่าน/ลบรายชิ้น
 - Pusher private channel ที่ตรวจสิทธิ์ด้วย session ของผู้ใช้
-- หน้าผู้ดูแลสำหรับสมาชิก กระทู้ คอมเมนต์ และรายงาน พร้อม pagination
+- Teacher content moderation, การปักหมุด/ล็อกกระทู้ และ audit log สำหรับ Admin/Super Admin
 - Dark mode, responsive navigation, skip link และ keyboard accessibility
 - Animated Spotlight Tour 6 ขั้นที่พาไปยัง UI จริง พร้อม blur, focus trap, route restoration และหน้าคู่มือฉบับเต็มที่ `/help`
 - AI assistant ผ่าน Gemini และรูปภาพผ่าน Cloudinary
@@ -73,6 +73,8 @@ npm run dev
 | `ITHUB_E2E_ALLOW_WRITES` | ต้องเป็น `true` เพื่อยืนยันการเขียนลงฐาน E2E |
 | `ITHUB_E2E_ENVIRONMENT` | ต้องไม่เป็น `production`, `prod` หรือ `live` |
 | `ITHUB_E2E_EMAIL`, `ITHUB_E2E_PASSWORD`, `ITHUB_E2E_USERNAME` | บัญชี E2E แยกจากบัญชีจริง |
+| `ITHUB_ENVIRONMENT` | ระบุ `production` สำหรับ safety guard ของงานดูแลระบบ |
+| `ITHUB_MEDIA_CLEANUP_ALLOW_PRODUCTION` | ต้องเป็น `true` เมื่อตั้งใจ retry Cloudinary cleanup บน Production |
 | `ITHUB_SEED_EMAIL`, `ITHUB_SEED_PASSWORD`, `ITHUB_SEED_USERNAME` | บัญชีเริ่มต้นสำหรับ development |
 
 ห้าม commit `.env`, credentials, token หรือไฟล์ข้อมูลส่วนตัวขึ้น Git
@@ -87,7 +89,14 @@ npm run db:check       # ตรวจตารางและข้อมูล�
 npm run db:seed        # สร้าง/อัปเดตบัญชี development จาก ITHUB_SEED_*
 ```
 
-Migration runner บันทึก SHA-256 ของไฟล์ migration, adopt schema ที่ migration 002 ครบถ้วนแล้ว และหยุดเมื่อพบสถานะ partial หรือ fingerprint ไม่ตรง ห้ามแก้ไฟล์ migration ที่เคยเผยแพร่แล้ว
+Migration runner บันทึก SHA-256 ของไฟล์ migration, ตรวจ fingerprint ของ migration 002/003, adopt เฉพาะ schema ที่ครบ และหยุดเมื่อพบสถานะ partial หรือ fingerprint ไม่ตรง ห้ามแก้ไฟล์ migration ที่เคยเผยแพร่แล้ว
+
+ตรวจคิว Cloudinary โดยไม่แก้ข้อมูล และ retry เมื่ออนุมัติแล้ว:
+
+```bash
+npm run media:cleanup
+npm run media:cleanup -- --apply
+```
 
 ### ฐานทดสอบ E2E แยก
 
@@ -123,6 +132,7 @@ npm run db:reconcile -- --apply
 ```bash
 npm run dev       # development server
 npm run lint      # ESLint เฉพาะ source/config/test/scripts
+npm run test:unit # unit tests สำหรับ security, role และ media lifecycle
 npm run build     # production build
 npm run test:e2e  # Chromium, Firefox และ WebKit แบบ serial
 npm run check     # lint และ build
@@ -139,17 +149,20 @@ lib/                    auth, database, actions, validation และ integratio
 database/migrations/    versioned database migrations
 scripts/                migrate, seed, check และ reconciliation tools
 tests/                  Playwright end-to-end tests
+.github/workflows/      GitHub Actions quality gate
 ```
 
 ## แนวทางความปลอดภัย
 
-- Session เก็บใน HttpOnly cookie และลงนามด้วย HMAC
+- Session เก็บใน HttpOnly cookie ลงนามด้วย HMAC และเพิกถอนได้ด้วย `session_version`
 - Server Actions และ Route Handlers ตรวจสิทธิ์ภายใน server ทุกครั้ง
 - Notification ใช้ `private-user-{id}` และอนุญาตเฉพาะเจ้าของ channel
 - SQL input ใช้ parameter binding และ dynamic values ใช้ allowlist
 - Rich text sanitize ทั้งก่อนบันทึกและก่อนแสดงข้อมูลเก่า
 - รูปภาพจำกัดชนิดและขนาดก่อนส่งไป Cloudinary
-- Rate limit ใช้ shared database table และ fallback ชั่วคราวหากยังไม่ได้ migrate
+- Login rate limit แยก account/IP, hash identifier และใช้ shared database table
+- CSP/HSTS และ security headers ป้องกัน browser attack surface
+- Moderation actions เก็บ audit log โดย redacted metadata และ request ID
 - การลบเนื้อหาและการให้ XP ทำใน transaction พร้อม reconciliation tool
 
 ## Deploy บน Vercel

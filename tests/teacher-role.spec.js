@@ -177,7 +177,7 @@ test.describe('Teacher content moderation', () => {
     expect(Number(participantAfter.xp)).toBe(0);
   });
 
-  test('keeps the dialog open and recoverable when permission changes', async ({ page }, testInfo) => {
+  test('keeps the dialog open and recoverable when the delete request fails', async ({ page }, testInfo) => {
     const suffix = `${Date.now()}.${testInfo.project.name.replace(/\W/g, '')}`;
     const targetEmail = `${fixtureEmailPrefix}${suffix}@example.invalid`;
     const targetUsername = `missing_target_${suffix}`.slice(0, 50);
@@ -198,11 +198,14 @@ test.describe('Teacher content moderation', () => {
     const dialog = page.getByRole('dialog', { name: new RegExp(`ลบกระทู้ “${fixtureTitlePrefix}`) });
     await expect(dialog).toBeVisible();
 
-    await setAccountRole('user');
+    await page.route(`**/topic/${topicResult.insertId}`, async (route) => {
+      if (route.request().method() === 'POST') await route.abort('connectionfailed');
+      else await route.continue();
+    });
     await dialog.getByTestId('confirm-delete-submit').click();
     await expect(dialog).toBeVisible();
     await expect(dialog).toHaveAttribute('data-pending', 'false');
-    await expect(dialog.getByRole('alert')).toContainText('ไม่มีสิทธิ์ลบกระทู้นี้');
+    await expect(dialog.getByRole('alert')).toContainText('ดำเนินการไม่สำเร็จ');
     await expect(dialog.getByTestId('confirm-delete-submit')).toBeEnabled();
     await page.keyboard.press('Escape');
     await expect(dialog).not.toBeVisible();

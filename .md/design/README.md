@@ -13,13 +13,14 @@
 ## แผนที่กำลังใช้งาน
 
 - **ชื่อ:** ITHub Design Redesign Plan
-- **สถานะ:** Implemented — Teacher moderation and destructive-action dialog verified
+- **สถานะ:** Implemented — Milestone 94 moderation, notification และ mutation UX verified
 - **ทิศทาง:** Clean Technical Community
-- **อัปเดตล่าสุด:** 2026-09-01
+- **อัปเดตล่าสุด:** 2026-09-02
 - **ไฟล์:** [`ITHUB_REDESIGN_PLAN.md`](./ITHUB_REDESIGN_PLAN.md)
 
 ## สรุปรอบล่าสุด
 
+- [`2026-09-02_ITHUB_94_RELEASE.md`](./2026-09-02_ITHUB_94_RELEASE.md) — moderation states/audit, notification center, mutation feedback และ visual/accessibility evidence
 - [`2026-09-01_TEACHER_DELETE_UX_RELEASE.md`](./2026-09-01_TEACHER_DELETE_UX_RELEASE.md) — Teacher role, modal ยืนยันการลบ และผลวัด cascade deletion
 - [`2026-09-01_UI_STABILITY_RELEASE.md`](./2026-09-01_UI_STABILITY_RELEASE.md) — Loading shell และ Spotlight Tour continuity พร้อมหลักฐานการตรวจรับ
 

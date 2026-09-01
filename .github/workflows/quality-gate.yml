@@ -1,0 +1,61 @@
+name: ITHub quality gate
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: ithub-shared-e2e-database
+  cancel-in-progress: false
+
+jobs:
+  quality-gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      CI: true
+      DB_HOST: ${{ secrets.E2E_DB_HOST }}
+      DB_PORT: ${{ secrets.E2E_DB_PORT }}
+      DB_USER: ${{ secrets.E2E_DB_USER }}
+      DB_PASSWORD: ${{ secrets.E2E_DB_PASSWORD }}
+      DB_NAME: ${{ secrets.E2E_DB_NAME }}
+      ITHUB_E2E_ALLOW_WRITES: true
+      ITHUB_E2E_ENVIRONMENT: e2e
+      ITHUB_E2E_EMAIL: ${{ secrets.E2E_EMAIL }}
+      ITHUB_E2E_PASSWORD: ${{ secrets.E2E_PASSWORD }}
+      ITHUB_E2E_USERNAME: ithub_ci_member
+      SESSION_SECRET: ${{ secrets.E2E_SESSION_SECRET }}
+      NEXT_PUBLIC_PUSHER_KEY: ${{ secrets.E2E_PUSHER_KEY }}
+      NEXT_PUBLIC_PUSHER_CLUSTER: ${{ secrets.E2E_PUSHER_CLUSTER }}
+      PUSHER_APP_ID: ${{ secrets.E2E_PUSHER_APP_ID }}
+      PUSHER_SECRET: ${{ secrets.E2E_PUSHER_SECRET }}
+      CLOUDINARY_CLOUD_NAME: ${{ secrets.E2E_CLOUDINARY_CLOUD_NAME }}
+      CLOUDINARY_API_KEY: ${{ secrets.E2E_CLOUDINARY_API_KEY }}
+      CLOUDINARY_API_SECRET: ${{ secrets.E2E_CLOUDINARY_API_SECRET }}
+      GEMINI_API_KEY: ${{ secrets.E2E_GEMINI_API_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm audit --omit=dev --audit-level=high
+      - run: npm run lint
+      - run: npm run test:unit
+      - run: npm run db:preflight:e2e
+      - run: npm run db:migrate:e2e
+      - run: npm run db:seed:e2e
+      - run: npm run db:check:e2e
+      - run: npm run db:reconcile:e2e
+      - run: npm run build
+      - run: npx playwright install --with-deps chromium firefox webkit
+      - run: npm run test:e2e
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report/
+          if-no-files-found: ignore
+          retention-days: 7

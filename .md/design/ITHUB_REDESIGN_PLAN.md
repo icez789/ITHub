@@ -330,6 +330,14 @@ YYYY-MM-DD — Phase N — ผู้ดำเนินการ
 - ค้างอยู่:
 ```
 
+### 2026-09-02 — Milestone 94 moderation และ mutation UX — Codex
+
+- เปลี่ยนแปลง: เพิ่มปักหมุด/ล็อกกระทู้และ badge ใน feed/detail, หน้า audit สำหรับ Admin, notification center แบบ 20 รายการต่อหน้า อ่าน/ลบรายชิ้นหรือทั้งหมด, pending/error/double-submit guard และ Cloudinary cleanup queue; ถอด SweetAlert2 ออกจากทุก flow
+- การตัดสินใจ/เหตุผล: กระทู้ล็อกยังอ่าน/ถูกใจ/บันทึกได้แต่ส่ง comment/reply ไม่ได้; Search คงการเรียงที่ผู้ใช้เลือก ส่วน feed ล่าสุดให้กระทู้ปักหมุดอยู่ก่อน; action ปิดรายงานใช้ transaction เดียวกับ audit และปิดปุ่มอื่นระหว่าง notification mutation เพื่อป้องกัน RSC refresh race
+- Viewport/theme ที่ตรวจ: 375×812, 390×844, 768×900, 1024×900, 1280×800 และ 1440×1000; Light/Dark/Reduced Motion; Chromium, Firefox และ WebKit
+- Tests: lint/build ผ่าน; unit 8/8; Playwright full suite 129/129 แบบ serial และ targeted report/notification หลัง final review 6/6; E2E preflight/migrate/seed/check/reconcile ผ่าน, drift/orphan/invalid state = 0
+- ค้างอยู่: Preview/Production URL, commit SHA และ rollout evidence จะบันทึกใน progress report หลังระบบภายนอกผ่านครบ; milestone ถัดไปคือ email verification/reset, public profile, tags/full-text, XP ledger, SEO และ monitoring
+
 ### 2026-09-01 — Teacher moderation และ destructive-action UX — Codex
 
 - เปลี่ยนแปลง: เพิ่ม native `<dialog>` แบบ reusable แทน browser confirm สำหรับกระทู้ ความคิดเห็น รายงาน และประวัติ ITHub Bot; เพิ่ม pending/error/focus restoration/backdrop/Escape และ Reduced Motion; เพิ่ม badge “อาจารย์” กับศูนย์ดูแลเนื้อหาที่ซ่อนข้อมูลสมาชิก

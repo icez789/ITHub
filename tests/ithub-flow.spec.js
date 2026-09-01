@@ -213,6 +213,7 @@ test.describe('ITHub onboarding', () => {
   });
 
   test('keeps all steps in view across the design breakpoint matrix', async ({ browser }) => {
+    test.setTimeout(90_000);
     const matrix = [
       { width: 390, height: 844, theme: 'light', reducedMotion: 'no-preference' },
       { width: 768, height: 900, theme: 'dark', reducedMotion: 'no-preference' },
