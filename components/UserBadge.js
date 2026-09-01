@@ -1,10 +1,18 @@
-import { Code2, Crown, Rocket, ShieldCheck, Sprout } from 'lucide-react';
+import { Code2, Crown, GraduationCap, Rocket, ShieldCheck, Sprout } from 'lucide-react';
 
 export default function UserBadge({ role, xp = 0 }) {
   if (role === 'admin' || role === 'super_admin') {
     return (
       <span className="inline-flex items-center gap-1 rounded-md border border-red-300 bg-red-50 px-2 py-0.5 text-[10px] font-semibold text-red-700 dark:border-red-900 dark:bg-red-950/40 dark:text-red-300">
         <ShieldCheck aria-hidden="true" size={11} /> Admin
+      </span>
+    );
+  }
+
+  if (role === 'teacher') {
+    return (
+      <span className="inline-flex items-center gap-1 rounded-md border border-blue-300 bg-blue-50 px-2 py-0.5 text-[10px] font-semibold text-blue-700 dark:border-blue-900 dark:bg-blue-950/40 dark:text-blue-300">
+        <GraduationCap aria-hidden="true" size={11} /> อาจารย์
       </span>
     );
   }
