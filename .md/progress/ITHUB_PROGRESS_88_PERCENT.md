@@ -1,8 +1,8 @@
 # ITHub — รายงานความคืบหน้า 88%
 
 > วันที่: 2 กันยายน 2026 (Asia/Bangkok)
-> สาขา: `codex/teacher-role-delete-ux`
-> Production: ยังไม่ deploy ตามขอบเขตของ milestone
+> สาขาต้นทาง: `codex/teacher-role-delete-ux`
+> Production: เผยแพร่แล้วจาก `main@99c2085`
 
 ## สรุป
 
@@ -63,8 +63,8 @@ Playwright acceptance รอบสุดท้ายผ่าน 111/111 แบ�
 
 - Git branch: `codex/teacher-role-delete-ux`
 - GitHub remote: push สำเร็จถึง `origin/codex/teacher-role-delete-ux`
-- Pull Request: <https://github.com/icez789/ITHub/pull/2> — Ready to merge และ checks ผ่าน 2/2
-- Vercel target: Preview เท่านั้น; Production ไม่ถูก deploy หรือ promote
+- Pull Request: <https://github.com/icez789/ITHub/pull/2> — checks ผ่าน 2/2 และ merge เข้า `main` แล้ว
+- Vercel target ในขั้นนี้: Preview แยกจาก Production
 - Preview alias: <https://ithub-git-codex-teacher-role-delete-ux-thiraphat-s-projects.vercel.app>
 - Environment safety: เพิ่ม branch-specific overrides 10 รายการ โดย DB/session/Pusher server values เป็น Secret และ `NEXT_PUBLIC_PUSHER_*` เป็น Config ตามข้อกำหนดของ Vercel
 - Database guard: อ่านค่า local ผ่าน `.env.e2e.local` โดยไม่พิมพ์ secret และหยุดทันทีหาก `DB_NAME` ไม่ลงท้าย `_e2e`
@@ -73,6 +73,21 @@ Playwright acceptance รอบสุดท้ายผ่าน 111/111 แบ�
 - E2E identity check: ค้นหา `content-only-needle` บน Preview แล้วพบ fixture เฉพาะฐานทดสอบ `ITHub E2E Baseline Topic` จึงยืนยันว่า branch alias ใช้ฐาน `_e2e`; การตรวจนี้ไม่แก้ข้อมูล
 - Authenticated/destructive acceptance ใช้ผล Playwright 111/111 และ error-recovery 3/3 บนฐานเดียวกัน โดย final Preview smoke จำกัดเป็น read-only เพื่อไม่ทิ้ง fixture เพิ่มเติม
 
+## Production rollout
+
+- Rollout time: 2 กันยายน 2026 (Asia/Bangkok)
+- ก่อน deploy พบ legacy role `Admin` 1 แถว จึง normalize เป็น `admin` ตาม allowlist โดยไม่เปลี่ยน XP, post count หรือข้อมูลอื่น
+- Production `db:preflight` และ `db:check` ผ่าน: 11/11 tables, migration 002 complete, duplicate username/invalid role/orphan ทุกชนิดเป็น 0
+- `db:reconcile` เป็น dry-run และพบ legacy/manual counter drift 5 บัญชี; ไม่ใช้ `--apply` เพื่อป้องกันคะแนนหรือจำนวนโพสต์เดิมสูญหาย
+- PR #2 merge เข้า `main` ด้วย merge commit `99c2085`
+- Vercel deployment: `dpl_EdAojfH8cAtxfqCVUee9Z5RFR5ur` — Production Ready
+- Production URL: <https://ithub-puce.vercel.app>
+- Rollback point ก่อนหน้า: `dpl_2Trai4TWuVvW5VJ62SaT2Ke2YmNi`
+- Post-deploy smoke: `/`, `/help`, `/login`, `/register`, `/privacy`, `/terms` ตอบ HTTP 200 ครบ
+- Pusher auth แบบไม่มี session ตอบ HTTP 401; GET ที่ method ไม่ถูกต้องตอบ 405
+- ค้นหา fixture `content-only-needle` แล้วไม่พบ `ITHub E2E Baseline Topic` จึงยืนยันว่า Production ไม่ได้ชี้ฐาน `_e2e`
+- Runtime error scan หลัง smoke: ไม่พบ error log
+
 ## งานค้างหลัง 88%
 
 - session-version revocation หลังเปลี่ยนรหัสผ่าน
@@ -80,4 +95,3 @@ Playwright acceptance รอบสุดท้ายผ่าน 111/111 แบ�
 - GitHub Actions พร้อม test pyramid/unit tests
 - CSP/HSTS และ dependency warning cleanup
 - admin/report E2E เพิ่มเติมสำหรับ error injection และ transaction rollback
-- Production rollout ต้องได้รับคำสั่งเผยแพร่โดยตรงก่อนเสมอ

@@ -1,8 +1,8 @@
 # ITHub Teacher Role และ Delete UX Release
 
 > วันที่ตรวจรับ: 2 กันยายน 2026
-> สาขา: `codex/teacher-role-delete-ux`
-> Production: ยังไม่เผยแพร่
+> สาขาต้นทาง: `codex/teacher-role-delete-ux`
+> Production: เผยแพร่แล้วจาก `main@99c2085`
 
 ## ขอบเขต UI/UX
 
@@ -53,8 +53,16 @@ Playwright production-mode รอบสุดท้ายของ full suite �
 ## Preview handoff
 
 - Push สาขา `codex/teacher-role-delete-ux` แล้ว
-- Pull Request #2: <https://github.com/icez789/ITHub/pull/2> — Ready to merge, checks 2/2 ผ่าน
+- Pull Request #2: <https://github.com/icez789/ITHub/pull/2> — checks 2/2 ผ่านและ merge แล้ว
 - Vercel Preview ใช้ alias <https://ithub-git-codex-teacher-role-delete-ux-thiraphat-s-projects.vercel.app>
 - ตั้งค่า DB/session/Pusher เฉพาะสาขา Preview รวม 10 รายการ โดยผ่าน guard ว่าฐานลงท้าย `_e2e`
 - ตรวจ public routes แบบ read-only ได้ HTTP 200 ครบ, พบ fixture `ITHub E2E Baseline Topic` จากฐาน `_e2e` และไม่พบ runtime error log
-- Production ไม่ถูก deploy หรือ promote ในรอบนี้
+
+## Production handoff
+
+- Normalize legacy role `Admin` 1 แถวเป็น `admin` โดยไม่แก้ XP/post count
+- Production preflight/check ผ่าน และคง legacy/manual counter drift 5 บัญชีไว้โดยไม่ apply
+- Merge commit: `99c2085`
+- Deployment: `dpl_EdAojfH8cAtxfqCVUee9Z5RFR5ur` — Ready ที่ <https://ithub-puce.vercel.app>
+- Rollback deployment: `dpl_2Trai4TWuVvW5VJ62SaT2Ke2YmNi`
+- Public smoke HTTP 200 ครบ, unauthenticated Pusher POST ตอบ 401, ไม่พบ E2E fixture และไม่พบ runtime error
