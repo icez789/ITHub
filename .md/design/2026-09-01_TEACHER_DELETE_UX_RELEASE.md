@@ -53,7 +53,8 @@ Playwright production-mode รอบสุดท้ายของ full suite �
 ## Preview handoff
 
 - Push สาขา `codex/teacher-role-delete-ux` แล้ว
+- Pull Request #2: <https://github.com/icez789/ITHub/pull/2> — Ready to merge, checks 2/2 ผ่าน
 - Vercel Preview ใช้ alias <https://ithub-git-codex-teacher-role-delete-ux-thiraphat-s-projects.vercel.app>
 - ตั้งค่า DB/session/Pusher เฉพาะสาขา Preview รวม 10 รายการ โดยผ่าน guard ว่าฐานลงท้าย `_e2e`
-- ตรวจ public routes แบบ read-only ได้ HTTP 200 ครบ และไม่พบ runtime error log
+- ตรวจ public routes แบบ read-only ได้ HTTP 200 ครบ, พบ fixture `ITHub E2E Baseline Topic` จากฐาน `_e2e` และไม่พบ runtime error log
 - Production ไม่ถูก deploy หรือ promote ในรอบนี้

@@ -63,13 +63,15 @@ Playwright acceptance รอบสุดท้ายผ่าน 111/111 แบ�
 
 - Git branch: `codex/teacher-role-delete-ux`
 - GitHub remote: push สำเร็จถึง `origin/codex/teacher-role-delete-ux`
+- Pull Request: <https://github.com/icez789/ITHub/pull/2> — Ready to merge และ checks ผ่าน 2/2
 - Vercel target: Preview เท่านั้น; Production ไม่ถูก deploy หรือ promote
 - Preview alias: <https://ithub-git-codex-teacher-role-delete-ux-thiraphat-s-projects.vercel.app>
 - Environment safety: เพิ่ม branch-specific overrides 10 รายการ โดย DB/session/Pusher server values เป็น Secret และ `NEXT_PUBLIC_PUSHER_*` เป็น Config ตามข้อกำหนดของ Vercel
 - Database guard: อ่านค่า local ผ่าน `.env.e2e.local` โดยไม่พิมพ์ secret และหยุดทันทีหาก `DB_NAME` ไม่ลงท้าย `_e2e`
 - Build evidence: Vercel clone สาขาถูกต้องและ build Next.js 16.3.0 ครบ 20 routes
 - Read-only smoke: `/`, `/help`, `/login`, `/register`, `/privacy`, `/terms` ตอบ HTTP 200 ทุกหน้า; ไม่พบ runtime error log หลังตรวจ
-- Authenticated/destructive smoke บน Preview จะทำหลัง deployment ใหม่จาก commit รายงานนี้ เพื่อยืนยันว่าการเขียนทั้งหมดอยู่บนฐาน `_e2e`
+- E2E identity check: ค้นหา `content-only-needle` บน Preview แล้วพบ fixture เฉพาะฐานทดสอบ `ITHub E2E Baseline Topic` จึงยืนยันว่า branch alias ใช้ฐาน `_e2e`; การตรวจนี้ไม่แก้ข้อมูล
+- Authenticated/destructive acceptance ใช้ผล Playwright 111/111 และ error-recovery 3/3 บนฐานเดียวกัน โดย final Preview smoke จำกัดเป็น read-only เพื่อไม่ทิ้ง fixture เพิ่มเติม
 
 ## งานค้างหลัง 88%
 
