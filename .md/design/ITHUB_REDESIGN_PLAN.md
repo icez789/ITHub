@@ -2,7 +2,7 @@
 
 | รายการ | ค่า |
 | --- | --- |
-| สถานะ | Implemented — core verification complete; baseline archive pending |
+| สถานะ | Implemented — Spotlight Tour v2 and loading shell verified; baseline archive pending |
 | ทิศทาง | Clean Technical Community |
 | วันที่จัดทำ | 2026-08-26 |
 | Source of truth | `.md/design/` |
@@ -198,6 +198,7 @@
 
 - ยกเลิก modal onboarding สี่ขั้นแบบเดิม
 - **Addendum 2026-08-31:** แผน milestone 85% ที่ผู้ใช้อนุมัติให้แทน welcome prompt ด้วย Spotlight Tour v2 แบบ 6 ขั้น ซึ่งหรี่และเบลอฉากหลังแต่คง target จริงให้คม โดยล็อก interaction และไม่แก้ข้อมูลจริง
+- **Addendum 2026-09-01:** ปรับการเปลี่ยนขั้นให้คง spotlight/tooltip เดิมระหว่างหา target ใหม่, commit เนื้อหาและ geometry พร้อมกัน, ไม่ใช้ตำแหน่งกลางจอระหว่างวัดหรือ fallback, ลด backdrop เป็น blur 4px/หรี่ 42%, ใช้ fade-through 120ms และ motion 300ms แบบไม่ overshoot พร้อมหยุด motion เมื่อ `prefers-reduced-motion`
 - เก็บคู่มือฉบับเต็มและตัวเรียก onboarding ไว้ในหน้า Help
 - ใช้หน้า Help เป็น reference ของ section hierarchy, content width และ CTA grouping แต่ปรับ token ให้ตรงกับ foundation ใหม่
 
@@ -328,6 +329,23 @@ YYYY-MM-DD — Phase N — ผู้ดำเนินการ
 - Tests:
 - ค้างอยู่:
 ```
+
+### 2026-09-01 — Spotlight Tour continuity — Codex
+
+- เปลี่ยนแปลง: แยกขั้นที่แสดงออกจากขั้นที่กำลังค้นหาและเพิ่ม phase contract `locating/transitioning/settled/fallback`; คง spotlight กับ tooltip เดิมไว้จน target ใหม่พร้อม; เปลี่ยนตำแหน่งด้วย motion เดียวกันโดยไม่ remount; ย้ายสถานะโหลดไปไว้ในปุ่ม; ทำ missing-target fallback ให้อยู่ตำแหน่งล่าสุดและซ่อน spotlight โดยไม่แวบกลางจอ
+- การตัดสินใจ/เหตุผล: สาเหตุของ centered flash คือการตั้ง target rectangle เป็น `null` ทุกครั้งก่อนค้นหา element ใหม่ ซึ่งสั่งให้ tooltip ใช้ centered placement และเปลี่ยน overlay เป็น full-screen ชั่วคราว; แก้ด้วย pending-step transaction และใช้ edge placement เฉพาะกรณีเปิดครั้งแรกแล้วไม่มี target
+- Visual/motion: ลด backdrop จาก blur 10px/หรี่ 58%/brightness 72% เป็น blur 4px/หรี่ 42%/brightness 88%; fallback ไม่มี filter ใช้พื้นดำ 64%; ใช้ easing `[0.22, 1, 0.36, 1]` ระยะ 300ms, content fade-through 120ms และยกเลิก pointer icon แบบเด้งวน
+- Viewport/theme ที่ตรวจ: Spotlight ครบ 6 ขั้นที่ 390×844 Light, 768×900 Dark, 1024×900 Light/Reduced Motion และ 1440×1000 Dark รวมทั้ง mobile 375×812 Dark/Reduced Motion
+- Tests: lint และ production build ผ่าน; Playwright onboarding ผ่าน 27/27 ครอบคลุม forward/backward, delayed target, missing target, backdrop fallback, breakpoint matrix, focus/URL/history restoration และ member target บน Chromium, Firefox และ WebKit
+- ค้างอยู่: visual screenshot baseline ยังใช้หลักฐานเดิมและ runtime assertions; รอบนี้ไม่เปลี่ยนเนื้อหา 6 ขั้น, route, API, database schema หรือ local-storage key
+
+### 2026-09-01 — Loading shell stability — Codex
+
+- เปลี่ยนแปลง: เปลี่ยน `app/loading.js` จาก skeleton ที่สร้าง Navbar/Sidebar และ scroll container ซ้ำ เป็น content-only fallback ภายใน `main-content`; ใช้ `ithub-page-container`, semantic surface tokens, `aria-busy`/live status และปิด pulse เมื่อ Reduced Motion; เพิ่ม Playwright test ที่หน่วง RSC navigation จาก Sidebar เพื่อจับ loading state จริง
+- การตัดสินใจ/เหตุผล: `app/loading.js` ถูก render ภายใน root layout และ Next.js คง shared layout ไว้ระหว่าง navigation ดังนั้น fallback ระดับ root ต้องไม่วาด App Shell ซ้ำหรือกำหนด `fixed`, `h-screen` และ `overflow-y-auto` ภายในอีกชั้น
+- Viewport/theme ที่ตรวจ: loading transition ที่ 1440×1000 Dark/Reduced Motion; responsive regression ครอบคลุม 390×844, 768×900, 1024×900 และ 1440×1000 รวม Light/Dark
+- Tests: `npm.cmd run lint` ผ่าน; `npm.cmd run build` ผ่าน; loading regression ผ่าน 3/3 และ responsive regression ผ่าน 15/15 บน Chromium, Firefox และ WebKit ผ่านฐาน `_e2e`
+- ค้างอยู่: ไม่ได้รัน full E2E suite ทั้งหมดในรอบนี้ เนื่องจากการเปลี่ยนแปลงจำกัดที่ loading UI; ชุด scope-specific และ production build ผ่านครบ
 
 ### 2026-08-31 — Milestone 85 Spotlight addendum — Codex
 

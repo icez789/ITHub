@@ -33,11 +33,12 @@ async function expectBackdrop(page, tour) {
     const style = getComputedStyle(element);
     const filter = style.backdropFilter || style.webkitBackdropFilter || '';
     if (element.dataset.tourShadeMode === 'fallback') {
-      return style.backgroundColor.includes('0.82') && (!filter || filter === 'none');
+      return style.backgroundColor.includes('0.64') && (!filter || filter === 'none');
     }
     return style.backgroundColor !== 'rgba(0, 0, 0, 0)'
-      && filter.includes('blur(10px)')
-      && filter.includes('brightness(0.72)');
+      && style.backgroundColor.includes('0.42')
+      && filter.includes('blur(4px)')
+      && filter.includes('brightness(0.88)');
   }))).toBe(true);
 
   await expect.poll(() => page.evaluate(() => {
@@ -145,14 +146,31 @@ test.describe('ITHub onboarding', () => {
       ['personal', 'โปรไฟล์และการแจ้งเตือน'],
       ['ai-safety', 'ใช้ ITHub Bot อย่างเหมาะสม'],
     ];
+    let tour;
     for (const [index, [id, heading]] of sequence.entries()) {
-      const tour = await expectTourStep(page, id, heading);
+      tour = await expectTourStep(page, id, heading);
       await expectBackdrop(page, tour);
       await expectTourFitsViewport(page);
-      await tour.dialog.getByRole('button', { name: index === sequence.length - 1 ? 'เริ่มใช้งาน' : 'ถัดไป' }).click();
+      if (index < sequence.length - 1) await tour.dialog.getByRole('button', { name: 'ถัดไป' }).click();
     }
 
-    const tour = onboarding(page);
+    const dialogHandle = await tour.dialog.elementHandle();
+    const spotlightHandle = await tour.spotlight.elementHandle();
+    for (let index = sequence.length - 2; index >= 0; index -= 1) {
+      await tour.dialog.getByRole('button', { name: 'ย้อนกลับ' }).click();
+      await expectTourStep(page, sequence[index][0], sequence[index][1]);
+      await expectTourFitsViewport(page);
+    }
+    for (let index = 1; index < sequence.length; index += 1) {
+      await tour.dialog.getByRole('button', { name: 'ถัดไป' }).click();
+      await expectTourStep(page, sequence[index][0], sequence[index][1]);
+      await expectTourFitsViewport(page);
+    }
+    expect(await dialogHandle.evaluate((element) => element.isConnected)).toBe(true);
+    expect(await spotlightHandle.evaluate((element) => element.isConnected)).toBe(true);
+    await tour.dialog.getByRole('button', { name: 'เริ่มใช้งาน' }).click();
+
+    tour = onboarding(page);
     await expect(tour.dialog).not.toBeVisible();
     await expect(page).toHaveURL('/help?tour=playwright#getting-started');
     await expect.poll(() => page.evaluate((key) => localStorage.getItem(key), onboardingStorageKey)).toBe('completed');
@@ -194,6 +212,42 @@ test.describe('ITHub onboarding', () => {
     await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth)).toBe(375);
   });
 
+  test('keeps all steps in view across the design breakpoint matrix', async ({ browser }) => {
+    const matrix = [
+      { width: 390, height: 844, theme: 'light', reducedMotion: 'no-preference' },
+      { width: 768, height: 900, theme: 'dark', reducedMotion: 'no-preference' },
+      { width: 1024, height: 900, theme: 'light', reducedMotion: 'reduce' },
+      { width: 1440, height: 1000, theme: 'dark', reducedMotion: 'no-preference' },
+    ];
+    const headings = [
+      ['search', 'ค้นหากระทู้ที่ตรงกับคุณ'], ['explore', 'เลือกดูกระทู้ที่น่าสนใจ'],
+      ['create', 'เข้าสู่ระบบแล้วสร้างกระทู้'], ['engage', 'ถูกใจและบันทึกเก็บไว้'],
+      ['personal', 'โปรไฟล์และการแจ้งเตือน'], ['ai-safety', 'ใช้ ITHub Bot อย่างเหมาะสม'],
+    ];
+
+    for (const entry of matrix) {
+      const context = await browser.newContext({
+        viewport: { width: entry.width, height: entry.height },
+        colorScheme: entry.theme,
+        reducedMotion: entry.reducedMotion,
+      });
+      const matrixPage = await context.newPage();
+      await matrixPage.addInitScript(({ key, theme }) => {
+        window.localStorage.removeItem(key);
+        window.localStorage.setItem('theme', theme);
+      }, { key: onboardingStorageKey, theme: entry.theme });
+      await matrixPage.goto('/');
+      for (const [index, [id, heading]] of headings.entries()) {
+        const tour = await expectTourStep(matrixPage, id, heading);
+        await expectTourFitsViewport(matrixPage);
+        await expect.poll(() => matrixPage.evaluate(() => document.documentElement.scrollWidth)).toBe(entry.width);
+        if (index < headings.length - 1) await tour.dialog.getByRole('button', { name: 'ถัดไป' }).click();
+      }
+      await expect(matrixPage.locator('html')).toHaveClass(entry.theme === 'dark' ? /dark/ : /^(?!.*dark)/);
+      await context.close();
+    }
+  });
+
   test('falls back gracefully when a target is unavailable', async ({ page }) => {
     await page.goto('/');
     const tour = await expectTourStep(page, 'search', 'ค้นหากระทู้ที่ตรงกับคุณ');
@@ -203,6 +257,39 @@ test.describe('ITHub onboarding', () => {
     await expect(tour.root).toHaveAttribute('data-tour-fallback', 'true', { timeout: 5_000 });
     await expect(tour.dialog.getByText(/ยังไม่พบส่วนนี้/)).toBeVisible();
     await expect(tour.fallbackShade).toBeVisible();
+    await expect(tour.spotlight).toHaveCSS('opacity', '0');
+    await expect(tour.root).not.toHaveAttribute('data-tour-placement', /center/);
+  });
+
+  test('keeps the previous geometry while the next target is still locating', async ({ page }) => {
+    await page.goto('/');
+    const tour = await expectTourStep(page, 'search', 'ค้นหากระทู้ที่ตรงกับคุณ');
+    const initialDialogBox = await tour.dialog.boundingBox();
+    const initialSpotlightBox = await tour.spotlight.boundingBox();
+    expect(initialDialogBox).not.toBeNull();
+    expect(initialSpotlightBox).not.toBeNull();
+
+    const hiddenTargets = await page.addStyleTag({ content: '[data-tour="topic-card"], [data-tour="topic-list"] { display: none !important; }' });
+    await hiddenTargets.evaluate((element) => { element.id = 'delayed-tour-targets'; });
+    await page.evaluate(() => window.setTimeout(() => document.getElementById('delayed-tour-targets')?.remove(), 600));
+    await tour.dialog.getByRole('button', { name: 'ถัดไป' }).click();
+
+    await expect(tour.root).toHaveAttribute('data-tour-phase', 'locating');
+    await expect(tour.root).toHaveAttribute('data-tour-step', 'search');
+    await expect(tour.root).toHaveAttribute('data-tour-pending-step', 'explore');
+    await page.waitForTimeout(150);
+    const locatingDialogBox = await tour.dialog.boundingBox();
+    const locatingSpotlightBox = await tour.spotlight.boundingBox();
+    expect(Math.abs(locatingDialogBox.x - initialDialogBox.x)).toBeLessThanOrEqual(2);
+    expect(Math.abs(locatingDialogBox.y - initialDialogBox.y)).toBeLessThanOrEqual(2);
+    expect(Math.abs(locatingSpotlightBox.x - initialSpotlightBox.x)).toBeLessThanOrEqual(2);
+    expect(Math.abs(locatingSpotlightBox.y - initialSpotlightBox.y)).toBeLessThanOrEqual(2);
+    await expect(tour.fallbackShade).toHaveCount(0);
+    await expect(tour.root).not.toHaveAttribute('data-tour-placement', /center/);
+
+    await expectTourStep(page, 'explore', 'เลือกดูกระทู้ที่น่าสนใจ');
+    await expect(tour.root).toHaveAttribute('data-tour-phase', 'settled');
+    await expectTourFitsViewport(page);
   });
 
   test('uses an opaque fallback when backdrop filters are unavailable', async ({ page }) => {
@@ -218,7 +305,7 @@ test.describe('ITHub onboarding', () => {
     await expect(tour.shades.first()).toHaveAttribute('data-tour-shade-mode', 'fallback');
     await expect.poll(() => tour.shades.first().evaluate((element) => {
       const style = getComputedStyle(element);
-      return style.backgroundColor.includes('0.82') && (!(style.backdropFilter || style.webkitBackdropFilter) || (style.backdropFilter || style.webkitBackdropFilter) === 'none');
+      return style.backgroundColor.includes('0.64') && (!(style.backdropFilter || style.webkitBackdropFilter) || (style.backdropFilter || style.webkitBackdropFilter) === 'none');
     })).toBe(true);
   });
 
@@ -540,6 +627,64 @@ test.describe('ITHub responsive layout regression', () => {
       expect(screenshot.byteLength).toBeGreaterThan(10_000);
       await testInfo.attach(`home-${viewport.width}-dark-reduced-motion`, { body: screenshot, contentType: 'image/png' });
     }
+  });
+
+  test('keeps the shared shell stable while a sidebar route is loading', async ({ page }, testInfo) => {
+    await page.addInitScript(() => window.localStorage.setItem('theme', 'dark'));
+    await page.emulateMedia({ colorScheme: 'dark', reducedMotion: 'reduce' });
+    await page.setViewportSize({ width: 1440, height: 1000 });
+
+    const leaderboardPrefetch = page.waitForResponse((response) => {
+      const url = new URL(response.url());
+      const headers = response.request().headers();
+      return url.pathname === '/leaderboard'
+        && url.searchParams.has('_rsc')
+        && (headers['next-router-prefetch'] === '1' || headers.purpose === 'prefetch');
+    });
+
+    await page.route('**/*', async (route) => {
+      const request = route.request();
+      const url = new URL(request.url());
+      const headers = request.headers();
+      const isPrefetch = headers['next-router-prefetch'] === '1' || headers.purpose === 'prefetch';
+
+      if (url.pathname === '/leaderboard' && url.searchParams.has('_rsc') && !isPrefetch) {
+        await new Promise((resolve) => setTimeout(resolve, 900));
+      }
+      await route.continue();
+    });
+
+    await page.goto('/help');
+    await expect(page.locator('html')).toHaveClass(/dark/);
+    await leaderboardPrefetch;
+
+    const sidebar = page.getByTestId('desktop-sidebar');
+    const main = page.locator('#main-content');
+    await sidebar.getByRole('link', { name: 'อันดับสมาชิก' }).click({ noWaitAfter: true });
+
+    const skeleton = page.getByTestId('route-loading-skeleton');
+    await expect(skeleton).toBeVisible();
+    await expect(page.getByTestId('desktop-sidebar')).toHaveCount(1);
+    await expect(skeleton.locator('nav, main, [class*="fixed"], [class*="overflow-y-auto"]')).toHaveCount(0);
+
+    const [sidebarBox, mainBox, skeletonBox] = await Promise.all([
+      sidebar.boundingBox(),
+      main.boundingBox(),
+      skeleton.boundingBox(),
+    ]);
+    expect(sidebarBox).not.toBeNull();
+    expect(mainBox).not.toBeNull();
+    expect(skeletonBox).not.toBeNull();
+    expect(sidebarBox.x + sidebarBox.width).toBeLessThanOrEqual(mainBox.x);
+    expect(skeletonBox.x).toBeGreaterThanOrEqual(mainBox.x);
+    expect(skeletonBox.x + skeletonBox.width).toBeLessThanOrEqual(mainBox.x + mainBox.width);
+    await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth)).toBe(1440);
+
+    const screenshot = await page.screenshot({ animations: 'disabled' });
+    await testInfo.attach('sidebar-route-loading-dark-shell', { body: screenshot, contentType: 'image/png' });
+
+    await expect(page).toHaveURL(/\/leaderboard$/);
+    await expect(page.getByRole('heading', { level: 1, name: 'อันดับสมาชิก' })).toBeVisible();
   });
 
   test('toggles the desktop sidebar by keyboard without covering content', async ({ page }) => {

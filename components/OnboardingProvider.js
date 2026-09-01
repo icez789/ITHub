@@ -11,13 +11,14 @@ export const ONBOARDING_STORAGE_KEY = 'ithub_onboarding_v2';
 const TARGET_TIMEOUT_MS = 3500;
 const SPOTLIGHT_MARGIN = 8;
 const SPOTLIGHT_PADDING = 10;
-const TOUR_SHADE_BACKDROP = 'blur(10px) saturate(0.6) brightness(0.72)';
+const TOUR_SHADE_BACKDROP = 'blur(4px) saturate(0.82) brightness(0.88)';
 const TOUR_SHADE_STYLE = {
-  backgroundColor: 'rgba(3, 7, 18, 0.58)',
+  backgroundColor: 'rgba(3, 7, 18, 0.42)',
   backdropFilter: TOUR_SHADE_BACKDROP,
   WebkitBackdropFilter: TOUR_SHADE_BACKDROP,
 };
-const TOUR_SHADE_FALLBACK_STYLE = { backgroundColor: 'rgba(3, 7, 18, 0.82)' };
+const TOUR_SHADE_FALLBACK_STYLE = { backgroundColor: 'rgba(3, 7, 18, 0.64)' };
+const TOUR_EASING = [0.22, 1, 0.36, 1];
 const SPOTLIGHT_GUARD_STYLE = {
   backgroundColor: 'transparent',
   boxShadow: [
@@ -143,6 +144,27 @@ async function waitForRoute(route, previousPage, signal) {
   }
 }
 
+async function waitForTargetToSettle(element, signal, reducedMotion) {
+  if (reducedMotion) {
+    await new Promise((resolve) => window.requestAnimationFrame(resolve));
+    return;
+  }
+  const startedAt = window.performance.now();
+  let previousRect = element.getBoundingClientRect();
+  let stableFrames = 0;
+  while (!signal.aborted && window.performance.now() - startedAt < 650) {
+    await new Promise((resolve) => window.requestAnimationFrame(resolve));
+    const rect = element.getBoundingClientRect();
+    const stable = Math.abs(rect.left - previousRect.left) <= 1
+      && Math.abs(rect.top - previousRect.top) <= 1
+      && Math.abs(rect.width - previousRect.width) <= 1
+      && Math.abs(rect.height - previousRect.height) <= 1;
+    stableFrames = stable ? stableFrames + 1 : 0;
+    previousRect = rect;
+    if (stableFrames >= 2 && window.performance.now() - startedAt >= 80) return;
+  }
+}
+
 function findTopicUrl() {
   const href = document.querySelector('[data-tour="topic-link"]')?.getAttribute('href') || '';
   return /^\/topic\/\d+$/.test(href) ? href : '';
@@ -172,7 +194,11 @@ function getTooltipPosition(target, tooltip) {
   const height = Math.min(tooltip.height, viewportHeight - margin * 2);
   const clampX = (value) => Math.min(Math.max(margin, value), viewportWidth - width - margin);
   const clampY = (value) => Math.min(Math.max(margin, value), viewportHeight - height - margin);
-  if (!target) return { left: clampX((viewportWidth - width) / 2), top: clampY((viewportHeight - height) / 2), width };
+  if (!target) {
+    return viewportWidth < 640
+      ? { left: margin, top: viewportHeight - height - margin, width, placement: 'edge-bottom' }
+      : { left: viewportWidth - width - margin, top: margin, width, placement: 'edge-top-right' };
+  }
   if (viewportWidth < 640) {
     const spaceAbove = target.top - gap - margin;
     const spaceBelow = viewportHeight - target.bottom - gap - margin;
@@ -181,16 +207,16 @@ function getTooltipPosition(target, tooltip) {
       left: margin,
       top: placeAbove ? Math.max(margin, target.top - height - gap) : Math.min(viewportHeight - height - margin, target.bottom + gap),
       width,
+      placement: placeAbove ? 'above' : 'below',
     };
   }
-  if (viewportHeight - target.bottom >= height + gap) return { left: clampX(target.left + target.width / 2 - width / 2), top: target.bottom + gap, width };
-  if (target.top >= height + gap) return { left: clampX(target.left + target.width / 2 - width / 2), top: target.top - height - gap, width };
-  if (viewportWidth - target.right >= width + gap) return { left: target.right + gap, top: clampY(target.top + target.height / 2 - height / 2), width };
-  return { left: Math.max(margin, target.left - width - gap), top: clampY(target.top + target.height / 2 - height / 2), width };
+  if (viewportHeight - target.bottom >= height + gap) return { left: clampX(target.left + target.width / 2 - width / 2), top: target.bottom + gap, width, placement: 'below' };
+  if (target.top >= height + gap) return { left: clampX(target.left + target.width / 2 - width / 2), top: target.top - height - gap, width, placement: 'above' };
+  if (viewportWidth - target.right >= width + gap) return { left: target.right + gap, top: clampY(target.top + target.height / 2 - height / 2), width, placement: 'right' };
+  return { left: Math.max(margin, target.left - width - gap), top: clampY(target.top + target.height / 2 - height / 2), width, placement: 'left' };
 }
 
-function OverlayPanels({ rect }) {
-  const transition = { duration: 0.28, ease: 'easeOut' };
+function OverlayPanels({ rect, transition }) {
   const hasBackdropFilter = supportsTourBackdropFilter();
   const shadeStyle = hasBackdropFilter ? TOUR_SHADE_STYLE : TOUR_SHADE_FALLBACK_STYLE;
   const shadeMode = hasBackdropFilter ? 'blur' : 'fallback';
@@ -226,9 +252,13 @@ export default function OnboardingProvider({ children }) {
   const isMounted = useSyncExternalStore(subscribeToHydration, getClientHydrationSnapshot, getServerHydrationSnapshot);
   const [isOpen, setIsOpen] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
+  const [pendingStep, setPendingStep] = useState(null);
   const [targetRect, setTargetRect] = useState(null);
-  const [isLocating, setIsLocating] = useState(false);
-  const [isFallback, setIsFallback] = useState(false);
+  const [tourPhase, setTourPhase] = useState('locating');
+  const [fallbackMode, setFallbackMode] = useState(null);
+  const [hasPresentedTour, setHasPresentedTour] = useState(false);
+  const [targetVersion, setTargetVersion] = useState(0);
+  const [navigationDirection, setNavigationDirection] = useState('forward');
   const [tooltipSize, setTooltipSize] = useState({ width: 0, height: 0 });
 
   const openTour = useCallback((triggerElement = null) => {
@@ -240,8 +270,12 @@ export default function OnboardingProvider({ children }) {
     wasMemberRef.current = Boolean(document.querySelector('[data-tour-session="member"]'));
     closingRef.current = false;
     setCurrentStep(0);
+    setPendingStep(0);
     setTargetRect(null);
-    setIsFallback(false);
+    setTourPhase('locating');
+    setFallbackMode(null);
+    setHasPresentedTour(false);
+    setNavigationDirection('forward');
     setIsOpen(true);
   }, []);
 
@@ -275,6 +309,7 @@ export default function OnboardingProvider({ children }) {
     closingRef.current = true;
     saveStatus(status);
     setIsOpen(false);
+    setPendingStep(null);
     setTargetRect(null);
     targetElementRef.current = null;
     window.setTimeout(() => restoreStartingContext(), 0);
@@ -309,18 +344,12 @@ export default function OnboardingProvider({ children }) {
   }, [isOpen]);
 
   useEffect(() => {
-    if (!isOpen) return undefined;
+    if (!isOpen || pendingStep === null) return undefined;
     const controller = new AbortController();
-    let resizeObserver;
-    let measureFrame;
-    let removeMeasureListeners = () => {};
     const locateStep = async () => {
-      setIsLocating(true);
-      setIsFallback(false);
-      setTargetRect(null);
-      targetElementRef.current = null;
+      setTourPhase('locating');
       let desiredRoute = '/';
-      if (currentStep >= 3) {
+      if (pendingStep >= 3) {
         if (!topicUrlRef.current) topicUrlRef.current = findTopicUrl();
         desiredRoute = topicUrlRef.current || '/';
       }
@@ -330,59 +359,77 @@ export default function OnboardingProvider({ children }) {
         await waitForRoute(desiredRoute, previousPage, controller.signal);
       }
       if (controller.signal.aborted) return;
-      const step = steps[currentStep];
-      const selectors = step.id === 'create' && wasMemberRef.current
+      const nextStep = steps[pendingStep];
+      const selectors = nextStep.id === 'create' && wasMemberRef.current
         ? ['[data-tour-session="member"]']
-        : step.selectors;
-      if (step.id === 'create' && wasMemberRef.current) {
+        : nextStep.selectors;
+      if (nextStep.id === 'create' && wasMemberRef.current) {
         router.refresh();
         await new Promise((resolve) => window.requestAnimationFrame(() => window.requestAnimationFrame(resolve)));
       }
       let target = await waitForVisibleTarget(selectors, controller.signal);
-      let fallback = false;
-      if (!target && currentStep === 3 && topicUrlRef.current && !controller.signal.aborted) {
+      let nextFallbackMode = null;
+      if (!target && pendingStep === 3 && topicUrlRef.current && !controller.signal.aborted) {
         topicUrlRef.current = '';
         router.replace('/', { scroll: false });
-        target = await waitForVisibleTarget(step.fallbackSelectors || [], controller.signal);
-        fallback = true;
+        target = await waitForVisibleTarget(nextStep.fallbackSelectors || [], controller.signal);
+        nextFallbackMode = target ? 'alternate' : 'missing';
       }
       if (controller.signal.aborted) return;
       if (!target) {
-        setIsFallback(true);
-        setIsLocating(false);
+        targetElementRef.current = null;
+        setTargetVersion((value) => value + 1);
+        setCurrentStep(pendingStep);
+        setPendingStep(null);
+        setFallbackMode('missing');
+        setTourPhase('fallback');
+        setHasPresentedTour(true);
         return;
       }
-      targetElementRef.current = target;
       target.scrollIntoView({ behavior: prefersReducedMotion ? 'auto' : 'smooth', block: 'center', inline: 'center' });
-      if (!prefersReducedMotion) await new Promise((resolve) => window.setTimeout(resolve, 320));
-      if (controller.signal.aborted) return;
-      const commitMeasurement = () => {
-        if (target.isConnected && isVisibleTarget(target)) setTargetRect(createSpotlightRect(target));
-      };
-      const measure = () => {
-        window.cancelAnimationFrame(measureFrame);
-        measureFrame = window.requestAnimationFrame(commitMeasurement);
-      };
-      commitMeasurement();
-      resizeObserver = new ResizeObserver(measure);
-      resizeObserver.observe(target);
-      window.addEventListener('resize', measure);
-      document.addEventListener('scroll', measure, { capture: true, passive: true });
-      removeMeasureListeners = () => {
-        window.cancelAnimationFrame(measureFrame);
-        window.removeEventListener('resize', measure);
-        document.removeEventListener('scroll', measure, true);
-      };
-      setIsFallback(fallback);
-      setIsLocating(false);
+      await waitForTargetToSettle(target, controller.signal, prefersReducedMotion);
+      if (controller.signal.aborted || !target.isConnected || !isVisibleTarget(target)) return;
+      targetElementRef.current = target;
+      setTargetRect(createSpotlightRect(target));
+      setTargetVersion((value) => value + 1);
+      setCurrentStep(pendingStep);
+      setPendingStep(null);
+      setFallbackMode(nextFallbackMode);
+      setTourPhase('transitioning');
+      setHasPresentedTour(true);
     };
     locateStep();
-    return () => {
-      controller.abort();
-      resizeObserver?.disconnect();
-      removeMeasureListeners();
+    return () => controller.abort();
+  }, [isOpen, pendingStep, prefersReducedMotion, router]);
+
+  useEffect(() => {
+    if (!isOpen || !targetElementRef.current) return undefined;
+    const target = targetElementRef.current;
+    let measureFrame;
+    const commitMeasurement = () => {
+      if (target.isConnected && isVisibleTarget(target)) setTargetRect(createSpotlightRect(target));
     };
-  }, [currentStep, isOpen, prefersReducedMotion, router]);
+    const measure = () => {
+      window.cancelAnimationFrame(measureFrame);
+      measureFrame = window.requestAnimationFrame(commitMeasurement);
+    };
+    const resizeObserver = new ResizeObserver(measure);
+    resizeObserver.observe(target);
+    window.addEventListener('resize', measure);
+    document.addEventListener('scroll', measure, { capture: true, passive: true });
+    return () => {
+      window.cancelAnimationFrame(measureFrame);
+      resizeObserver.disconnect();
+      window.removeEventListener('resize', measure);
+      document.removeEventListener('scroll', measure, true);
+    };
+  }, [isOpen, targetVersion]);
+
+  useEffect(() => {
+    if (tourPhase !== 'transitioning') return undefined;
+    const timeout = window.setTimeout(() => setTourPhase('settled'), prefersReducedMotion ? 0 : 320);
+    return () => window.clearTimeout(timeout);
+  }, [currentStep, prefersReducedMotion, targetRect, tourPhase]);
 
   useEffect(() => {
     if (!isOpen || !tooltipRef.current) return undefined;
@@ -395,19 +442,28 @@ export default function OnboardingProvider({ children }) {
     const observer = new ResizeObserver(measure);
     observer.observe(tooltip);
     return () => observer.disconnect();
-  }, [currentStep, isFallback, isLocating, isOpen]);
+  }, [currentStep, fallbackMode, isOpen]);
 
   useEffect(() => {
-    if (!isOpen) return undefined;
+    if (!isOpen || !hasPresentedTour) return undefined;
     const frame = window.requestAnimationFrame(() => tooltipRef.current?.focus());
     return () => window.cancelAnimationFrame(frame);
-  }, [currentStep, isOpen]);
+  }, [currentStep, hasPresentedTour, isOpen]);
 
-  const goBack = useCallback(() => setCurrentStep((value) => Math.max(0, value - 1)), []);
+  const isBusy = tourPhase === 'locating' || tourPhase === 'transitioning';
+  const goBack = useCallback(() => {
+    if (isBusy) return;
+    setNavigationDirection('backward');
+    setPendingStep(Math.max(0, currentStep - 1));
+  }, [currentStep, isBusy]);
   const goNext = useCallback(() => {
+    if (isBusy) return;
     if (currentStep === steps.length - 1) finishTour('completed');
-    else setCurrentStep((value) => Math.min(steps.length - 1, value + 1));
-  }, [currentStep, finishTour]);
+    else {
+      setNavigationDirection('forward');
+      setPendingStep(Math.min(steps.length - 1, currentStep + 1));
+    }
+  }, [currentStep, finishTour, isBusy]);
 
   const handleTooltipKeyDown = (event) => {
     if (event.key === 'Escape') {
@@ -448,44 +504,50 @@ export default function OnboardingProvider({ children }) {
   const step = steps[currentStep];
   const StepIcon = step.Icon;
   const tooltipPosition = isMounted ? getTooltipPosition(targetRect, tooltipSize) : null;
-  const tooltipStyle = tooltipPosition ? { left: tooltipPosition.left, top: tooltipPosition.top, width: tooltipPosition.width } : { left: 12, top: 12 };
+  const tooltipStyle = tooltipPosition ? { left: 0, top: 0, width: tooltipPosition.width } : { left: 0, top: 0 };
+  const motionTransition = { duration: prefersReducedMotion ? 0 : 0.3, ease: TOUR_EASING };
+  const overlayRect = fallbackMode === 'missing' ? null : targetRect;
+  const showSpotlight = Boolean(targetRect && fallbackMode !== 'missing');
+  const isFallback = fallbackMode !== null;
   const tour = isMounted ? createPortal(
     <AnimatePresence>
       {isOpen ? (
-        <motion.div key="ithub-spotlight-tour" className="pointer-events-none fixed inset-0 z-[200]" data-tour-root="true" data-tour-step={step.id} data-tour-fallback={isFallback ? 'true' : 'false'} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: prefersReducedMotion ? 0 : 0.2 }}>
-          <OverlayPanels rect={targetRect} />
+        <motion.div key="ithub-spotlight-tour" className="pointer-events-none fixed inset-0 z-[200]" data-tour-root="true" data-tour-step={step.id} data-tour-pending-step={pendingStep === null ? '' : steps[pendingStep].id} data-tour-phase={tourPhase} data-tour-placement={tooltipPosition?.placement || 'measuring'} data-tour-fallback={isFallback ? 'true' : 'false'} initial={{ opacity: 0 }} animate={{ opacity: hasPresentedTour ? 1 : 0 }} exit={{ opacity: 0 }} transition={{ duration: prefersReducedMotion ? 0 : 0.2 }}>
+          <OverlayPanels rect={overlayRect} transition={motionTransition} />
           {targetRect ? (
-            <motion.div className="ithub-tour-spotlight-guard pointer-events-auto fixed z-[2] rounded-2xl border-2 border-red-500" aria-hidden="true" style={SPOTLIGHT_GUARD_STYLE} animate={{ left: targetRect.left, top: targetRect.top, width: targetRect.width, height: targetRect.height }} transition={{ duration: prefersReducedMotion ? 0 : 0.28, ease: 'easeOut' }} onPointerDown={(event) => event.preventDefault()} onClick={(event) => event.preventDefault()}>
-              <motion.span className="absolute -right-3 -top-4 flex h-9 w-9 items-center justify-center rounded-full bg-red-600 text-white shadow-lg" animate={prefersReducedMotion ? undefined : { y: [0, -6, 0], rotate: [-6, 4, -6] }} transition={{ duration: 1.25, repeat: Infinity, ease: 'easeInOut' }}>
+            <motion.div className="ithub-tour-spotlight-guard pointer-events-auto fixed z-[2] rounded-2xl border-2 border-red-500" aria-hidden="true" style={SPOTLIGHT_GUARD_STYLE} initial={false} animate={{ left: targetRect.left, top: targetRect.top, width: targetRect.width, height: targetRect.height, opacity: showSpotlight ? 1 : 0 }} transition={motionTransition} onPointerDown={(event) => event.preventDefault()} onClick={(event) => event.preventDefault()}>
+              <motion.span className="absolute -right-3 -top-4 flex h-9 w-9 items-center justify-center rounded-full bg-red-600 text-white shadow-lg" initial={false} animate={{ opacity: showSpotlight ? 1 : 0, scale: showSpotlight ? 1 : 0.92 }} transition={{ duration: prefersReducedMotion ? 0 : 0.16, ease: TOUR_EASING }}>
                 <MousePointer2 aria-hidden="true" size={18} />
               </motion.span>
             </motion.div>
           ) : null}
-          <motion.section ref={tooltipRef} role="dialog" aria-modal="true" aria-labelledby="ithub-tour-title" aria-describedby="ithub-tour-description" tabIndex={-1} className="pointer-events-auto fixed z-[3] max-h-[calc(100dvh-1.5rem)] w-[calc(100vw-1.5rem)] max-w-sm overflow-y-auto rounded-2xl border border-[var(--app-border)] bg-[var(--app-surface)] text-[var(--app-text)] shadow-2xl outline-none" style={tooltipStyle} onKeyDown={handleTooltipKeyDown} initial={{ opacity: 0, scale: prefersReducedMotion ? 1 : 0.96, y: prefersReducedMotion ? 0 : 12 }} animate={{ opacity: 1, scale: 1, y: 0 }} transition={{ duration: prefersReducedMotion ? 0 : 0.24, ease: 'easeOut' }}>
-            <header className="relative rounded-t-2xl border-b border-zinc-800 bg-zinc-950 px-4 py-4 text-white sm:px-5">
-              <button type="button" aria-label="ปิดคำแนะนำ" onClick={() => finishTour('dismissed')} className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-lg text-zinc-300 transition-colors hover:bg-white/10 hover:text-white"><X aria-hidden="true" size={18} /></button>
-              <div className="flex items-start gap-3 pr-10">
-                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-red-600 text-white"><StepIcon aria-hidden="true" size={20} /></span>
-                <div><p className="text-xs font-bold uppercase tracking-[0.16em] text-red-300">{step.eyebrow}</p><p className="mt-1 text-sm font-semibold text-zinc-300" aria-live="polite">ขั้นตอน {currentStep + 1} จาก {steps.length}</p></div>
-              </div>
-              <ol className="mt-3 grid grid-cols-6 gap-1.5" aria-label="ความคืบหน้าคำแนะนำ">
-                {steps.map((item, index) => <li key={item.id}><span className={`block h-1.5 rounded-full ${index <= currentStep ? 'bg-red-500' : 'bg-white/20'}`} aria-current={index === currentStep ? 'step' : undefined}><span className="sr-only">ขั้นตอน {index + 1}: {item.title}</span></span></li>)}
-              </ol>
-            </header>
-            <div className="px-4 py-4 sm:px-5">
-              {isLocating ? <div className="mb-3 flex items-center gap-2 rounded-xl bg-[var(--app-surface-subtle)] px-3 py-2 text-sm text-[var(--app-text-muted)]" role="status"><span className="h-4 w-4 animate-spin rounded-full border-2 border-zinc-300 border-t-red-600" aria-hidden="true" />กำลังพาไปยังจุดที่จะสอน...</div> : null}
-              {isFallback ? <div className="mb-3 rounded-xl border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-100" role="status">ตอนนี้ยังไม่พบส่วนนี้ คุณยังอ่านคำอธิบายและไปขั้นตอนถัดไปได้</div> : null}
-              <h2 id="ithub-tour-title" className="text-xl font-bold">{step.title}</h2>
-              <p id="ithub-tour-description" className="mt-2 text-sm leading-6 text-[var(--app-text-muted)]">{step.description}</p>
-              <ul className="mt-4 hidden space-y-2 sm:block">{step.points.map((point) => <li key={point} className="flex gap-2 text-sm leading-6"><Check className="mt-1 shrink-0 text-emerald-600" aria-hidden="true" size={15} /><span>{point}</span></li>)}</ul>
-            </div>
-            <footer className="flex items-center justify-between gap-2 border-t border-[var(--app-border)] bg-[var(--app-surface-subtle)] px-3 py-3 sm:px-5">
-              <button type="button" onClick={() => finishTour('dismissed')} className="rounded-lg px-2 py-2 text-xs font-semibold text-[var(--app-text-muted)] transition-colors hover:bg-[var(--app-surface)] sm:px-3 sm:text-sm">ข้าม</button>
-              <div className="flex gap-1.5 sm:gap-2">
-                <button type="button" disabled={currentStep === 0 || isLocating} onClick={goBack} className="inline-flex items-center gap-1 rounded-lg border border-[var(--app-border)] bg-[var(--app-surface)] px-3 py-2 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-40"><ChevronLeft aria-hidden="true" size={16} /> ย้อนกลับ</button>
-                <button type="button" disabled={isLocating} onClick={goNext} className="inline-flex items-center gap-1 rounded-lg bg-[var(--app-primary)] px-3 py-2 text-sm font-semibold text-white transition-colors hover:bg-[var(--app-primary-hover)] disabled:cursor-wait disabled:opacity-60 sm:px-4">{currentStep === steps.length - 1 ? 'เริ่มใช้งาน' : 'ถัดไป'}{currentStep < steps.length - 1 ? <ChevronRight aria-hidden="true" size={16} /> : null}</button>
-              </div>
-            </footer>
+          <motion.section ref={tooltipRef} role="dialog" aria-modal="true" aria-labelledby={`ithub-tour-title-${step.id}`} aria-describedby={`ithub-tour-description-${step.id}`} tabIndex={-1} className="pointer-events-auto fixed z-[3] max-h-[calc(100dvh-1.5rem)] w-[calc(100vw-1.5rem)] max-w-sm overflow-y-auto rounded-2xl border border-[var(--app-border)] bg-[var(--app-surface)] text-[var(--app-text)] shadow-2xl outline-none" style={tooltipStyle} onKeyDown={handleTooltipKeyDown} initial={{ opacity: 0, scale: prefersReducedMotion ? 1 : 0.98 }} animate={{ opacity: hasPresentedTour ? 1 : 0, scale: 1, x: tooltipPosition?.left || 0, y: tooltipPosition?.top || 0 }} transition={motionTransition}>
+            <span className="sr-only" role="status" aria-live="polite">{isBusy ? 'กำลังพาไปยังจุดที่จะสอน' : ''}</span>
+            <motion.div key={step.id} initial={{ opacity: prefersReducedMotion ? 1 : 0 }} animate={{ opacity: isBusy && hasPresentedTour ? 0.72 : 1 }} transition={{ duration: prefersReducedMotion ? 0 : 0.12, ease: TOUR_EASING }}>
+                <header className="relative rounded-t-2xl border-b border-zinc-800 bg-zinc-950 px-4 py-4 text-white sm:px-5">
+                  <button type="button" aria-label="ปิดคำแนะนำ" onClick={() => finishTour('dismissed')} className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-lg text-zinc-300 transition-colors hover:bg-white/10 hover:text-white"><X aria-hidden="true" size={18} /></button>
+                  <div className="flex items-start gap-3 pr-10">
+                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-red-600 text-white"><StepIcon aria-hidden="true" size={20} /></span>
+                    <div><p className="text-xs font-bold uppercase tracking-[0.16em] text-red-300">{step.eyebrow}</p><p className="mt-1 text-sm font-semibold text-zinc-300" aria-live="polite">ขั้นตอน {currentStep + 1} จาก {steps.length}</p></div>
+                  </div>
+                  <ol className="mt-3 grid grid-cols-6 gap-1.5" aria-label="ความคืบหน้าคำแนะนำ">
+                    {steps.map((item, index) => <li key={item.id}><span className={`block h-1.5 rounded-full ${index <= currentStep ? 'bg-red-500' : 'bg-white/20'}`} aria-current={index === currentStep ? 'step' : undefined}><span className="sr-only">ขั้นตอน {index + 1}: {item.title}</span></span></li>)}
+                  </ol>
+                </header>
+                <div className="px-4 py-4 sm:px-5">
+                  {isFallback ? <div className="mb-3 rounded-xl border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-100" role="status">ตอนนี้ยังไม่พบส่วนนี้ คุณยังอ่านคำอธิบายและไปขั้นตอนถัดไปได้</div> : null}
+                  <h2 id={`ithub-tour-title-${step.id}`} className="text-xl font-bold">{step.title}</h2>
+                  <p id={`ithub-tour-description-${step.id}`} className="mt-2 text-sm leading-6 text-[var(--app-text-muted)]">{step.description}</p>
+                  <ul className="mt-4 hidden space-y-2 sm:block">{step.points.map((point) => <li key={point} className="flex gap-2 text-sm leading-6"><Check className="mt-1 shrink-0 text-emerald-600" aria-hidden="true" size={15} /><span>{point}</span></li>)}</ul>
+                </div>
+                <footer className="flex items-center justify-between gap-2 border-t border-[var(--app-border)] bg-[var(--app-surface-subtle)] px-3 py-3 sm:px-5">
+                  <button type="button" onClick={() => finishTour('dismissed')} className="rounded-lg px-2 py-2 text-xs font-semibold text-[var(--app-text-muted)] transition-colors hover:bg-[var(--app-surface)] sm:px-3 sm:text-sm">ข้าม</button>
+                  <div className="flex gap-1.5 sm:gap-2">
+                    <button type="button" disabled={currentStep === 0 || isBusy} onClick={goBack} className="inline-flex items-center gap-1 rounded-lg border border-[var(--app-border)] bg-[var(--app-surface)] px-3 py-2 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-40">{isBusy && navigationDirection === 'backward' ? <span className="h-4 w-4 animate-spin rounded-full border-2 border-zinc-300 border-t-red-600 motion-reduce:animate-none" aria-hidden="true" /> : <ChevronLeft aria-hidden="true" size={16} />} ย้อนกลับ</button>
+                    <button type="button" disabled={isBusy} onClick={goNext} className="inline-flex items-center gap-1 rounded-lg bg-[var(--app-primary)] px-3 py-2 text-sm font-semibold text-white transition-colors hover:bg-[var(--app-primary-hover)] disabled:cursor-wait disabled:opacity-60 sm:px-4">{currentStep === steps.length - 1 ? 'เริ่มใช้งาน' : 'ถัดไป'}{isBusy && navigationDirection === 'forward' ? <span className="h-4 w-4 animate-spin rounded-full border-2 border-red-200 border-t-white motion-reduce:animate-none" aria-hidden="true" /> : currentStep < steps.length - 1 ? <ChevronRight aria-hidden="true" size={16} /> : null}</button>
+                  </div>
+                </footer>
+            </motion.div>
           </motion.section>
         </motion.div>
       ) : null}
