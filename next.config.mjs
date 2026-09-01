@@ -28,6 +28,20 @@ const nextConfig = {
     ],
   },
   async headers() {
+    const isProduction = process.env.VERCEL_ENV === 'production';
+    const contentSecurityPolicy = [
+      "default-src 'self'",
+      "base-uri 'self'",
+      "object-src 'none'",
+      "frame-ancestors 'none'",
+      "form-action 'self'",
+      "script-src 'self' 'unsafe-inline'",
+      "style-src 'self' 'unsafe-inline'",
+      "font-src 'self' data:",
+      "img-src 'self' data: blob: https://res.cloudinary.com https://api.dicebear.com",
+      "connect-src 'self' https://*.pusher.com wss://*.pusher.com https://*.vercel-insights.com",
+      'upgrade-insecure-requests',
+    ].join('; ');
     return [{
       source: '/(.*)',
       headers: [
@@ -35,6 +49,13 @@ const nextConfig = {
         { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
         { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=()' },
         { key: 'X-Frame-Options', value: 'DENY' },
+        {
+          key: isProduction ? 'Content-Security-Policy' : 'Content-Security-Policy-Report-Only',
+          value: contentSecurityPolicy,
+        },
+        ...(isProduction
+          ? [{ key: 'Strict-Transport-Security', value: 'max-age=31536000' }]
+          : []),
       ],
     }];
   },

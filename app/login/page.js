@@ -2,6 +2,7 @@ import React from 'react';
 // Navbar ไม่ต้องใส่แล้ว เพราะ Layout จัดการให้
 import db from '../../lib/db';
 import { redirect } from 'next/navigation';
+import { headers } from 'next/headers';
 import bcrypt from 'bcryptjs';
 import Link from 'next/link';
 import RippleButton from '../../components/RippleButton';
@@ -13,6 +14,7 @@ import {
 } from '../../lib/auth';
 import { enforceRateLimit } from '../../lib/rateLimit';
 import { validEmail } from '../../lib/validation';
+import { getTrustedClientIp } from '../../lib/clientIp';
 
 export default async function LoginPage({ searchParams }) {
   
@@ -33,13 +35,18 @@ export default async function LoginPage({ searchParams }) {
 
     try {
       email = validEmail(formData.get('email'));
-      await enforceRateLimit(`login:${email}`, { limit: 8, windowMs: 15 * 60 * 1000 });
+      const requestHeaders = await headers();
+      const clientIp = getTrustedClientIp(requestHeaders);
+      await Promise.all([
+        enforceRateLimit(`login-account:${email}`, { limit: 8, windowMs: 15 * 60 * 1000 }),
+        enforceRateLimit(`login-ip:${clientIp}`, { limit: 40, windowMs: 15 * 60 * 1000 }),
+      ]);
     } catch {
       redirect(`/login?notify=login_failed${nextQuery}`);
     }
 
     const [users] = await db.query(
-      'SELECT id, password, is_banned FROM users WHERE email = ? LIMIT 1',
+      'SELECT id, password, is_banned, session_version FROM users WHERE email = ? LIMIT 1',
       [email],
     );
     const user = users[0];

@@ -5,6 +5,7 @@ import db from '../lib/db.js';
 import {
   assertBaselineShape,
   assertMigration002Complete,
+  assertMigration003Complete,
   inspectSchema,
 } from './db-schema.mjs';
 import { assertE2eFlag } from './e2e-safety.mjs';
@@ -57,6 +58,7 @@ async function main() {
         assertBaselineShape(await inspectSchema(db));
       }
       if (name.startsWith('002_')) assertMigration002Complete(await inspectSchema(db));
+      if (name.startsWith('003_')) assertMigration003Complete(await inspectSchema(db));
       if (!recordedChecksum) {
         await db.query('UPDATE schema_migrations SET checksum = ? WHERE name = ?', [checksum, name]);
         console.log(`adopt checksum ${name}`);
@@ -85,6 +87,21 @@ async function main() {
         for (const statement of splitStatements(sql)) await db.query(statement);
       }
       assertMigration002Complete(await inspectSchema(db));
+    } else if (name.startsWith('003_')) {
+      const before = await inspectSchema(db);
+      assertMigration002Complete(before);
+      if (before.migration003State === 'partial') {
+        throw new Error(
+          `${name} cannot continue from a partial schema (${before.found003.length}/${before.expected003Count} expected objects)`,
+        );
+      }
+      if (before.migration003State === 'complete') {
+        console.log(`adopt ${name}; expected milestone 94 objects already exist`);
+      } else {
+        console.log(`apply ${name}`);
+        for (const statement of splitStatements(sql)) await db.query(statement);
+      }
+      assertMigration003Complete(await inspectSchema(db));
     } else {
       console.log(`apply ${name}`);
       for (const statement of splitStatements(sql)) await db.query(statement);

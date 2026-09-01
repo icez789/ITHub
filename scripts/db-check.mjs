@@ -3,6 +3,7 @@ import {
   applicationTables,
   assertBaselineShape,
   assertMigration002Complete,
+  assertMigration003Complete,
   inspectSchema,
   runIntegrityChecks,
 } from './db-schema.mjs';
@@ -16,6 +17,7 @@ async function main() {
   try {
     assertBaselineShape(state);
     assertMigration002Complete(state);
+    assertMigration003Complete(state);
   } catch (error) {
     failures.push(error.message);
   }

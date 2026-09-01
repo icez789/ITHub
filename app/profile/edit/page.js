@@ -79,7 +79,7 @@ export default async function EditProfilePage({ searchParams }) {
       if (notifyPath === '/profile?notify=profile_updated') {
         if (hashedPassword) {
           await connection.query(
-            'UPDATE users SET username = ?, bio = ?, password = ? WHERE id = ?',
+            'UPDATE users SET username = ?, bio = ?, password = ?, session_version = session_version + 1 WHERE id = ?',
             [username, bio, hashedPassword, actor.id],
           );
         } else {

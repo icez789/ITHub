@@ -48,6 +48,40 @@ export const migration002ForeignKeys = [
   ['poll_votes', 'fk_poll_votes_option', 'option_id->poll_options.id:CASCADE'],
 ];
 
+export const migration003Tables = [
+  'moderation_audit_logs',
+  'media_cleanup_queue',
+];
+
+export const migration003Columns = [
+  'users.session_version',
+  'users.avatar_public_id',
+  'topics.image_public_id',
+  'topics.is_pinned',
+  'topics.pinned_by',
+  'topics.pinned_at',
+  'topics.is_locked',
+  'topics.locked_by',
+  'topics.locked_at',
+];
+
+export const migration003Indexes = [
+  ['topics', 'idx_topics_pinned_created', 'N:is_pinned,created_at'],
+  ['topics', 'idx_topics_pinned_by', 'N:pinned_by'],
+  ['topics', 'idx_topics_locked_by', 'N:locked_by'],
+  ['moderation_audit_logs', 'idx_moderation_audit_created', 'N:created_at'],
+  ['moderation_audit_logs', 'idx_moderation_audit_actor', 'N:actor_id'],
+  ['moderation_audit_logs', 'idx_moderation_audit_target', 'N:target_type,target_id'],
+  ['media_cleanup_queue', 'uq_media_cleanup_asset', 'U:public_id,resource_type'],
+  ['media_cleanup_queue', 'idx_media_cleanup_status', 'N:status,created_at'],
+];
+
+export const migration003ForeignKeys = [
+  ['topics', 'fk_topics_pinned_by', 'pinned_by->users.id:SET NULL'],
+  ['topics', 'fk_topics_locked_by', 'locked_by->users.id:SET NULL'],
+  ['moderation_audit_logs', 'fk_moderation_audit_actor', 'actor_id->users.id:SET NULL'],
+];
+
 function value(row, upper, lower) {
   return row[upper] ?? row[lower];
 }
@@ -137,6 +171,28 @@ export async function inspectSchema(db) {
     ? 'absent'
     : found002.length === expected002Count ? 'complete' : 'partial';
 
+  const found003 = [
+    ...migration003Tables.filter((table) => tables.has(table)),
+    ...migration003Columns.filter((column) => columns.has(column)),
+    ...migration003Indexes.filter(([table, name, signature]) => {
+      const index = indexes.get(`${table}.${name}`);
+      const actual = index ? `${index.unique ? 'U' : 'N'}:${index.columns.join(',')}` : '';
+      return actual === signature;
+    }).map(([, name]) => name),
+    ...migration003ForeignKeys.filter(([table, name, signature]) => {
+      const foreignKey = foreignKeys.get(`${table}.${name}`);
+      const actual = foreignKey
+        ? `${foreignKey.columns.join(',')}->${foreignKey.referencedTable}.${foreignKey.referencedColumns.join(',')}:${foreignKey.deleteRule}`
+        : '';
+      return actual === signature;
+    }).map(([, name]) => name),
+  ];
+  const expected003Count = migration003Tables.length + migration003Columns.length
+    + migration003Indexes.length + migration003ForeignKeys.length;
+  const migration003State = found003.length === 0
+    ? 'absent'
+    : found003.length === expected003Count ? 'complete' : 'partial';
+
   return {
     tables,
     columns,
@@ -148,6 +204,9 @@ export async function inspectSchema(db) {
     found002,
     named002,
     expected002Count,
+    migration003State,
+    found003,
+    expected003Count,
   };
 }
 
@@ -166,9 +225,25 @@ export function assertMigration002Complete(state) {
   }
 }
 
+export function assertMigration003Complete(state) {
+  if (state.migration003State !== 'complete') {
+    throw new Error(
+      `migration 003 schema is ${state.migration003State} (${state.found003.length}/${state.expected003Count} expected objects)`,
+    );
+  }
+}
+
 export const integrityChecks = {
   duplicate_usernames: 'SELECT COUNT(*) AS count FROM (SELECT username FROM users GROUP BY username HAVING COUNT(*) > 1) duplicates',
   invalid_user_roles: "SELECT COUNT(*) AS count FROM users WHERE role NOT IN ('user', 'teacher', 'admin', 'super_admin') OR role IS NULL",
+  invalid_session_versions: 'SELECT COUNT(*) AS count FROM users WHERE session_version IS NULL OR session_version < 1',
+  invalid_topic_moderation_state: `SELECT COUNT(*) AS count FROM topics
+    WHERE is_pinned NOT IN (0, 1) OR is_locked NOT IN (0, 1)
+       OR (is_pinned = 0 AND (pinned_by IS NOT NULL OR pinned_at IS NOT NULL))
+       OR (is_pinned = 1 AND (pinned_by IS NULL OR pinned_at IS NULL))
+       OR (is_locked = 0 AND (locked_by IS NOT NULL OR locked_at IS NOT NULL))
+       OR (is_locked = 1 AND (locked_by IS NULL OR locked_at IS NULL))`,
+  invalid_media_cleanup_status: "SELECT COUNT(*) AS count FROM media_cleanup_queue WHERE status NOT IN ('pending', 'processing', 'failed', 'completed')",
   orphan_topics: 'SELECT COUNT(*) AS count FROM topics t LEFT JOIN users u ON u.id = t.user_id WHERE t.user_id IS NOT NULL AND u.id IS NULL',
   orphan_comments: 'SELECT COUNT(*) AS count FROM comments c LEFT JOIN topics t ON t.id = c.topic_id LEFT JOIN users u ON u.id = c.user_id LEFT JOIN comments p ON p.id = c.parent_id WHERE t.id IS NULL OR (c.user_id IS NOT NULL AND u.id IS NULL) OR (c.parent_id IS NOT NULL AND p.id IS NULL)',
   orphan_likes: 'SELECT COUNT(*) AS count FROM likes l LEFT JOIN users u ON u.id = l.user_id LEFT JOIN topics t ON t.id = l.topic_id WHERE u.id IS NULL OR t.id IS NULL',
@@ -179,9 +254,16 @@ export const integrityChecks = {
   orphan_poll_votes: 'SELECT COUNT(*) AS count FROM poll_votes v LEFT JOIN polls p ON p.id = v.poll_id LEFT JOIN topics t ON t.id = p.topic_id LEFT JOIN users u ON u.id = v.user_id LEFT JOIN poll_options o ON o.id = v.option_id WHERE p.id IS NULL OR t.id IS NULL OR u.id IS NULL OR o.id IS NULL OR o.poll_id <> v.poll_id',
 };
 
-export async function runIntegrityChecks(db) {
+const migration003IntegrityChecks = new Set([
+  'invalid_session_versions',
+  'invalid_topic_moderation_state',
+  'invalid_media_cleanup_status',
+]);
+
+export async function runIntegrityChecks(db, { includeMigration003 = true } = {}) {
   const failures = [];
   for (const [name, sql] of Object.entries(integrityChecks)) {
+    if (!includeMigration003 && migration003IntegrityChecks.has(name)) continue;
     const [rows] = await db.query(sql);
     const count = Number(rows[0].count);
     console.log(`${name}: ${count}`);
