@@ -363,10 +363,45 @@ test.describe('ITHub critical flows', () => {
       created = true;
     } finally {
       if (created) {
-        await page.getByRole('button', { name: /ลบกระทู้/ }).click();
+        const deleteTrigger = page.getByRole('button', { name: /ลบกระทู้/ });
+        await deleteTrigger.focus();
+        await deleteTrigger.click();
+        const dialog = page.getByTestId('confirm-delete-dialog');
+        await expect(dialog).toBeVisible();
+        await page.keyboard.press('Escape');
+        await expect(dialog).not.toBeVisible();
+        await expect(deleteTrigger).toBeFocused();
+
+        await deleteTrigger.click();
+        const confirmDelete = dialog.getByTestId('confirm-delete-submit');
+        const deleteRequest = page.waitForRequest((request) => request.method() === 'POST');
+        await confirmDelete.click();
+        await expect(confirmDelete).toBeDisabled();
+        await deleteRequest;
         await expect(page).toHaveURL((url) => url.pathname === '/');
       }
     }
+  });
+
+  test('clears ITHub Bot history with the in-app confirmation dialog', async ({ page }) => {
+    await page.addInitScript(() => {
+      localStorage.setItem('ithub_bot_chat', JSON.stringify([
+        { role: 'user', text: 'temporary message' },
+      ]));
+    });
+    await page.goto('/help');
+    await page.getByRole('button', { name: 'เปิด ITHub Bot' }).click();
+    const clearTrigger = page.getByRole('button', { name: 'ล้างประวัติแชท' });
+    await clearTrigger.click();
+    const dialog = page.getByTestId('confirm-delete-dialog');
+    await expect(dialog.getByRole('heading', { name: 'ล้างประวัติ ITHub Bot?' })).toBeVisible();
+    await page.mouse.click(1, 1);
+    await expect(dialog).not.toBeVisible();
+    await expect(clearTrigger).toBeFocused();
+    await clearTrigger.click();
+    await dialog.getByTestId('confirm-delete-submit').click();
+    await expect(dialog).not.toBeVisible();
+    await expect.poll(() => page.evaluate(() => JSON.parse(localStorage.getItem('ithub_bot_chat'))[0].text)).toContain('รีเซ็ตระบบเรียบร้อย');
   });
 
   test('opens a search result without returning to the search page', async ({ page }) => {
@@ -506,8 +541,10 @@ test.describe('ITHub critical flows', () => {
       Object.keys(button).some((key) => key.startsWith('__reactProps'))
     ))).toBe(true);
     await expect.poll(() => submitProfile.evaluate((button) => button.form?.checkValidity() ?? false)).toBe(true);
-    await submitProfile.evaluate((button) => button.form.requestSubmit(button));
-    await expect(page).toHaveURL(/notify=wrong_old_password/, { timeout: 15_000 });
+    await Promise.all([
+      page.waitForURL(/notify=wrong_old_password/, { timeout: 15_000 }),
+      submitProfile.click(),
+    ]);
     await expect(page.locator('input[name="username"]')).toHaveValue(originalUsername);
   });
 
