@@ -1,6 +1,6 @@
 # ITHub Teacher Role และ Delete UX Release
 
-> วันที่ตรวจรับ: 1 กันยายน 2026
+> วันที่ตรวจรับ: 2 กันยายน 2026
 > สาขา: `codex/teacher-role-delete-ux`
 > Production: ยังไม่เผยแพร่
 
@@ -49,3 +49,11 @@ fixture มี accepted comment, like, bookmark, notification, topic/comment rep
 ฝั่งแอปใช้คำสั่งภายใน transaction จำนวนคงที่: lock กระทู้, ตรวจ `foreign_key_checks`, aggregate update ผู้ใช้ และลบ parent topic รวม 4 query calls โดยจำนวนไม่เพิ่มตามผู้ร่วมกระทู้ จากนั้น FK `ON DELETE CASCADE` จัดการ dependent rows
 
 Playwright production-mode รอบสุดท้ายของ full suite ผ่าน 111/111 แบบ serial ครบ Chromium, Firefox และ WebKit โดยไม่มี skip หรือ failure และชุด error-recovery ที่เพิ่มภายหลังผ่านอีก 3/3
+
+## Preview handoff
+
+- Push สาขา `codex/teacher-role-delete-ux` แล้ว
+- Vercel Preview ใช้ alias <https://ithub-git-codex-teacher-role-delete-ux-thiraphat-s-projects.vercel.app>
+- ตั้งค่า DB/session/Pusher เฉพาะสาขา Preview รวม 10 รายการ โดยผ่าน guard ว่าฐานลงท้าย `_e2e`
+- ตรวจ public routes แบบ read-only ได้ HTTP 200 ครบ และไม่พบ runtime error log
+- Production ไม่ถูก deploy หรือ promote ในรอบนี้

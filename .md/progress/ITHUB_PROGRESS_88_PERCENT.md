@@ -1,6 +1,6 @@
 # ITHub — รายงานความคืบหน้า 88%
 
-> วันที่: 1 กันยายน 2026 (Asia/Bangkok)
+> วันที่: 2 กันยายน 2026 (Asia/Bangkok)
 > สาขา: `codex/teacher-role-delete-ux`
 > Production: ยังไม่ deploy ตามขอบเขตของ milestone
 
@@ -58,6 +58,18 @@ Milestone นี้เพิ่ม Teacher ในฐานะผู้ดูแ�
 | Deletion latency | 572ms / 597ms / 536ms; median 572ms |
 
 Playwright acceptance รอบสุดท้ายผ่าน 111/111 แบบ serial หลังเพิ่ม post-login readiness gate สำหรับ WebKit และ error-recovery เพิ่มเติมผ่าน 3/3; ไม่มี temporary topic, like, bookmark หรือ role fixture ค้าง และ post-run database integrity ยังคงตรวจซ้ำก่อนสร้าง Preview
+
+## Preview rollout
+
+- Git branch: `codex/teacher-role-delete-ux`
+- GitHub remote: push สำเร็จถึง `origin/codex/teacher-role-delete-ux`
+- Vercel target: Preview เท่านั้น; Production ไม่ถูก deploy หรือ promote
+- Preview alias: <https://ithub-git-codex-teacher-role-delete-ux-thiraphat-s-projects.vercel.app>
+- Environment safety: เพิ่ม branch-specific overrides 10 รายการ โดย DB/session/Pusher server values เป็น Secret และ `NEXT_PUBLIC_PUSHER_*` เป็น Config ตามข้อกำหนดของ Vercel
+- Database guard: อ่านค่า local ผ่าน `.env.e2e.local` โดยไม่พิมพ์ secret และหยุดทันทีหาก `DB_NAME` ไม่ลงท้าย `_e2e`
+- Build evidence: Vercel clone สาขาถูกต้องและ build Next.js 16.3.0 ครบ 20 routes
+- Read-only smoke: `/`, `/help`, `/login`, `/register`, `/privacy`, `/terms` ตอบ HTTP 200 ทุกหน้า; ไม่พบ runtime error log หลังตรวจ
+- Authenticated/destructive smoke บน Preview จะทำหลัง deployment ใหม่จาก commit รายงานนี้ เพื่อยืนยันว่าการเขียนทั้งหมดอยู่บนฐาน `_e2e`
 
 ## งานค้างหลัง 88%
 
