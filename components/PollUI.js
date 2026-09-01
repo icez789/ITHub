@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { votePoll } from '../lib/actions';
-import Swal from 'sweetalert2';
+import { toast } from 'react-hot-toast';
 import { pusherClient } from '../lib/pusherClient'; // ✅ Import Pusher Client
 import { BarChart3, CheckCircle2, Crown, Handshake } from 'lucide-react';
 
@@ -50,7 +50,7 @@ export default function PollUI({ poll, options: initialOptions, userVote: initia
 
   const handleSubmit = async () => {
     if (!currentUser) {
-        Swal.fire({ icon: 'error', title: 'กรุณาเข้าสู่ระบบ', confirmButtonColor: '#d33' });
+        toast.error('กรุณาเข้าสู่ระบบก่อนโหวต');
         return;
     }
     if (!selectedOption) return;
@@ -78,19 +78,9 @@ export default function PollUI({ poll, options: initialOptions, userVote: initia
     if (result.success) {
         // router.refresh(); // ❌ ไม่ต้อง refresh แล้ว เพราะเดี๋ยว Pusher จะส่งข้อมูลล่าสุดกลับมาให้เอง
         
-        Swal.fire({
-            icon: 'success',
-            title: 'เรียบร้อย!',
-            text: result.message || 'บันทึกการโหวตแล้ว',
-            timer: 1500,
-            showConfirmButton: false,
-            toast: true,
-            position: 'top-end',
-            background: document.documentElement.classList.contains('dark') ? '#1f1f1f' : '#ffffff',
-            color: document.documentElement.classList.contains('dark') ? '#ffffff' : '#000000',
-        });
+        toast.success(result.message || 'บันทึกการโหวตแล้ว');
     } else {
-        Swal.fire({ icon: 'error', title: 'เกิดข้อผิดพลาด', text: result.message });
+        toast.error(result.message || 'บันทึกการโหวตไม่สำเร็จ');
         router.refresh(); // ถ้าพลาดค่อย refresh เอาค่าเดิมกลับมา
     }
   };

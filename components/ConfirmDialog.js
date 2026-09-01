@@ -14,6 +14,7 @@ export default function ConfirmDialog({
   onConfirm,
   triggerAriaLabel,
   triggerClassName = '',
+  triggerDisabled = false,
   testId = 'confirm-delete-dialog',
 }) {
   const dialogRef = useRef(null);
@@ -31,6 +32,7 @@ export default function ConfirmDialog({
   }, []);
 
   function openDialog() {
+    if (triggerDisabled) return;
     setError('');
     previousOverflowRef.current = document.body.style.overflow;
     dialogRef.current?.showModal();
@@ -86,6 +88,7 @@ export default function ConfirmDialog({
         ref={triggerRef}
         type="button"
         aria-label={triggerAriaLabel}
+        disabled={triggerDisabled}
         className={triggerClassName}
         onClick={openDialog}
       >

@@ -4,16 +4,17 @@ import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { updateTopic } from '../../../lib/actions';
 import Editor from '../../../components/Editor';
-import Swal from 'sweetalert2';
+import { toast } from 'react-hot-toast';
 import Link from 'next/link';
 import Image from 'next/image';
-import { ImagePlus, RefreshCw, Save, X } from 'lucide-react';
+import { ImagePlus, LoaderCircle, RefreshCw, Save, X } from 'lucide-react';
 
 export default function EditTopicForm({ topic }) {
   const router = useRouter();
   
   const [imagePreview, setImagePreview] = useState(topic.image_url); 
   const [isImageRemoved, setIsImageRemoved] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
@@ -32,21 +33,26 @@ export default function EditTopicForm({ topic }) {
   };
 
   const handleSubmit = async (formData) => {
+    if (isSubmitting) return;
+    setIsSubmitting(true);
     formData.set('isImageRemoved', isImageRemoved);
-    const result = await updateTopic(formData);
+    let result;
+    try {
+      result = await updateTopic(formData);
+    } catch (error) {
+      console.error('Topic update failed:', error);
+      toast.error('แก้ไขกระทู้ไม่สำเร็จ กรุณาลองใหม่');
+      setIsSubmitting(false);
+      return;
+    }
 
     if (result.success) {
-        Swal.fire({
-            icon: 'success',
-            title: 'แก้ไขเรียบร้อย!',
-            timer: 1500,
-            showConfirmButton: false
-        }).then(() => {
-            router.push(`/topic/${result.topicId}`); 
-            router.refresh();
-        });
+        toast.success('แก้ไขกระทู้เรียบร้อย');
+        router.push(`/topic/${result.topicId}`);
+        router.refresh();
     } else {
-        Swal.fire({ icon: 'error', title: 'เกิดข้อผิดพลาด', text: result.message });
+        toast.error(result.message || 'แก้ไขกระทู้ไม่สำเร็จ');
+        setIsSubmitting(false);
     }
   };
 
@@ -125,8 +131,8 @@ export default function EditTopicForm({ topic }) {
             <Link href={`/topic/${topic.id}`} className="flex-1 py-3 text-center border border-gray-300 rounded-lg text-gray-600 font-bold hover:bg-gray-100 transition dark:text-gray-300 dark:border-neutral-600 dark:hover:bg-neutral-800">
                 ยกเลิก
             </Link>
-            <button type="submit" className="inline-flex flex-[2] items-center justify-center gap-2 rounded-lg bg-[var(--app-primary)] py-3 font-semibold text-white transition-colors hover:bg-[var(--app-primary-hover)]">
-                <Save aria-hidden="true" size={18} /> บันทึกการแก้ไข
+            <button type="submit" disabled={isSubmitting} className="inline-flex flex-[2] items-center justify-center gap-2 rounded-lg bg-[var(--app-primary)] py-3 font-semibold text-white transition-colors hover:bg-[var(--app-primary-hover)] disabled:cursor-wait disabled:opacity-60">
+                {isSubmitting ? <LoaderCircle aria-hidden="true" className="animate-spin motion-reduce:animate-none" size={18} /> : <Save aria-hidden="true" size={18} />} {isSubmitting ? 'กำลังบันทึก…' : 'บันทึกการแก้ไข'}
             </button>
         </div>
     </form>

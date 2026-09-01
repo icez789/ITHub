@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createTopicWithPoll } from '../../lib/actions'; // เดี๋ยวเราไปสร้างฟังก์ชันนี้กัน
 import Editor from '../../components/Editor'; 
-import Swal from 'sweetalert2';
+import { toast } from 'react-hot-toast';
 import { BarChart3, LoaderCircle, Plus, Send, Trash2 } from 'lucide-react';
 
 export default function CreateTopicPage() {
@@ -39,20 +39,20 @@ export default function CreateTopicPage() {
     const content = String(formData.get('content') || '');
     const plainContent = new DOMParser().parseFromString(content, 'text/html').body.textContent?.trim() || '';
     if (plainContent.length < 5) {
-      await Swal.fire({ icon: 'error', title: 'กรุณาใส่รายละเอียดอย่างน้อย 5 ตัวอักษร' });
+      toast.error('กรุณาใส่รายละเอียดอย่างน้อย 5 ตัวอักษร');
       return;
     }
 
     // เพิ่มข้อมูลโพลเข้าไปใน formData (ถ้ามี)
     if (hasPoll) {
         if (!pollQuestion.trim()) {
-            Swal.fire({ icon: 'error', title: 'กรุณากรอกคำถามโพล' });
+            toast.error('กรุณากรอกคำถามโพล');
             return;
         }
         // กรองตัวเลือกที่ว่างออก
         const validOptions = pollOptions.filter(opt => opt.trim() !== '');
         if (validOptions.length < 2) {
-            Swal.fire({ icon: 'error', title: 'ต้องมีตัวเลือกโพลอย่างน้อย 2 ข้อ' });
+            toast.error('ต้องมีตัวเลือกโพลอย่างน้อย 2 ข้อ');
             return;
         }
 
@@ -67,23 +67,16 @@ export default function CreateTopicPage() {
       result = await createTopicWithPoll(formData);
     } catch {
       setIsSubmitting(false);
-      await Swal.fire({ icon: 'error', title: 'ส่งกระทู้ไม่สำเร็จ', text: 'การเชื่อมต่อขัดข้อง กรุณาลองใหม่อีกครั้ง' });
+      toast.error('ส่งกระทู้ไม่สำเร็จ การเชื่อมต่อขัดข้อง กรุณาลองใหม่อีกครั้ง');
       return;
     }
 
     if (result.success) {
-        Swal.fire({
-            icon: 'success',
-            title: 'ตั้งกระทู้สำเร็จ!',
-            text: 'ระบบกำลังพาคุณไปหน้ากระทู้ (+10 XP)',
-            timer: 1500,
-            showConfirmButton: false
-        }).then(() => {
-            router.push(`/topic/${result.topicId}`);
-        });
+        toast.success('ตั้งกระทู้สำเร็จ (+10 XP)');
+        router.push(`/topic/${result.topicId}`);
     } else {
         setIsSubmitting(false);
-        Swal.fire({ icon: 'error', title: 'เกิดข้อผิดพลาด', text: result.message });
+        toast.error(result.message || 'ตั้งกระทู้ไม่สำเร็จ');
     }
   };
 

@@ -28,8 +28,14 @@ export default function NotificationBell({ count: initialCount, notifications: i
     const channelName = notificationChannelName(currentUserId);
     const channel = pusher.subscribe(channelName);
     channel.bind('new-notification', (data) => {
-      setUnreadCount((prev) => prev + 1);
-      setNotifications((prev) => [data, ...prev]);
+      setNotifications((prev) => {
+        const duplicate = data.id
+          ? prev.some((notification) => Number(notification.id) === Number(data.id))
+          : prev.some((notification) => notification.message === data.message && notification.link === data.link);
+        if (duplicate) return prev;
+        setUnreadCount((count) => count + 1);
+        return [data, ...prev].slice(0, 10);
+      });
     });
     return () => {
       pusher.unsubscribe(channelName);
