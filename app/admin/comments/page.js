@@ -5,7 +5,8 @@ import { revalidatePath } from 'next/cache';
 import Link from 'next/link';
 import Image from 'next/image';
 import DeleteButton from '../DeleteButton';
-import { getCurrentUser, requireAdmin } from '../../../lib/auth';
+import { getCurrentUser, requireContentModerator } from '../../../lib/auth';
+import { isContentModeratorRole } from '../../../lib/roles';
 import { positiveInteger } from '../../../lib/validation';
 import { deleteCommentCascade } from '../../../lib/moderation';
 import AdminPagination from '../AdminPagination';
@@ -14,7 +15,7 @@ import { ArrowLeft, MessageCircle, Search, Trash2 } from 'lucide-react';
 export default async function CommentsManagementPage({ searchParams }) {
   const currentUser = await getCurrentUser();
   if (!currentUser) redirect('/login');
-  if (!['admin', 'super_admin'].includes(currentUser.role)) redirect('/');
+  if (!isContentModeratorRole(currentUser.role)) redirect('/');
 
   const params = await searchParams;
   const q = String(params?.q || '').trim().slice(0, 100);
@@ -46,10 +47,19 @@ export default async function CommentsManagementPage({ searchParams }) {
 
   async function deleteComment(formData) {
     'use server';
-    await requireAdmin();
-    const commentId = positiveInteger(formData.get('commentId'), 'comment id');
-    await deleteCommentCascade(commentId);
-    revalidatePath('/admin/comments');
+    try {
+      await requireContentModerator();
+      const commentId = positiveInteger(formData.get('commentId'), 'comment id');
+      const deleted = await deleteCommentCascade(commentId);
+      if (!deleted) return { success: false, message: 'ไม่พบความคิดเห็นหรือความคิดเห็นถูกลบไปแล้ว' };
+      revalidatePath('/admin');
+      revalidatePath('/admin/comments');
+      revalidatePath('/leaderboard');
+      return { success: true, message: 'ลบความคิดเห็นแล้ว' };
+    } catch (error) {
+      console.error('Admin comment deletion error:', error);
+      return { success: false, message: 'ลบความคิดเห็นไม่สำเร็จ กรุณาลองใหม่' };
+    }
   }
 
   return (
@@ -100,6 +110,8 @@ export default async function CommentsManagementPage({ searchParams }) {
                                     id={c.id} 
                                     idName="commentId" 
                                     ariaLabel={`ลบความคิดเห็นของ ${c.username}`}
+                                    title={`ลบความคิดเห็นของ ${c.username}?`}
+                                    description="ความคิดเห็นนี้จะถูกลบถาวร แต่คำตอบย่อยจะยังอยู่และถูกย้ายออกจากชุดคำตอบเดิม"
                                     className="inline-flex items-center gap-1.5 text-xs font-bold text-red-600 hover:text-red-700"
                                 >
                                     <Trash2 aria-hidden="true" size={14} /> ลบความคิดเห็น

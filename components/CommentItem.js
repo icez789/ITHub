@@ -11,13 +11,14 @@ import remarkGfm from 'remark-gfm';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { Check, CheckCircle2, Reply, Send, Trash2 } from 'lucide-react';
+import DeleteButton from './DeleteButton';
 // SweetAlert2
 import Swal from 'sweetalert2';
 
 export default function CommentItem({ 
   comment, 
   currentUser, 
-  isAdmin, 
+  isModerator,
   topicUserId, 
   deleteAction, 
   replyAction, 
@@ -35,7 +36,7 @@ export default function CommentItem({
   const canDelete = currentUser && (
     currentUser.id === comment.user_id || 
     currentUser.id === topicUserId || 
-    isAdmin
+    isModerator
   );
 
   const handleMarkAsSolution = () => {
@@ -171,12 +172,20 @@ export default function CommentItem({
         </div>
 
         {canDelete && (
-          <form action={async (formData) => {
-              await deleteAction(formData);
-          }} className="absolute top-4 right-4 opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100">
-             <input type="hidden" name="commentId" value={comment.id} />
-             <button type="submit" aria-label="ลบคอมเมนต์นี้" className="rounded-md p-1 text-[var(--app-text-muted)] transition-colors hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950/30" title="ลบคอมเมนต์นี้"><Trash2 aria-hidden="true" size={16} /></button>
-          </form>
+          <div className="absolute right-4 top-4 opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100">
+            <DeleteButton
+              action={deleteAction}
+              id={comment.id}
+              idName="commentId"
+              ariaLabel="ลบความคิดเห็นนี้"
+              title="ลบความคิดเห็นนี้?"
+              description="ความคิดเห็นนี้จะถูกลบถาวร แต่คำตอบย่อยจะยังอยู่และถูกย้ายออกจากชุดคำตอบเดิม"
+              successMessage="ลบความคิดเห็นแล้ว"
+              className="rounded-md p-1 text-[var(--app-text-muted)] transition-colors hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950/30"
+            >
+              <Trash2 aria-hidden="true" size={16} />
+            </DeleteButton>
+          </div>
         )}
       </div>
 
@@ -204,7 +213,7 @@ export default function CommentItem({
                     key={child.id} 
                     comment={child} 
                     currentUser={currentUser} 
-                    isAdmin={isAdmin} 
+                    isModerator={isModerator}
                     topicUserId={topicUserId}
                     deleteAction={deleteAction}
                     replyAction={replyAction}
