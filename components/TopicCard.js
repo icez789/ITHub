@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import Image from 'next/image';
-import { Eye, Heart, MessageCircle, UserRound } from 'lucide-react';
+import { Eye, Heart, Lock, MessageCircle, Pin, UserRound } from 'lucide-react';
 
 export default function TopicCard({
   id,
@@ -14,6 +14,8 @@ export default function TopicCard({
   commentCount = 0,
   likeCount = 0,
   index = 0,
+  isPinned = false,
+  isLocked = false,
 }) {
   const formattedDate = new Date(createdAt).toLocaleDateString('th-TH', {
     day: 'numeric',
@@ -33,6 +35,8 @@ export default function TopicCard({
             <span className="rounded-lg bg-red-50 px-2 py-0.5 text-[11px] font-bold text-red-700 dark:bg-red-950/35 dark:text-red-300">
               {category}
             </span>
+            {isPinned ? <span className="inline-flex items-center gap-1 rounded-lg bg-amber-50 px-2 py-0.5 text-[11px] font-bold text-amber-800 dark:bg-amber-950/35 dark:text-amber-300"><Pin aria-hidden="true" size={11} /> ปักหมุด</span> : null}
+            {isLocked ? <span className="inline-flex items-center gap-1 rounded-lg bg-zinc-100 px-2 py-0.5 text-[11px] font-bold text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300"><Lock aria-hidden="true" size={11} /> ล็อกแล้ว</span> : null}
             <span className="text-xs text-zinc-500 dark:text-zinc-400">{formattedDate}</span>
           </div>
 

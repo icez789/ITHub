@@ -4,19 +4,20 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
-import { ArrowLeft, CalendarDays, Edit3, Eye, Flame, MessageCircle, Send, Trash2, UserRound } from 'lucide-react';
+import { after } from 'next/server';
+import { ArrowLeft, CalendarDays, Edit3, Eye, Flame, Lock, MessageCircle, Pin, Trash2, UserRound } from 'lucide-react';
 
 // Components
 import UserBadge from '../../../components/UserBadge';
 import TopicCard from '../../../components/TopicCard';
-import Editor from '../../../components/Editor'; 
 import CommentItem from '../../../components/CommentItem';
-import RippleButton from '../../../components/RippleButton'; 
 import ReportButton from '../../../components/ReportButton';
 import ViewCounter from '../../../components/ViewCounter';
 import PollUI from '../../../components/PollUI'; // ✅ Import โพล
 import TopicEngagementActions from '../../../components/TopicEngagementActions';
 import DeleteButton from '../../../components/DeleteButton';
+import TopicModerationActions from '../../../components/TopicModerationActions';
+import CommentComposer from '../../../components/CommentComposer';
 
 // Libs & Styles
 import { pusherServer } from '../../../lib/pusher'; 
@@ -25,8 +26,10 @@ import { getCurrentUser, isContentModerator, requireUser } from '../../../lib/au
 import { plainText, sanitizeRichText } from '../../../lib/content';
 import { enforceRateLimit } from '../../../lib/rateLimit';
 import { optionalPositiveInteger, positiveInteger, requiredText } from '../../../lib/validation';
-import { deleteCommentCascade, deleteTopicCascade } from '../../../lib/moderation';
+import { deleteCommentCascade, deleteTopicCascade, setTopicModerationState } from '../../../lib/moderation';
 import { notificationChannelName } from '../../../lib/pusherChannels';
+import { destroyMediaAsset } from '../../../lib/mediaCleanup';
+import { shouldNotifyOwner } from '../../../lib/notificationPolicy';
 
 export async function generateMetadata({ params }) {
   const { id } = await params;
@@ -50,7 +53,7 @@ export default async function TopicDetailPage({ params }) {
   // Query กระทู้ (ดึง XP มาด้วย)
   const topicQuery = db.query(`
     SELECT topics.id, topics.title, topics.category, topics.content, topics.image_url,
-           topics.user_id, topics.views, topics.created_at,
+           topics.user_id, topics.views, topics.is_pinned, topics.is_locked, topics.created_at,
            users.username, users.role, users.xp
     FROM topics 
     LEFT JOIN users ON topics.user_id = users.id 
@@ -129,7 +132,7 @@ export default async function TopicDetailPage({ params }) {
   // --- 4. ดึงกระทู้ที่เกี่ยวข้อง ---
   const [relatedTopics] = await db.query(`
     SELECT topics.id, topics.title, topics.category, topics.content, topics.image_url,
-           topics.views, topics.created_at, users.username
+           topics.views, topics.is_pinned, topics.is_locked, topics.created_at, users.username
     FROM topics 
     LEFT JOIN users ON topics.user_id = users.id
     WHERE topics.category = ? AND topics.id != ?
@@ -160,8 +163,14 @@ export default async function TopicDetailPage({ params }) {
       if (!freshTopics[0] || (freshTopics[0].user_id !== actor.id && !isContentModerator(actor))) {
         return { success: false, message: 'คุณไม่มีสิทธิ์ลบกระทู้นี้' };
       }
-      const deleted = await deleteTopicCascade(topicId);
-      if (!deleted) return { success: false, message: 'ไม่พบกระทู้หรือกระทู้ถูกลบไปแล้ว' };
+      const result = await deleteTopicCascade(topicId, {
+        actorId: actor.id,
+        action: isContentModerator(actor) && freshTopics[0].user_id !== actor.id
+          ? 'topic.delete.moderation'
+          : 'topic.delete.self',
+      });
+      if (!result.deleted) return { success: false, message: 'ไม่พบกระทู้หรือกระทู้ถูกลบไปแล้ว' };
+      if (result.imagePublicId) after(() => destroyMediaAsset(result.imagePublicId, 'topic_deleted'));
     } catch (error) {
       console.error('Delete topic error:', error);
       return { success: false, message: 'ลบกระทู้ไม่สำเร็จ กรุณาลองใหม่' };
@@ -177,6 +186,7 @@ export default async function TopicDetailPage({ params }) {
   
   async function addComment(formData) { 
     'use server'; 
+    try {
     const actor = await requireUser();
     await enforceRateLimit(`comment:${actor.id}`, { limit: 12, windowMs: 60 * 1000 });
     const topicId = positiveInteger(id, 'topic id');
@@ -184,15 +194,17 @@ export default async function TopicDetailPage({ params }) {
     const content = sanitizeRichText(formData.get('content'));
     if (plainText(content).length < 1 || content.length > 20_000) throw new Error('Invalid comment');
 
-    const [freshTopics] = await db.query('SELECT user_id FROM topics WHERE id = ?', [topicId]);
+    const [freshTopics] = await db.query('SELECT user_id, is_locked FROM topics WHERE id = ?', [topicId]);
     const freshTopic = freshTopics[0];
     if (!freshTopic) throw new Error('Topic not found');
+    if (freshTopic.is_locked) throw new Error('กระทู้นี้ถูกล็อกและไม่รับความคิดเห็นใหม่');
     if (parentId) {
       const [parents] = await db.query('SELECT id FROM comments WHERE id = ? AND topic_id = ?', [parentId, topicId]);
       if (!parents[0]) throw new Error('Invalid parent comment');
     }
 
     const connection = await db.getConnection();
+    let notificationId = null;
     try {
       await connection.beginTransaction();
       await connection.query(
@@ -200,11 +212,12 @@ export default async function TopicDetailPage({ params }) {
         [topicId, content, actor.id, parentId],
       );
       await connection.query('UPDATE users SET xp = COALESCE(xp, 0) + 2 WHERE id = ?', [actor.id]);
-      if (!parentId && freshTopic.user_id !== actor.id) {
-        await connection.query(
+      if (!parentId && shouldNotifyOwner(freshTopic.user_id, actor.id)) {
+        const [notificationResult] = await connection.query(
           'INSERT INTO notifications (user_id, actor_id, topic_id, type, message) VALUES (?, ?, ?, ?, ?)',
           [freshTopic.user_id, actor.id, topicId, 'comment', `${actor.username} แสดงความคิดเห็นในกระทู้ของคุณ`],
         );
+        notificationId = notificationResult.insertId;
       }
       await connection.commit();
     } catch (error) {
@@ -214,9 +227,10 @@ export default async function TopicDetailPage({ params }) {
       connection.release();
     }
 
-    if (!parentId && freshTopic.user_id !== actor.id) {
+    if (!parentId && shouldNotifyOwner(freshTopic.user_id, actor.id)) {
       try {
         await pusherServer.trigger(notificationChannelName(freshTopic.user_id), 'new-notification', {
+          id: notificationId,
           message: `${actor.username} แสดงความคิดเห็นในกระทู้ของคุณ`,
           link: `/topic/${topicId}`,
           created_at: new Date().toISOString(),
@@ -226,6 +240,14 @@ export default async function TopicDetailPage({ params }) {
       }
     }
     revalidatePath(`/topic/${topicId}`);
+    return { success: true, message: parentId ? 'ส่งคำตอบแล้ว' : 'ส่งความคิดเห็นแล้ว' };
+    } catch (error) {
+      console.error('Add comment error:', error);
+      const message = error?.message === 'กระทู้นี้ถูกล็อกและไม่รับความคิดเห็นใหม่'
+        ? error.message
+        : 'ส่งความคิดเห็นไม่สำเร็จ กรุณาลองใหม่';
+      return { success: false, message };
+    }
   }
 
   async function toggleLike() { 
@@ -242,6 +264,7 @@ export default async function TopicDetailPage({ params }) {
     let connection;
     let added = false;
     let topicOwnerId = null;
+    let notificationId = null;
     try {
       connection = await db.getConnection();
       await connection.beginTransaction();
@@ -258,11 +281,12 @@ export default async function TopicDetailPage({ params }) {
       } else {
         added = true;
         await connection.query('INSERT INTO likes (user_id, topic_id) VALUES (?, ?)', [actor.id, topicId]);
-        if (topicOwnerId !== actor.id) {
-          await connection.query(
+        if (shouldNotifyOwner(topicOwnerId, actor.id)) {
+          const [notificationResult] = await connection.query(
             'INSERT INTO notifications (user_id, actor_id, topic_id, type, message) VALUES (?, ?, ?, ?, ?)',
             [topicOwnerId, actor.id, topicId, 'like', `${actor.username} ถูกใจกระทู้ของคุณ`],
           );
+          notificationId = notificationResult.insertId;
         }
       }
       await connection.commit();
@@ -274,9 +298,10 @@ export default async function TopicDetailPage({ params }) {
       connection?.release();
     }
 
-    if (added && topicOwnerId !== actor.id) {
+    if (added && shouldNotifyOwner(topicOwnerId, actor.id)) {
       try {
         await pusherServer.trigger(notificationChannelName(topicOwnerId), 'new-notification', {
+          id: notificationId,
           message: `${actor.username} ถูกใจกระทู้ของคุณ`,
           link: `/topic/${topicId}`,
           created_at: new Date().toISOString(),
@@ -353,8 +378,11 @@ export default async function TopicDetailPage({ params }) {
       )) {
         return { success: false, message: 'คุณไม่มีสิทธิ์ลบความคิดเห็นนี้' };
       }
-      const deleted = await deleteCommentCascade(commentId);
-      if (!deleted) return { success: false, message: 'ไม่พบความคิดเห็นหรือความคิดเห็นถูกลบไปแล้ว' };
+      const result = await deleteCommentCascade(commentId, {
+        actorId: actor.id,
+        action: comments[0].user_id === actor.id ? 'comment.delete.self' : 'comment.delete.moderation',
+      });
+      if (!result.deleted) return { success: false, message: 'ไม่พบความคิดเห็นหรือความคิดเห็นถูกลบไปแล้ว' };
       revalidatePath(`/topic/${topicId}`);
       revalidatePath('/admin');
       revalidatePath('/admin/comments');
@@ -367,46 +395,72 @@ export default async function TopicDetailPage({ params }) {
   }
   async function submitReport(formData) { 
     'use server'; 
-    const actor = await requireUser();
-    await enforceRateLimit(`report:${actor.id}`, { limit: 5, windowMs: 60 * 60 * 1000 });
-    const targetId = positiveInteger(formData.get('targetId'), 'report target');
-    const type = formData.get('type'); 
-    const reason = requiredText(formData.get('reason'), 'reason', { min: 3, max: 500 });
-    
-    let notificationTopicId;
-    if (type === 'topic') { 
-      const [targets] = await db.query('SELECT id FROM topics WHERE id = ?', [targetId]);
-      if (!targets[0]) throw new Error('Invalid report target');
-      await db.query('INSERT INTO reports (reporter_id, topic_id, reason) VALUES (?, ?, ?)', [actor.id, targetId, reason]);
-      notificationTopicId = targetId;
-    } else if (type === 'comment') { 
-      const [targets] = await db.query('SELECT id, topic_id FROM comments WHERE id = ?', [targetId]);
-      if (!targets[0]) throw new Error('Invalid report target');
-      await db.query('INSERT INTO reports (reporter_id, comment_id, reason) VALUES (?, ?, ?)', [actor.id, targetId, reason]);
-      notificationTopicId = targets[0].topic_id;
-    } else throw new Error('Invalid report type');
-
-    const reportMessage = `มีรายการรายงานใหม่รอตรวจสอบ: ${reason}`;
-    await db.query(
-      `INSERT INTO notifications (user_id, actor_id, topic_id, type, message)
-       SELECT id, ?, ?, 'report', ?
-       FROM users
-       WHERE role IN ('teacher', 'admin', 'super_admin') AND id <> ?`,
-      [actor.id, notificationTopicId, reportMessage, actor.id],
-    );
-
-    // 🚀 ยิง Pusher แจ้งเตือน Admin/Super Admin ทุกคนแบบ Real-time
     try {
-      const [admins] = await db.query("SELECT id FROM users WHERE role IN ('teacher', 'admin', 'super_admin')");
-      for (const admin of admins) {
-         await pusherServer.trigger(notificationChannelName(admin.id), 'new-notification', {
-            message: reportMessage,
-            link: '/admin', // กดที่กระดิ่งแล้วเด้งไปหน้าแอดมินเลย
-            created_at: new Date().toISOString()
-         });
+      const actor = await requireUser();
+      await enforceRateLimit(`report:${actor.id}`, { limit: 5, windowMs: 60 * 60 * 1000 });
+      const targetId = positiveInteger(formData.get('targetId'), 'report target');
+      const type = formData.get('type');
+      const reason = requiredText(formData.get('reason'), 'reason', { min: 3, max: 500 });
+      let notificationTopicId;
+
+      if (type === 'topic') {
+        const [targets] = await db.query('SELECT id FROM topics WHERE id = ?', [targetId]);
+        if (!targets[0]) throw new Error('Invalid report target');
+        await db.query('INSERT INTO reports (reporter_id, topic_id, reason) VALUES (?, ?, ?)', [actor.id, targetId, reason]);
+        notificationTopicId = targetId;
+      } else if (type === 'comment') {
+        const [targets] = await db.query('SELECT id, topic_id FROM comments WHERE id = ?', [targetId]);
+        if (!targets[0]) throw new Error('Invalid report target');
+        await db.query('INSERT INTO reports (reporter_id, comment_id, reason) VALUES (?, ?, ?)', [actor.id, targetId, reason]);
+        notificationTopicId = targets[0].topic_id;
+      } else throw new Error('Invalid report type');
+
+      const reportMessage = `มีรายการรายงานใหม่รอตรวจสอบ: ${reason}`;
+      await db.query(
+        `INSERT INTO notifications (user_id, actor_id, topic_id, type, message)
+         SELECT id, ?, ?, 'report', ? FROM users
+         WHERE role IN ('teacher', 'admin', 'super_admin') AND id <> ?`,
+        [actor.id, notificationTopicId, reportMessage, actor.id],
+      );
+
+      try {
+        const [admins] = await db.query("SELECT id FROM users WHERE role IN ('teacher', 'admin', 'super_admin') AND id <> ?", [actor.id]);
+        await Promise.all(admins.map((admin) => pusherServer.trigger(notificationChannelName(admin.id), 'new-notification', {
+          message: reportMessage,
+          link: '/admin',
+          created_at: new Date().toISOString(),
+        })));
+      } catch (error) {
+        console.error('Pusher Report Error:', error);
       }
+      revalidatePath('/admin');
+      return { success: true, message: 'ส่งรายงานให้ผู้ดูแลแล้ว' };
     } catch (error) {
-      console.error("Pusher Report Error:", error);
+      console.error('Submit report error:', error);
+      return { success: false, message: 'ส่งรายงานไม่สำเร็จ กรุณาลองใหม่' };
+    }
+  }
+
+  async function moderateTopic(formData) {
+    'use server';
+    try {
+      const actor = await requireUser();
+      if (!isContentModerator(actor)) return { success: false, message: 'คุณไม่มีสิทธิ์จัดการกระทู้นี้' };
+      const topicId = positiveInteger(id, 'topic id');
+      const type = String(formData.get('type') || '');
+      const enabled = String(formData.get('enabled')) === 'true';
+      const updated = await setTopicModerationState(topicId, type, enabled, actor.id);
+      if (!updated) return { success: false, message: 'ไม่พบกระทู้นี้' };
+      revalidatePath('/');
+      revalidatePath(`/topic/${topicId}`);
+      revalidatePath('/admin');
+      revalidatePath('/admin/topics');
+      return { success: true, message: type === 'pin'
+        ? (enabled ? 'ปักหมุดกระทู้แล้ว' : 'ยกเลิกปักหมุดแล้ว')
+        : (enabled ? 'ล็อกกระทู้แล้ว' : 'ปลดล็อกกระทู้แล้ว') };
+    } catch (error) {
+      console.error('Topic moderation error:', error);
+      return { success: false, message: 'จัดการสถานะกระทู้ไม่สำเร็จ กรุณาลองใหม่' };
     }
   }
   // --- Render UI ---
@@ -433,6 +487,7 @@ export default async function TopicDetailPage({ params }) {
           <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
             <Link href="/" className="inline-flex min-h-10 items-center gap-2 rounded-lg px-2 text-sm font-medium text-[var(--app-text-muted)] transition-colors hover:bg-[var(--app-surface-subtle)] hover:text-[var(--app-primary)]"><ArrowLeft aria-hidden="true" size={17} /> กลับหน้าหลัก</Link>
             <div className="flex flex-wrap items-center gap-2">
+                {isModerator ? <TopicModerationActions action={moderateTopic} initialPinned={Boolean(topic.is_pinned)} initialLocked={Boolean(topic.is_locked)} /> : null}
                 {currentUser && <ReportButton targetId={id} type="topic" reportAction={submitReport} />}
                 {isOwner && <Link href={`/edit/${id}`} className="inline-flex min-h-10 items-center gap-2 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-sm font-semibold text-amber-700 transition-colors hover:bg-amber-100 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-300"><Edit3 aria-hidden="true" size={16} /> แก้ไข</Link>}
                 {(isOwner || isModerator) && (
@@ -456,6 +511,8 @@ export default async function TopicDetailPage({ params }) {
             {/* Topic Header Area */}
             <header className="border-b border-[var(--app-border)] bg-zinc-950 px-5 py-7 text-white sm:px-8 sm:py-9">
                <span className="mb-3 inline-block rounded-md bg-red-600 px-2.5 py-1 text-xs font-semibold">{topic.category}</span>
+               {topic.is_pinned ? <span className="mb-3 ml-2 inline-flex items-center gap-1 rounded-md bg-amber-400 px-2.5 py-1 text-xs font-semibold text-zinc-950"><Pin aria-hidden="true" size={12} /> ปักหมุด</span> : null}
+               {topic.is_locked ? <span className="mb-3 ml-2 inline-flex items-center gap-1 rounded-md bg-zinc-700 px-2.5 py-1 text-xs font-semibold text-white"><Lock aria-hidden="true" size={12} /> ล็อกแล้ว</span> : null}
                <h1 className="max-w-[860px] text-2xl font-bold leading-tight sm:text-3xl md:text-4xl">{topic.title}</h1>
                <div className="mt-5 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-zinc-300">
                  <span className="flex items-center gap-1.5">
@@ -524,6 +581,7 @@ export default async function TopicDetailPage({ params }) {
                       deleteAction={deleteComment}
                       replyAction={addComment}
                       reportAction={submitReport} 
+                      isTopicLocked={Boolean(topic.is_locked)}
                     />
                 ))
               ) : (
@@ -537,13 +595,10 @@ export default async function TopicDetailPage({ params }) {
           {/* Comment Form */}
           <section className="mx-auto max-w-[840px] rounded-xl border border-[var(--app-border)] bg-[var(--app-surface)] p-5 sm:p-6" aria-labelledby="comment-form-heading">
             <h2 id="comment-form-heading" className="mb-4 text-lg font-bold text-[var(--app-text)]">แสดงความคิดเห็น</h2>
-            {currentUser ? (
-              <form action={addComment}>
-                <div className="mb-4 border border-gray-300 rounded-lg overflow-hidden dark:border-neutral-700">
-                   <Editor className="h-32 mb-12 bg-white text-black" />
-                </div>
-                <RippleButton type="submit" className="inline-flex items-center gap-2 rounded-lg bg-[var(--app-primary)] px-5 py-2.5 font-semibold text-white hover:bg-[var(--app-primary-hover)]"><Send aria-hidden="true" size={17} /> ส่งความคิดเห็น</RippleButton>
-              </form>
+            {topic.is_locked ? (
+              <div className="rounded-lg border border-amber-300 bg-amber-50 p-4 text-center text-sm font-medium text-amber-900 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-200">กระทู้นี้ถูกล็อกโดยผู้ดูแล จึงไม่รับความคิดเห็นหรือคำตอบใหม่</div>
+            ) : currentUser ? (
+              <CommentComposer action={addComment} />
             ) : (
               <div className="rounded-lg border border-[var(--app-border)] bg-[var(--app-surface-subtle)] p-4 text-center">
                 <p className="mb-2 text-sm text-[var(--app-text-muted)]">เข้าสู่ระบบเพื่อร่วมตอบคำถามและแลกเปลี่ยนกับชุมชน</p>
@@ -560,7 +615,7 @@ export default async function TopicDetailPage({ params }) {
               </h2>
               <div className="overflow-hidden rounded-xl border border-[var(--app-border)] bg-[var(--app-surface)]">
                 {relatedTopics.map((t, index) => (
-                  <TopicCard key={t.id} index={index} id={t.id} title={t.title} category={t.category} username={t.username} createdAt={t.created_at} imageUrl={t.image_url} excerpt={plainText(t.content).slice(0, 120)} views={t.views || 0} commentCount={0} likeCount={0} />
+                  <TopicCard key={t.id} index={index} id={t.id} title={t.title} category={t.category} username={t.username} createdAt={t.created_at} imageUrl={t.image_url} excerpt={plainText(t.content).slice(0, 120)} views={t.views || 0} commentCount={0} likeCount={0} isPinned={Boolean(t.is_pinned)} isLocked={Boolean(t.is_locked)} />
                 ))}
               </div>
             </section>

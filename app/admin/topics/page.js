@@ -2,6 +2,7 @@ import React from 'react';
 import db from '../../../lib/db';
 import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
+import { after } from 'next/server';
 import Link from 'next/link';
 import Image from 'next/image';
 import DeleteButton from '../DeleteButton'; // ดึงปุ่มจากโฟลเดอร์ admin แม่
@@ -9,6 +10,7 @@ import { getCurrentUser, requireContentModerator } from '../../../lib/auth';
 import { isContentModeratorRole } from '../../../lib/roles';
 import { positiveInteger } from '../../../lib/validation';
 import { deleteTopicCascade } from '../../../lib/moderation';
+import { destroyMediaAsset } from '../../../lib/mediaCleanup';
 import AdminPagination from '../AdminPagination';
 import { ArrowLeft, CalendarDays, Eye, FileText, MessageCircle, Search, Trash2 } from 'lucide-react';
 
@@ -26,10 +28,10 @@ export default async function TopicsManagementPage({ searchParams }) {
   const offset = (page - 1) * pageSize;
   const searchPattern = `%${q}%`;
   const querySQL = `
-    SELECT t.id, t.title, t.content, t.created_at, t.views, u.username, u.avatar_url,
+    SELECT t.id, t.title, t.content, t.created_at, t.views, t.is_pinned, t.is_locked, u.username, u.avatar_url,
     (SELECT COUNT(*) FROM comments WHERE topic_id = t.id) as comment_count
     FROM topics t 
-    JOIN users u ON t.user_id = u.id
+    LEFT JOIN users u ON t.user_id = u.id
     WHERE t.title LIKE ? OR t.content LIKE ?
     ORDER BY t.created_at DESC
     LIMIT ? OFFSET ?
@@ -44,10 +46,11 @@ export default async function TopicsManagementPage({ searchParams }) {
   async function deleteTopic(formData) {
     'use server';
     try {
-      await requireContentModerator();
+      const actor = await requireContentModerator();
       const topicId = positiveInteger(formData.get('topicId'), 'topic id');
-      const deleted = await deleteTopicCascade(topicId);
-      if (!deleted) return { success: false, message: 'ไม่พบกระทู้หรือกระทู้ถูกลบไปแล้ว' };
+      const result = await deleteTopicCascade(topicId, { actorId: actor.id, action: 'topic.delete.moderation' });
+      if (!result.deleted) return { success: false, message: 'ไม่พบกระทู้หรือกระทู้ถูกลบไปแล้ว' };
+      if (result.imagePublicId) after(() => destroyMediaAsset(result.imagePublicId, 'topic_deleted'));
       revalidatePath('/');
       revalidatePath('/admin');
       revalidatePath('/admin/topics');
@@ -90,9 +93,9 @@ export default async function TopicsManagementPage({ searchParams }) {
                         <div className="flex flex-wrap items-center gap-4 text-xs text-[var(--app-muted)]">
                             <span className="flex items-center gap-1 text-gray-600 dark:text-gray-300">
                                 <span className="relative w-5 h-5 rounded-full bg-gray-200 flex items-center justify-center text-[10px] overflow-hidden">
-                                    {t.avatar_url ? <Image src={t.avatar_url} alt={`รูปโปรไฟล์ของ ${t.username}`} fill sizes="20px" className="object-cover" /> : t.username.charAt(0)}
+                                {t.avatar_url ? <Image src={t.avatar_url} alt={`รูปโปรไฟล์ของ ${t.username || 'สมาชิกที่ถูกลบ'}`} fill sizes="20px" className="object-cover" /> : (t.username || '?').charAt(0)}
                                 </span>
-                                {t.username}
+                                {t.username || 'สมาชิกที่ถูกลบ'}
                             </span>
                             <span className="flex items-center gap-1"><CalendarDays aria-hidden="true" size={14} /> {new Date(t.created_at).toLocaleDateString('th-TH')}</span>
                             <span className="flex items-center gap-1"><MessageCircle aria-hidden="true" size={14} /> {t.comment_count}</span>

@@ -55,6 +55,8 @@ export default async function SavedTopicsPage() {
                         views={topic.views}
                         commentCount={topic.comment_count}
                         likeCount={topic.like_count}
+                        isPinned={Boolean(topic.is_pinned)}
+                        isLocked={Boolean(topic.is_locked)}
                     />
                 ))
             ) : (

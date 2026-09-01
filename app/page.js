@@ -50,7 +50,7 @@ export default async function HomePage({ searchParams }) {
   }
   const whereClause = conditions.length > 0 ? ` WHERE ${conditions.join(' AND ')}` : '';
 
-  let orderBy = 'topics.created_at DESC';
+  let orderBy = search ? 'topics.created_at DESC' : 'topics.is_pinned DESC, topics.created_at DESC';
   if (sort === 'popular') orderBy = 'topics.views DESC, topics.created_at DESC';
   if (sort === 'likes') orderBy = 'like_count DESC, topics.created_at DESC';
 
@@ -63,6 +63,8 @@ export default async function HomePage({ searchParams }) {
       topics.content,
       topics.image_url,
       topics.views,
+      topics.is_pinned,
+      topics.is_locked,
       topics.created_at,
       users.username,
       (SELECT COUNT(*) FROM comments WHERE comments.topic_id = topics.id) AS comment_count,
@@ -192,6 +194,8 @@ export default async function HomePage({ searchParams }) {
                 views={topic.views}
                 commentCount={topic.comment_count}
                 likeCount={topic.like_count}
+                isPinned={Boolean(topic.is_pinned)}
+                isLocked={Boolean(topic.is_locked)}
                 index={index}
               />
             )) : (

@@ -48,10 +48,10 @@ export default async function CommentsManagementPage({ searchParams }) {
   async function deleteComment(formData) {
     'use server';
     try {
-      await requireContentModerator();
+      const actor = await requireContentModerator();
       const commentId = positiveInteger(formData.get('commentId'), 'comment id');
-      const deleted = await deleteCommentCascade(commentId);
-      if (!deleted) return { success: false, message: 'ไม่พบความคิดเห็นหรือความคิดเห็นถูกลบไปแล้ว' };
+      const result = await deleteCommentCascade(commentId, { actorId: actor.id, action: 'comment.delete.moderation' });
+      if (!result.deleted) return { success: false, message: 'ไม่พบความคิดเห็นหรือความคิดเห็นถูกลบไปแล้ว' };
       revalidatePath('/admin');
       revalidatePath('/admin/comments');
       revalidatePath('/leaderboard');

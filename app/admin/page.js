@@ -3,12 +3,17 @@ import React from 'react';
 import db from '../../lib/db';
 import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
+import { after } from 'next/server';
 import Link from 'next/link';
 import Image from 'next/image';
 import DeleteButton from './DeleteButton';
 import { getCurrentUser, requireAdmin, requireContentModerator } from '../../lib/auth';
 import { positiveInteger } from '../../lib/validation';
 import { deleteCommentCascade, deleteTopicCascade } from '../../lib/moderation';
+import { destroyMediaAsset } from '../../lib/mediaCleanup';
+import { writeModerationAudit } from '../../lib/audit';
+import UserBanButton from '../../components/UserBanButton';
+import ResolveReportButton from '../../components/ResolveReportButton';
 import { isContentModeratorRole } from '../../lib/roles';
 import { Activity, AlertTriangle, CheckCircle2, ClipboardList, Eye, FileText, LockKeyhole, MessageCircle, Trash2, Users } from 'lucide-react';
 
@@ -65,30 +70,75 @@ export default async function AdminDashboard() {
 
   async function toggleBan(formData) {
     'use server';
+    try {
     const actor = await requireAdmin();
     const userId = positiveInteger(formData.get('userId'), 'user id');
     const [targets] = await db.query('SELECT role, is_banned FROM users WHERE id = ?', [userId]);
     const target = targets[0];
     if (!target || target.role === 'super_admin' || actor.id === userId) throw new Error('Forbidden');
-    await db.query('UPDATE users SET is_banned = ? WHERE id = ?', [!target.is_banned, userId]);
+    const connection = await db.getConnection();
+    try {
+      await connection.beginTransaction();
+      await connection.query(
+        'UPDATE users SET is_banned = ?, session_version = session_version + 1 WHERE id = ?',
+        [!target.is_banned, userId],
+      );
+      await writeModerationAudit({ executor: connection, actorId: actor.id, action: target.is_banned ? 'user.unban' : 'user.ban', targetType: 'user', targetId: userId });
+      await connection.commit();
+    } catch (error) {
+      await connection.rollback();
+      throw error;
+    } finally {
+      connection.release();
+    }
     revalidatePath('/admin');
+    return { success: true, message: target.is_banned ? 'ปลดระงับบัญชีแล้ว' : 'ระงับบัญชีแล้ว' };
+    } catch (error) {
+      console.error('Toggle ban error:', error);
+      return { success: false, message: 'เปลี่ยนสถานะบัญชีไม่สำเร็จ กรุณาลองใหม่' };
+    }
   }
 
   async function resolveReport(formData) {
     'use server';
-    await requireContentModerator();
-    const reportId = positiveInteger(formData.get('reportId'), 'report id');
-    await db.query("UPDATE reports SET status = 'resolved' WHERE id = ?", [reportId]);
-    revalidatePath('/admin');
+    try {
+      const actor = await requireContentModerator();
+      const reportId = positiveInteger(formData.get('reportId'), 'report id');
+      const connection = await db.getConnection();
+      try {
+        await connection.beginTransaction();
+        const [result] = await connection.query(
+          "UPDATE reports SET status = 'resolved' WHERE id = ? AND status = 'pending'",
+          [reportId],
+        );
+        if (!result.affectedRows) {
+          await connection.rollback();
+          return { success: false, message: 'ไม่พบรายงานหรือรายงานถูกปิดไปแล้ว' };
+        }
+        await writeModerationAudit({ executor: connection, actorId: actor.id, action: 'report.resolve', targetType: 'report', targetId: reportId });
+        await connection.commit();
+      } catch (error) {
+        await connection.rollback();
+        throw error;
+      } finally {
+        connection.release();
+      }
+      revalidatePath('/admin');
+      return { success: true, message: 'ปิดรายงานแล้ว' };
+    } catch (error) {
+      console.error('Resolve report error:', error);
+      return { success: false, message: 'ปิดรายงานไม่สำเร็จ กรุณาลองใหม่' };
+    }
   }
 
   async function deleteTopic(formData) {
     'use server';
     try {
-      await requireContentModerator();
+      const actor = await requireContentModerator();
       const topicId = positiveInteger(formData.get('topicId'), 'topic id');
-      const deleted = await deleteTopicCascade(topicId);
-      if (!deleted) return { success: false, message: 'ไม่พบกระทู้หรือกระทู้ถูกลบไปแล้ว' };
+      const result = await deleteTopicCascade(topicId, { actorId: actor.id, action: 'topic.delete.report' });
+      if (!result.deleted) return { success: false, message: 'ไม่พบกระทู้หรือกระทู้ถูกลบไปแล้ว' };
+      if (result.imagePublicId) after(() => destroyMediaAsset(result.imagePublicId, 'topic_deleted'));
       revalidatePath('/');
       revalidatePath('/admin');
       revalidatePath('/admin/topics');
@@ -105,10 +155,10 @@ export default async function AdminDashboard() {
   async function deleteComment(formData) {
     'use server';
     try {
-      await requireContentModerator();
+      const actor = await requireContentModerator();
       const commentId = positiveInteger(formData.get('commentId'), 'comment id');
-      const deleted = await deleteCommentCascade(commentId);
-      if (!deleted) return { success: false, message: 'ไม่พบความคิดเห็นหรือความคิดเห็นถูกลบไปแล้ว' };
+      const result = await deleteCommentCascade(commentId, { actorId: actor.id, action: 'comment.delete.report' });
+      if (!result.deleted) return { success: false, message: 'ไม่พบความคิดเห็นหรือความคิดเห็นถูกลบไปแล้ว' };
       revalidatePath('/admin');
       revalidatePath('/admin/comments');
       revalidatePath('/leaderboard');
@@ -138,6 +188,7 @@ export default async function AdminDashboard() {
                    <LockKeyhole aria-hidden="true" size={15} /> สิทธิ์ผู้ดูแลสูงสุด
                 </div>
             )}
+            {!isTeacher ? <Link href="/admin/audit" className="mt-4 inline-flex items-center gap-2 rounded-xl border border-[var(--app-border)] px-4 py-2 text-sm font-semibold transition-colors hover:bg-[var(--app-surface-subtle)] md:ml-auto md:mt-0"><ClipboardList aria-hidden="true" size={16} /> ประวัติการดูแลระบบ</Link> : null}
         </div>
 
         {/* --- Stats Cards --- */}
@@ -239,10 +290,7 @@ export default async function AdminDashboard() {
                                     <td className="px-6 py-4 text-red-600 dark:text-red-400">{r.reason}</td>
                                     <td className="px-6 py-4">{r.reporter_name}</td>
                                     <td className="px-6 py-4 flex justify-center gap-2">
-                                        <form action={resolveReport}>
-                                            <input type="hidden" name="reportId" value={r.id} />
-                                            <button aria-label="ปิดรายงานโดยไม่ลบเนื้อหา" className="p-2 rounded-lg bg-gray-100 hover:bg-gray-200 dark:bg-neutral-700 dark:hover:bg-neutral-600 text-gray-600 dark:text-gray-300 transition" title="ปิดรายงาน"><Eye aria-hidden="true" size={16} /></button>
-                                        </form>
+                                        <ResolveReportButton action={resolveReport} reportId={r.id} />
                                         {r.topic_id ? (
                                             <DeleteButton 
                                                 action={deleteTopic} 
@@ -378,13 +426,7 @@ export default async function AdminDashboard() {
                                         {/* Actions Panel (Visible on Hover) */}
                                         {showActions && (
                                             <div className="mt-3 flex gap-2 justify-end opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity">
-                                                <form action={toggleBan}>
-                                                    <input type="hidden" name="userId" value={u.id} />
-                                                    <input type="hidden" name="currentStatus" value={u.is_banned ? '1' : '0'} />
-                                                    <button className={`px-2 py-1 rounded text-white text-xs transition ${u.is_banned ? 'bg-gray-500' : 'bg-red-500 hover:bg-red-600'}`}>
-                                                         {u.is_banned ? 'ปลดระงับ' : 'ระงับ'}
-                                                    </button>
-                                                </form>
+                                                <UserBanButton action={toggleBan} userId={u.id} username={u.username} isBanned={Boolean(u.is_banned)} className={`rounded px-2 py-1 text-xs text-white transition ${u.is_banned ? 'bg-gray-500' : 'bg-red-500 hover:bg-red-600'}`} />
                                             </div>
                                         )}
                                     </td>

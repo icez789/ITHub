@@ -9,7 +9,9 @@ import { positiveInteger } from '../../../lib/validation';
 import { ASSIGNABLE_ROLES, isAdminRole, roleLabel } from '../../../lib/roles';
 import AdminPagination from '../AdminPagination';
 import RoleAssignmentForm from '../../../components/RoleAssignmentForm';
-import { ArrowLeft, Ban, CircleCheck, GraduationCap, Search, ShieldCheck, Undo2, Users } from 'lucide-react';
+import { ArrowLeft, Ban, CircleCheck, GraduationCap, Search, Users } from 'lucide-react';
+import { writeModerationAudit } from '../../../lib/audit';
+import UserBanButton from '../../../components/UserBanButton';
 
 export default async function UsersManagementPage({ searchParams }) {
   const currentUser = await getCurrentUser();
@@ -41,14 +43,34 @@ export default async function UsersManagementPage({ searchParams }) {
   // --- Actions ---
   async function toggleBan(formData) {
     'use server';
+    try {
     const actor = await requireAdmin();
     const userId = positiveInteger(formData.get('userId'), 'user id');
     const [target] = await db.query('SELECT role, is_banned FROM users WHERE id = ?', [userId]);
     // กันไม่ให้แบน Super Admin
     if (!target[0] || target[0].role === 'super_admin' || actor.id === userId) throw new Error('Forbidden');
 
-    await db.query('UPDATE users SET is_banned = ? WHERE id = ?', [!target[0].is_banned, userId]);
+    const connection = await db.getConnection();
+    try {
+      await connection.beginTransaction();
+      await connection.query(
+        'UPDATE users SET is_banned = ?, session_version = session_version + 1 WHERE id = ?',
+        [!target[0].is_banned, userId],
+      );
+      await writeModerationAudit({ executor: connection, actorId: actor.id, action: target[0].is_banned ? 'user.unban' : 'user.ban', targetType: 'user', targetId: userId });
+      await connection.commit();
+    } catch (error) {
+      await connection.rollback();
+      throw error;
+    } finally {
+      connection.release();
+    }
     revalidatePath('/admin/users');
+    return { success: true, message: target[0].is_banned ? 'ปลดระงับบัญชีแล้ว' : 'ระงับบัญชีแล้ว' };
+    } catch (error) {
+      console.error('Toggle ban error:', error);
+      return { success: false, message: 'เปลี่ยนสถานะบัญชีไม่สำเร็จ กรุณาลองใหม่' };
+    }
   }
 
   async function setRole(formData) {
@@ -63,7 +85,21 @@ export default async function UsersManagementPage({ searchParams }) {
         return { success: false, message: 'ไม่สามารถเปลี่ยนสิทธิ์บัญชีนี้ได้' };
       }
 
-      await db.query('UPDATE users SET role = ? WHERE id = ?', [nextRole, userId]);
+      const connection = await db.getConnection();
+      try {
+        await connection.beginTransaction();
+        await connection.query(
+          'UPDATE users SET role = ?, session_version = session_version + 1 WHERE id = ?',
+          [nextRole, userId],
+        );
+        await writeModerationAudit({ executor: connection, actorId: actor.id, action: 'user.role.change', targetType: 'user', targetId: userId, metadata: { from: target[0].role, to: nextRole } });
+        await connection.commit();
+      } catch (error) {
+        await connection.rollback();
+        throw error;
+      } finally {
+        connection.release();
+      }
       revalidatePath('/admin');
       revalidatePath('/admin/users');
       return { success: true, role: nextRole };
@@ -158,13 +194,7 @@ export default async function UsersManagementPage({ searchParams }) {
                                                       action={setRole}
                                                     />
                                                 )}
-                                                <form action={toggleBan}>
-                                                    <input type="hidden" name="userId" value={u.id} />
-                                                    <input type="hidden" name="currentStatus" value={u.is_banned ? '1' : '0'} />
-                                                    <button className={`px-3 py-1.5 rounded text-xs text-white transition ${u.is_banned ? 'bg-gray-500 hover:bg-gray-600' : 'bg-red-600 hover:bg-red-700'}`}>
-                                                        <span className="inline-flex items-center gap-1.5">{u.is_banned ? <Undo2 aria-hidden="true" size={14} /> : <ShieldCheck aria-hidden="true" size={14} />}{u.is_banned ? 'ปลดระงับ' : 'ระงับ'}</span>
-                                                    </button>
-                                                </form>
+                                                <UserBanButton action={toggleBan} userId={u.id} username={u.username} isBanned={Boolean(u.is_banned)} className={`rounded px-3 py-1.5 text-xs text-white transition ${u.is_banned ? 'bg-gray-500 hover:bg-gray-600' : 'bg-red-600 hover:bg-red-700'}`} />
                                             </div>
                                         ) : (
                                             <span className="text-xs text-gray-400">จัดการไม่ได้</span>

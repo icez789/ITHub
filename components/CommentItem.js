@@ -5,15 +5,14 @@ import { useRouter } from 'next/navigation';
 import UserBadge from './UserBadge';
 import ReportButton from './ReportButton';
 import { markAsSolution } from '../lib/actions';
-import Editor from './Editor'; 
+import CommentComposer from './CommentComposer';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
-import { Check, CheckCircle2, Reply, Send, Trash2 } from 'lucide-react';
+import { Check, CheckCircle2, Reply, Trash2 } from 'lucide-react';
 import DeleteButton from './DeleteButton';
-// SweetAlert2
-import Swal from 'sweetalert2';
+import ConfirmDialog from './ConfirmDialog';
 
 export default function CommentItem({ 
   comment, 
@@ -22,7 +21,8 @@ export default function CommentItem({
   topicUserId, 
   deleteAction, 
   replyAction, 
-  reportAction 
+  reportAction,
+  isTopicLocked = false,
 }) {
   const router = useRouter();
   const [isReplying, setIsReplying] = useState(false);
@@ -39,35 +39,10 @@ export default function CommentItem({
     isModerator
   );
 
-  const handleMarkAsSolution = () => {
-    Swal.fire({
-        title: 'ยืนยันการเลือกคำตอบ?',
-        text: "คุณต้องการเลือกความคิดเห็นนี้เป็นคำตอบที่ถูกต้องใช่หรือไม่?",
-        icon: 'question', 
-        showCancelButton: true,
-        confirmButtonColor: '#16a34a', 
-        cancelButtonColor: '#d33',     
-        confirmButtonText: 'ใช่, เลือกเลย!',
-        cancelButtonText: 'ยกเลิก',
-        background: document.documentElement.classList.contains('dark') ? '#1f1f1f' : '#ffffff', 
-        color: document.documentElement.classList.contains('dark') ? '#ffffff' : '#000000', 
-    }).then(async (result) => {
-        if (result.isConfirmed) {
-            await markAsSolution(comment.id, comment.topic_id);
-            router.refresh();
-            
-            Swal.fire({
-                title: 'เรียบร้อย!',
-                text: 'เลือกคำตอบสำเร็จแล้ว (+20 XP)',
-                icon: 'success',
-                confirmButtonColor: '#16a34a',
-                timer: 1500, 
-                showConfirmButton: false,
-                background: document.documentElement.classList.contains('dark') ? '#1f1f1f' : '#ffffff',
-                color: document.documentElement.classList.contains('dark') ? '#ffffff' : '#000000',
-            });
-        }
-    });
+  const handleMarkAsSolution = async () => {
+    const result = await markAsSolution(comment.id, comment.topic_id);
+    if (result.success) router.refresh();
+    return result;
   };
 
   return (
@@ -149,7 +124,7 @@ export default function CommentItem({
           )}
 
           <div className="mt-3 flex gap-3 items-center flex-wrap">
-            {currentUser && (
+            {currentUser && !isTopicLocked && (
                 <button 
                     type="button"
                     onClick={() => setIsReplying(!isReplying)}
@@ -160,13 +135,7 @@ export default function CommentItem({
             )}
 
             {isOwnerOfTopic && !isSolved && (
-                <button 
-                    type="button"
-                    onClick={handleMarkAsSolution} 
-                    className="ml-auto inline-flex items-center gap-1 rounded-md border border-emerald-300 px-2 py-1 text-xs font-semibold text-emerald-700 transition-colors hover:bg-emerald-50 dark:border-emerald-800 dark:text-emerald-300 dark:hover:bg-emerald-950/30"
-                >
-                    <Check aria-hidden="true" size={14} /> เลือกเป็นคำตอบ
-                </button>
+                <ConfirmDialog trigger={<><Check aria-hidden="true" size={14} /> เลือกเป็นคำตอบ</>} triggerAriaLabel="เลือกความคิดเห็นนี้เป็นคำตอบ" triggerClassName="ml-auto inline-flex items-center gap-1 rounded-md border border-emerald-300 px-2 py-1 text-xs font-semibold text-emerald-700 transition-colors hover:bg-emerald-50 dark:border-emerald-800 dark:text-emerald-300 dark:hover:bg-emerald-950/30" title="เลือกความคิดเห็นนี้เป็นคำตอบ?" description="ระบบจะย้ายสถานะคำตอบที่ถูกต้องและปรับคะแนนผู้ตอบให้สอดคล้อง" confirmLabel="ยืนยันคำตอบ" pendingLabel="กำลังบันทึก…" onConfirm={handleMarkAsSolution} testId="confirm-solution-dialog" />
             )}
           </div>
         </div>
@@ -191,18 +160,7 @@ export default function CommentItem({
 
       {isReplying && (
         <div className={`mt-2 mb-4 ${comment.parent_id ? 'ml-12 md:ml-16' : 'ml-12 md:ml-16'}`}>
-            <form action={async (formData) => {
-                await replyAction(formData);
-                setIsReplying(false);
-            }} className="flex gap-2 items-start">
-                <div className="flex-1 bg-white dark:bg-black rounded-lg border border-gray-300 dark:border-neutral-700 overflow-hidden">
-                    <Editor className="h-24 bg-white dark:bg-black text-black dark:text-white" />
-                    <input type="hidden" name="parentId" value={comment.id} />
-                </div>
-                <button type="submit" className="mt-1 inline-flex items-center gap-1 whitespace-nowrap rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-blue-700">
-                    <Send aria-hidden="true" size={15} /> ส่ง
-                </button>
-            </form>
+            <CommentComposer action={replyAction} parentId={comment.id} compact onSuccess={() => setIsReplying(false)} />
         </div>
       )}
 
@@ -217,7 +175,8 @@ export default function CommentItem({
                     topicUserId={topicUserId}
                     deleteAction={deleteAction}
                     replyAction={replyAction}
-                    reportAction={reportAction} 
+                    reportAction={reportAction}
+                    isTopicLocked={isTopicLocked}
                 />
             ))}
         </div>
