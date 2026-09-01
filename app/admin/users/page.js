@@ -4,15 +4,17 @@ import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
 import Link from 'next/link';
 import Image from 'next/image';
-import { getCurrentUser, requireAdmin } from '../../../lib/auth';
+import { getCurrentUser, requireAdmin, requireSuperAdmin } from '../../../lib/auth';
 import { positiveInteger } from '../../../lib/validation';
+import { ASSIGNABLE_ROLES, isAdminRole, roleLabel } from '../../../lib/roles';
 import AdminPagination from '../AdminPagination';
-import { ArrowDown, ArrowLeft, ArrowUp, Ban, CircleCheck, Search, ShieldCheck, Undo2, Users } from 'lucide-react';
+import RoleAssignmentForm from '../../../components/RoleAssignmentForm';
+import { ArrowLeft, Ban, CircleCheck, GraduationCap, Search, ShieldCheck, Undo2, Users } from 'lucide-react';
 
 export default async function UsersManagementPage({ searchParams }) {
   const currentUser = await getCurrentUser();
   if (!currentUser) redirect('/login');
-  if (!['admin', 'super_admin'].includes(currentUser.role)) redirect('/');
+  if (!isAdminRole(currentUser.role)) redirect('/');
 
   const isSuperAdmin = currentUser.role === 'super_admin';
   
@@ -26,7 +28,7 @@ export default async function UsersManagementPage({ searchParams }) {
   const querySQL = `
     SELECT id, username, email, role, avatar_url, is_banned FROM users
     WHERE username LIKE ? OR email LIKE ?
-    ORDER BY CASE WHEN role = 'super_admin' THEN 1 WHEN role = 'admin' THEN 2 ELSE 3 END, created_at DESC
+    ORDER BY CASE WHEN role = 'super_admin' THEN 1 WHEN role = 'admin' THEN 2 WHEN role = 'teacher' THEN 3 ELSE 4 END, created_at DESC
     LIMIT ? OFFSET ?
   `;
   const searchPattern = `%${q}%`;
@@ -49,17 +51,26 @@ export default async function UsersManagementPage({ searchParams }) {
     revalidatePath('/admin/users');
   }
 
-  async function toggleAdmin(formData) {
+  async function setRole(formData) {
     'use server';
-    const actor = await requireAdmin();
-    if (actor.role !== 'super_admin') throw new Error('Forbidden');
-    const userId = positiveInteger(formData.get('userId'), 'user id');
-    const [target] = await db.query('SELECT role FROM users WHERE id = ?', [userId]);
-    if (!target[0] || target[0].role === 'super_admin' || actor.id === userId) throw new Error('Forbidden');
+    try {
+      const actor = await requireSuperAdmin();
+      const userId = positiveInteger(formData.get('userId'), 'user id');
+      const nextRole = String(formData.get('role') || '');
+      if (!ASSIGNABLE_ROLES.includes(nextRole)) return { success: false, message: 'ไม่รองรับสิทธิ์ที่เลือก' };
+      const [target] = await db.query('SELECT role FROM users WHERE id = ?', [userId]);
+      if (!target[0] || target[0].role === 'super_admin' || actor.id === userId) {
+        return { success: false, message: 'ไม่สามารถเปลี่ยนสิทธิ์บัญชีนี้ได้' };
+      }
 
-    const newRole = target[0].role === 'admin' ? 'user' : 'admin';
-    await db.query('UPDATE users SET role = ? WHERE id = ?', [newRole, userId]);
-    revalidatePath('/admin/users');
+      await db.query('UPDATE users SET role = ? WHERE id = ?', [nextRole, userId]);
+      revalidatePath('/admin');
+      revalidatePath('/admin/users');
+      return { success: true, role: nextRole };
+    } catch (error) {
+      console.error('Role assignment error:', error);
+      return { success: false, message: 'คุณไม่มีสิทธิ์เปลี่ยนระดับสมาชิก' };
+    }
   }
 
   return (
@@ -121,9 +132,13 @@ export default async function UsersManagementPage({ searchParams }) {
                                         <span className={`text-[10px] px-2 py-1 rounded font-bold border ${
                                             u.role === 'super_admin' ? 'border-yellow-500/50 text-yellow-600 bg-yellow-500/10' :
                                             u.role === 'admin' ? 'border-red-500/50 text-red-600 bg-red-500/10' :
+                                            u.role === 'teacher' ? 'border-blue-500/50 text-blue-600 bg-blue-500/10 dark:text-blue-300' :
                                             'border-gray-300 text-gray-500'
                                         }`}>
-                                            {u.role.toUpperCase()}
+                                            <span className="inline-flex items-center gap-1">
+                                              {u.role === 'teacher' ? <GraduationCap aria-hidden="true" size={12} /> : null}
+                                              {roleLabel(u.role)}
+                                            </span>
                                         </span>
                                     </td>
                                     <td className="px-6 py-4">
@@ -136,12 +151,12 @@ export default async function UsersManagementPage({ searchParams }) {
                                         {showActions ? (
                                             <div className="flex justify-center gap-2">
                                                 {isSuperAdmin && (
-                                                    <form action={toggleAdmin}>
-                                                        <input type="hidden" name="userId" value={u.id} />
-                                                        <button className="px-3 py-1.5 rounded text-xs border border-gray-300 dark:border-neutral-700 hover:bg-gray-100 dark:hover:bg-neutral-800 transition">
-                                                            <span className="inline-flex items-center gap-1.5">{u.role === 'admin' ? <ArrowDown aria-hidden="true" size={14} /> : <ArrowUp aria-hidden="true" size={14} />}{u.role === 'admin' ? 'ลดสิทธิ์' : 'ตั้งเป็นแอดมิน'}</span>
-                                                        </button>
-                                                    </form>
+                                                    <RoleAssignmentForm
+                                                      userId={u.id}
+                                                      username={u.username}
+                                                      initialRole={u.role}
+                                                      action={setRole}
+                                                    />
                                                 )}
                                                 <form action={toggleBan}>
                                                     <input type="hidden" name="userId" value={u.id} />

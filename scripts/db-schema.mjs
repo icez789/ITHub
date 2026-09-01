@@ -168,6 +168,7 @@ export function assertMigration002Complete(state) {
 
 export const integrityChecks = {
   duplicate_usernames: 'SELECT COUNT(*) AS count FROM (SELECT username FROM users GROUP BY username HAVING COUNT(*) > 1) duplicates',
+  invalid_user_roles: "SELECT COUNT(*) AS count FROM users WHERE role NOT IN ('user', 'teacher', 'admin', 'super_admin') OR role IS NULL",
   orphan_topics: 'SELECT COUNT(*) AS count FROM topics t LEFT JOIN users u ON u.id = t.user_id WHERE t.user_id IS NOT NULL AND u.id IS NULL',
   orphan_comments: 'SELECT COUNT(*) AS count FROM comments c LEFT JOIN topics t ON t.id = c.topic_id LEFT JOIN users u ON u.id = c.user_id LEFT JOIN comments p ON p.id = c.parent_id WHERE t.id IS NULL OR (c.user_id IS NOT NULL AND u.id IS NULL) OR (c.parent_id IS NOT NULL AND p.id IS NULL)',
   orphan_likes: 'SELECT COUNT(*) AS count FROM likes l LEFT JOIN users u ON u.id = l.user_id LEFT JOIN topics t ON t.id = l.topic_id WHERE u.id IS NULL OR t.id IS NULL',

@@ -4,6 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Bookmark, Settings } from 'lucide-react';
+import { roleLabel } from '../lib/roles';
 
 export default function ProfileAvatar({ user, updateAvatar, myTopicsCount }) {
   return (
@@ -56,8 +57,13 @@ export default function ProfileAvatar({ user, updateAvatar, myTopicsCount }) {
       <div className="text-left bg-gray-50 p-4 rounded-lg text-sm space-y-2 dark:bg-black dark:border dark:border-neutral-800">
         <div className="flex justify-between">
           <span className="text-gray-500 dark:text-gray-400">สถานะ:</span>
-          <span className={`font-bold ${user.role === 'admin' ? 'text-red-600' : 'text-green-600'}`}>
-            {user.role === 'admin' ? 'Admin (ผู้ดูแล)' : 'สมาชิกทั่วไป'}
+          <span className={`font-bold ${
+            user.role === 'super_admin' ? 'text-amber-600' :
+            user.role === 'admin' ? 'text-red-600' :
+            user.role === 'teacher' ? 'text-blue-600 dark:text-blue-400' :
+            'text-green-600'
+          }`}>
+            {roleLabel(user.role)}
           </span>
         </div>
         <div className="flex justify-between">

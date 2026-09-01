@@ -6,9 +6,10 @@ import { revalidatePath } from 'next/cache';
 import Link from 'next/link';
 import Image from 'next/image';
 import DeleteButton from './DeleteButton';
-import { getCurrentUser, requireAdmin } from '../../lib/auth';
-import { optionalPositiveInteger, positiveInteger } from '../../lib/validation';
+import { getCurrentUser, requireAdmin, requireContentModerator } from '../../lib/auth';
+import { positiveInteger } from '../../lib/validation';
 import { deleteCommentCascade, deleteTopicCascade } from '../../lib/moderation';
+import { isContentModeratorRole } from '../../lib/roles';
 import { Activity, AlertTriangle, CheckCircle2, ClipboardList, Eye, FileText, LockKeyhole, MessageCircle, Trash2, Users } from 'lucide-react';
 
 export default async function AdminDashboard() {
@@ -16,11 +17,12 @@ export default async function AdminDashboard() {
   if (!currentUser) redirect('/login');
   const myRole = currentUser.role;
 
-  if (myRole !== 'admin' && myRole !== 'super_admin') {
+  if (!isContentModeratorRole(myRole)) {
     redirect('/'); 
   }
 
   const isSuperAdmin = myRole === 'super_admin';
+  const isTeacher = myRole === 'teacher';
 
   const [
     [userCountData],
@@ -30,12 +32,12 @@ export default async function AdminDashboard() {
     [reports],
     [latestTopics]
   ] = await Promise.all([
-    db.query('SELECT COUNT(*) as count FROM users'),
+    isTeacher ? Promise.resolve([[{ count: 0 }], []]) : db.query('SELECT COUNT(*) as count FROM users'),
     db.query('SELECT COUNT(*) as count FROM topics'),
     db.query('SELECT COUNT(*) as count FROM comments'),
-    db.query(`
+    isTeacher ? Promise.resolve([[], []]) : db.query(`
       SELECT id, username, role, avatar_url, is_banned FROM users ORDER BY
-      CASE WHEN role = 'super_admin' THEN 1 WHEN role = 'admin' THEN 2 ELSE 3 END, 
+      CASE WHEN role = 'super_admin' THEN 1 WHEN role = 'admin' THEN 2 WHEN role = 'teacher' THEN 3 ELSE 4 END,
       created_at DESC
       LIMIT 20
     `),
@@ -72,22 +74,9 @@ export default async function AdminDashboard() {
     revalidatePath('/admin');
   }
 
-  async function toggleAdmin(formData) {
-    'use server';
-    const actor = await requireAdmin();
-    if (actor.role !== 'super_admin') throw new Error('Forbidden');
-    const userId = positiveInteger(formData.get('userId'), 'user id');
-    const [targets] = await db.query('SELECT role FROM users WHERE id = ?', [userId]);
-    const target = targets[0];
-    if (!target || target.role === 'super_admin' || actor.id === userId) throw new Error('Forbidden');
-    const newRole = target.role === 'admin' ? 'user' : 'admin';
-    await db.query('UPDATE users SET role = ? WHERE id = ?', [newRole, userId]);
-    revalidatePath('/admin');
-  }
-
   async function resolveReport(formData) {
     'use server';
-    await requireAdmin();
+    await requireContentModerator();
     const reportId = positiveInteger(formData.get('reportId'), 'report id');
     await db.query("UPDATE reports SET status = 'resolved' WHERE id = ?", [reportId]);
     revalidatePath('/admin');
@@ -95,30 +84,39 @@ export default async function AdminDashboard() {
 
   async function deleteTopic(formData) {
     'use server';
-    await requireAdmin();
-    const topicId = positiveInteger(formData.get('topicId'), 'topic id');
-    const reportId = optionalPositiveInteger(formData.get('reportId'), 'report id');
-
-    await deleteTopicCascade(topicId);
-
-    if (reportId) {
-        await db.query("UPDATE reports SET status = 'resolved' WHERE id = ?", [reportId]);
+    try {
+      await requireContentModerator();
+      const topicId = positiveInteger(formData.get('topicId'), 'topic id');
+      const deleted = await deleteTopicCascade(topicId);
+      if (!deleted) return { success: false, message: 'ไม่พบกระทู้หรือกระทู้ถูกลบไปแล้ว' };
+      revalidatePath('/');
+      revalidatePath('/admin');
+      revalidatePath('/admin/topics');
+      revalidatePath('/leaderboard');
+      revalidatePath('/profile');
+      revalidatePath('/profile/saved');
+      return { success: true, message: 'ลบกระทู้และรายการรายงานแล้ว' };
+    } catch (error) {
+      console.error('Reported topic deletion error:', error);
+      return { success: false, message: 'ลบกระทู้ไม่สำเร็จ กรุณาลองใหม่' };
     }
-    revalidatePath('/admin');
   }
 
   async function deleteComment(formData) {
     'use server';
-    await requireAdmin();
-    const commentId = positiveInteger(formData.get('commentId'), 'comment id');
-    const reportId = optionalPositiveInteger(formData.get('reportId'), 'report id');
-
-    await deleteCommentCascade(commentId);
-
-    if (reportId) {
-        await db.query("UPDATE reports SET status = 'resolved' WHERE id = ?", [reportId]);
+    try {
+      await requireContentModerator();
+      const commentId = positiveInteger(formData.get('commentId'), 'comment id');
+      const deleted = await deleteCommentCascade(commentId);
+      if (!deleted) return { success: false, message: 'ไม่พบความคิดเห็นหรือความคิดเห็นถูกลบไปแล้ว' };
+      revalidatePath('/admin');
+      revalidatePath('/admin/comments');
+      revalidatePath('/leaderboard');
+      return { success: true, message: 'ลบความคิดเห็นและรายการรายงานแล้ว' };
+    } catch (error) {
+      console.error('Reported comment deletion error:', error);
+      return { success: false, message: 'ลบความคิดเห็นไม่สำเร็จ กรุณาลองใหม่' };
     }
-    revalidatePath('/admin');
   }
 
   return (
@@ -129,10 +127,10 @@ export default async function AdminDashboard() {
         <div className="flex flex-col md:flex-row justify-between items-end mb-10 border-b border-gray-200 dark:border-red-900/30 pb-6">
             <div>
                 <h1 className="flex items-center gap-3 text-3xl font-bold tracking-tight text-gray-900 dark:text-white md:text-4xl">
-                    <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-red-600 text-white"><LockKeyhole aria-hidden="true" size={23} /></span> ศูนย์จัดการระบบ
+                     <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-red-600 text-white"><LockKeyhole aria-hidden="true" size={23} /></span> {isTeacher ? 'ศูนย์ดูแลเนื้อหา' : 'ศูนย์จัดการระบบ'}
                 </h1>
                 <p className="text-gray-500 dark:text-gray-400 mt-2 text-sm font-medium">
-                    ตรวจสอบเนื้อหา สมาชิก และสถานะชุมชน
+                    {isTeacher ? 'ตรวจสอบรายงาน กระทู้ และความคิดเห็นในชุมชน' : 'ตรวจสอบเนื้อหา สมาชิก และสถานะชุมชน'}
                 </p>
             </div>
             {isSuperAdmin && (
@@ -143,10 +141,10 @@ export default async function AdminDashboard() {
         </div>
 
         {/* --- Stats Cards --- */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-10">
+        <div className={`grid grid-cols-1 gap-6 mb-10 ${isTeacher ? 'md:grid-cols-3' : 'md:grid-cols-4'}`}>
            
            {/* Card 1: Users */}
-           <Link href="/admin/users" className="block group">
+           {!isTeacher && <Link href="/admin/users" className="block group">
                 <div className="relative rounded-xl border border-[var(--app-border)] bg-[var(--app-surface)] p-6 shadow-sm transition hover:-translate-y-0.5 hover:border-red-500/50 hover:shadow-md">
                     <div className="absolute top-4 right-4 w-10 h-10 bg-red-100 dark:bg-red-900/30 rounded-lg flex items-center justify-center text-red-600 dark:text-red-400 group-hover:bg-red-600 group-hover:text-white transition-colors">
                          <Users aria-hidden="true" size={20} />
@@ -159,7 +157,7 @@ export default async function AdminDashboard() {
                          เปิดหน้าจัดการสมาชิก
                     </div>
                 </div>
-           </Link>
+           </Link>}
 
           {/* Card 2: Topics */}
           <Link href="/admin/topics" className="block group">
@@ -212,7 +210,7 @@ export default async function AdminDashboard() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             
             {/* Left Column: Recent Topics & Reports */}
-            <div className="lg:col-span-2 space-y-8">
+            <div className={`${isTeacher ? 'lg:col-span-3' : 'lg:col-span-2'} space-y-8`}>
                 
                 {/* --- Reports Section --- */}
                 <div className="bg-white dark:bg-neutral-900 border border-red-200 dark:border-red-900/50 rounded-xl overflow-hidden shadow-lg shadow-red-500/5 mb-8">
@@ -250,8 +248,10 @@ export default async function AdminDashboard() {
                                                 action={deleteTopic} 
                                                 id={r.topic_id} 
                                                 idName="topicId" 
-                                                reportId={r.id}
-                                                ariaLabel="ลบกระทู้ที่ถูกรายงาน"
+                                                 reportId={r.id}
+                                                 ariaLabel="ลบกระทู้ที่ถูกรายงาน"
+                                                 title="ลบกระทู้ที่ถูกรายงาน?"
+                                                 description="กระทู้และข้อมูลที่เกี่ยวข้องทั้งหมด รวมถึงรายการรายงานนี้ จะถูกลบถาวร"
                                                 className="p-2 rounded-lg bg-red-100 hover:bg-red-600 text-red-600 hover:text-white dark:bg-red-900/30 dark:hover:bg-red-600 dark:text-red-400 dark:hover:text-white transition"
                                             >
                                                  <Trash2 aria-hidden="true" size={16} />
@@ -261,8 +261,10 @@ export default async function AdminDashboard() {
                                                 action={deleteComment} 
                                                 id={r.comment_id} 
                                                 idName="commentId" 
-                                                reportId={r.id}
-                                                ariaLabel="ลบความคิดเห็นที่ถูกรายงาน"
+                                                 reportId={r.id}
+                                                 ariaLabel="ลบความคิดเห็นที่ถูกรายงาน"
+                                                 title="ลบความคิดเห็นที่ถูกรายงาน?"
+                                                 description="ความคิดเห็นและรายการรายงานนี้จะถูกลบถาวร แต่คำตอบย่อยจะยังอยู่"
                                                 className="p-2 rounded-lg bg-orange-100 hover:bg-orange-600 text-orange-600 hover:text-white dark:bg-orange-900/30 dark:hover:bg-orange-600 dark:text-orange-400 dark:hover:text-white transition"
                                             >
                                                  <Trash2 aria-hidden="true" size={16} />
@@ -320,6 +322,8 @@ export default async function AdminDashboard() {
                                         id={t.id} 
                                         idName="topicId" 
                                         ariaLabel={`ลบกระทู้ ${t.title}`}
+                                        title={`ลบกระทู้ “${t.title}”?`}
+                                        description="กระทู้และข้อมูลที่เกี่ยวข้องทั้งหมดจะถูกลบถาวร"
                                         className="text-xs text-red-500 hover:text-white border border-red-500/30 hover:bg-red-600 px-3 py-1 rounded transition"
                                     >
                                         ลบ
@@ -334,7 +338,7 @@ export default async function AdminDashboard() {
             </div>
 
             {/* Right Column: User List (Side Panel) */}
-            <div className="lg:col-span-1">
+            {!isTeacher && <div className="lg:col-span-1">
                  <div className="bg-white dark:bg-neutral-900 border border-gray-200 dark:border-neutral-800 rounded-xl overflow-hidden shadow-sm h-full flex flex-col">
                     <div className="px-6 py-4 border-b border-gray-200 dark:border-neutral-800 bg-gray-50 dark:bg-neutral-900">
                         <h3 className="flex items-center gap-2 font-bold text-gray-800 dark:text-gray-200"><ClipboardList aria-hidden="true" size={18} /> จัดการสมาชิก</h3>
@@ -363,9 +367,10 @@ export default async function AdminDashboard() {
                                                 <span className={`text-[10px] px-1.5 py-0.5 rounded border font-semibold ${
                                                     u.role === 'super_admin' ? 'border-yellow-300 text-yellow-700 bg-yellow-50 dark:border-yellow-600 dark:text-yellow-400 dark:bg-yellow-900/20' :
                                                     u.role === 'admin' ? 'border-red-300 text-red-700 bg-red-50 dark:border-red-600 dark:text-red-400 dark:bg-red-900/20' :
+                                                    u.role === 'teacher' ? 'border-blue-300 text-blue-700 bg-blue-50 dark:border-blue-600 dark:text-blue-400 dark:bg-blue-900/20' :
                                                     'border-gray-200 text-gray-500 dark:border-neutral-700 dark:text-gray-500'
                                                 }`}>
-                                                    {u.role}
+                                                    {u.role === 'teacher' ? 'อาจารย์' : u.role}
                                                 </span>
                                             </div>
                                         </div>
@@ -373,13 +378,6 @@ export default async function AdminDashboard() {
                                         {/* Actions Panel (Visible on Hover) */}
                                         {showActions && (
                                             <div className="mt-3 flex gap-2 justify-end opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity">
-                                                <form action={toggleAdmin}>
-                                                    <input type="hidden" name="userId" value={u.id} />
-                                                    <input type="hidden" name="currentRole" value={u.role} />
-                                                    <button className="px-2 py-1 rounded bg-gray-100 hover:bg-gray-200 dark:bg-neutral-700 dark:hover:bg-neutral-600 text-gray-600 dark:text-white text-xs transition border border-gray-200 dark:border-neutral-600">
-                                                         {u.role === 'admin' ? 'ลดสิทธิ์เป็นสมาชิก' : 'ตั้งเป็นแอดมิน'}
-                                                    </button>
-                                                </form>
                                                 <form action={toggleBan}>
                                                     <input type="hidden" name="userId" value={u.id} />
                                                     <input type="hidden" name="currentStatus" value={u.is_banned ? '1' : '0'} />
@@ -397,7 +395,7 @@ export default async function AdminDashboard() {
                         </table>
                     </div>
                 </div>
-            </div>
+            </div>}
 
         </div>
       </div>

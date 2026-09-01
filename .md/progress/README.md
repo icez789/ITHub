@@ -4,6 +4,7 @@
 
 ## รายงานปัจจุบัน
 
+- [`ITHUB_PROGRESS_88_PERCENT.md`](./ITHUB_PROGRESS_88_PERCENT.md) — Teacher content moderation, delete UX/performance และหลักฐาน `_e2e`
 - [`ITHUB_PROGRESS_85_PERCENT.md`](./ITHUB_PROGRESS_85_PERCENT.md) — milestone 85% พร้อมสถานะ implementation, safety gates, test evidence และ rollout blocker
 - [`ITHUB_PROGRESS_75_PERCENT.md`](./ITHUB_PROGRESS_75_PERCENT.md) — ภาพรวมฟีเจอร์ สถานะ 75% ผลการทดสอบ ช่องว่าง และแผนไปสู่ 100% ณ วันที่ 31 สิงหาคม 2026
 

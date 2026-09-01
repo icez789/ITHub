@@ -5,7 +5,8 @@ import { revalidatePath } from 'next/cache';
 import Link from 'next/link';
 import Image from 'next/image';
 import DeleteButton from '../DeleteButton'; // ดึงปุ่มจากโฟลเดอร์ admin แม่
-import { getCurrentUser, requireAdmin } from '../../../lib/auth';
+import { getCurrentUser, requireContentModerator } from '../../../lib/auth';
+import { isContentModeratorRole } from '../../../lib/roles';
 import { positiveInteger } from '../../../lib/validation';
 import { deleteTopicCascade } from '../../../lib/moderation';
 import AdminPagination from '../AdminPagination';
@@ -14,7 +15,7 @@ import { ArrowLeft, CalendarDays, Eye, FileText, MessageCircle, Search, Trash2 }
 export default async function TopicsManagementPage({ searchParams }) {
   const currentUser = await getCurrentUser();
   if (!currentUser) redirect('/login');
-  if (!['admin', 'super_admin'].includes(currentUser.role)) redirect('/');
+  if (!isContentModeratorRole(currentUser.role)) redirect('/');
 
   // Search Logic
   const params = await searchParams;
@@ -42,10 +43,22 @@ export default async function TopicsManagementPage({ searchParams }) {
   // Action ลบกระทู้
   async function deleteTopic(formData) {
     'use server';
-    await requireAdmin();
-    const topicId = positiveInteger(formData.get('topicId'), 'topic id');
-    await deleteTopicCascade(topicId);
-    revalidatePath('/admin/topics');
+    try {
+      await requireContentModerator();
+      const topicId = positiveInteger(formData.get('topicId'), 'topic id');
+      const deleted = await deleteTopicCascade(topicId);
+      if (!deleted) return { success: false, message: 'ไม่พบกระทู้หรือกระทู้ถูกลบไปแล้ว' };
+      revalidatePath('/');
+      revalidatePath('/admin');
+      revalidatePath('/admin/topics');
+      revalidatePath('/leaderboard');
+      revalidatePath('/profile');
+      revalidatePath('/profile/saved');
+      return { success: true, message: 'ลบกระทู้แล้ว' };
+    } catch (error) {
+      console.error('Admin topic deletion error:', error);
+      return { success: false, message: 'ลบกระทู้ไม่สำเร็จ กรุณาลองใหม่' };
+    }
   }
 
   return (
@@ -93,6 +106,8 @@ export default async function TopicsManagementPage({ searchParams }) {
                             id={t.id} 
                             idName="topicId" 
                             ariaLabel={`ลบกระทู้ ${t.title}`}
+                            title={`ลบกระทู้ “${t.title}”?`}
+                            description="กระทู้และความคิดเห็น การถูกใจ รายการบันทึก รายงาน และโพลที่เกี่ยวข้องจะถูกลบถาวร"
                             className="inline-flex items-center gap-1.5 rounded-lg border border-red-200 bg-red-50 px-3 py-1.5 text-xs font-bold text-red-600 transition hover:bg-red-600 hover:text-white dark:border-red-900/40 dark:bg-red-950/30 dark:text-red-400"
                         >
                             <Trash2 aria-hidden="true" size={14} /> ลบ

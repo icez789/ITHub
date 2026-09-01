@@ -16,11 +16,12 @@ import ReportButton from '../../../components/ReportButton';
 import ViewCounter from '../../../components/ViewCounter';
 import PollUI from '../../../components/PollUI'; // ✅ Import โพล
 import TopicEngagementActions from '../../../components/TopicEngagementActions';
+import DeleteButton from '../../../components/DeleteButton';
 
 // Libs & Styles
 import { pusherServer } from '../../../lib/pusher'; 
 import 'highlight.js/styles/atom-one-dark.css'; 
-import { getCurrentUser, isAdmin as isAdminUser, requireUser } from '../../../lib/auth';
+import { getCurrentUser, isContentModerator, requireUser } from '../../../lib/auth';
 import { plainText, sanitizeRichText } from '../../../lib/content';
 import { enforceRateLimit } from '../../../lib/rateLimit';
 import { optionalPositiveInteger, positiveInteger, requiredText } from '../../../lib/validation';
@@ -42,7 +43,7 @@ export default async function TopicDetailPage({ params }) {
   const { id } = await params;
   
   const currentUser = await getCurrentUser();
-  const isAdmin = isAdminUser(currentUser);
+  const isModerator = isContentModerator(currentUser);
 
   // --- 1. เตรียม Queries ทั้งหมด ---
   
@@ -151,12 +152,26 @@ export default async function TopicDetailPage({ params }) {
 
   async function deleteTopic() {
     'use server';
-    const actor = await requireUser();
-    const topicId = positiveInteger(id, 'topic id');
-    const [freshTopics] = await db.query('SELECT user_id FROM topics WHERE id = ?', [topicId]);
-    if (!freshTopics[0] || (freshTopics[0].user_id !== actor.id && !isAdminUser(actor))) throw new Error('Forbidden');
-
-    await deleteTopicCascade(topicId);
+    let topicId;
+    try {
+      const actor = await requireUser();
+      topicId = positiveInteger(id, 'topic id');
+      const [freshTopics] = await db.query('SELECT user_id FROM topics WHERE id = ?', [topicId]);
+      if (!freshTopics[0] || (freshTopics[0].user_id !== actor.id && !isContentModerator(actor))) {
+        return { success: false, message: 'คุณไม่มีสิทธิ์ลบกระทู้นี้' };
+      }
+      const deleted = await deleteTopicCascade(topicId);
+      if (!deleted) return { success: false, message: 'ไม่พบกระทู้หรือกระทู้ถูกลบไปแล้ว' };
+    } catch (error) {
+      console.error('Delete topic error:', error);
+      return { success: false, message: 'ลบกระทู้ไม่สำเร็จ กรุณาลองใหม่' };
+    }
+    revalidatePath('/');
+    revalidatePath('/admin');
+    revalidatePath('/admin/topics');
+    revalidatePath('/leaderboard');
+    revalidatePath('/profile');
+    revalidatePath('/profile/saved');
     redirect('/?notify=delete_success');
   }
   
@@ -320,13 +335,35 @@ export default async function TopicDetailPage({ params }) {
   }
   async function deleteComment(formData) {
     'use server';
-    const actor = await requireUser();
-    const commentId = positiveInteger(formData.get('commentId'), 'comment id');
-    const topicId = positiveInteger(id, 'topic id');
-    const [comments] = await db.query('SELECT user_id FROM comments WHERE id = ? AND topic_id = ?', [commentId, topicId]);
-    if (!comments[0] || (comments[0].user_id !== actor.id && !isAdminUser(actor))) throw new Error('Forbidden');
-    await deleteCommentCascade(commentId);
-    revalidatePath(`/topic/${topicId}`);
+    try {
+      const actor = await requireUser();
+      const commentId = positiveInteger(formData.get('commentId'), 'comment id');
+      const topicId = positiveInteger(id, 'topic id');
+      const [comments] = await db.query(
+        `SELECT c.user_id, t.user_id AS topic_owner_id
+         FROM comments c
+         INNER JOIN topics t ON t.id = c.topic_id
+         WHERE c.id = ? AND c.topic_id = ?`,
+        [commentId, topicId],
+      );
+      if (!comments[0] || (
+        comments[0].user_id !== actor.id
+        && comments[0].topic_owner_id !== actor.id
+        && !isContentModerator(actor)
+      )) {
+        return { success: false, message: 'คุณไม่มีสิทธิ์ลบความคิดเห็นนี้' };
+      }
+      const deleted = await deleteCommentCascade(commentId);
+      if (!deleted) return { success: false, message: 'ไม่พบความคิดเห็นหรือความคิดเห็นถูกลบไปแล้ว' };
+      revalidatePath(`/topic/${topicId}`);
+      revalidatePath('/admin');
+      revalidatePath('/admin/comments');
+      revalidatePath('/leaderboard');
+      return { success: true, message: 'ลบความคิดเห็นแล้ว' };
+    } catch (error) {
+      console.error('Delete comment error:', error);
+      return { success: false, message: 'ลบความคิดเห็นไม่สำเร็จ กรุณาลองใหม่' };
+    }
   }
   async function submitReport(formData) { 
     'use server'; 
@@ -336,22 +373,34 @@ export default async function TopicDetailPage({ params }) {
     const type = formData.get('type'); 
     const reason = requiredText(formData.get('reason'), 'reason', { min: 3, max: 500 });
     
+    let notificationTopicId;
     if (type === 'topic') { 
       const [targets] = await db.query('SELECT id FROM topics WHERE id = ?', [targetId]);
       if (!targets[0]) throw new Error('Invalid report target');
       await db.query('INSERT INTO reports (reporter_id, topic_id, reason) VALUES (?, ?, ?)', [actor.id, targetId, reason]);
+      notificationTopicId = targetId;
     } else if (type === 'comment') { 
-      const [targets] = await db.query('SELECT id FROM comments WHERE id = ?', [targetId]);
+      const [targets] = await db.query('SELECT id, topic_id FROM comments WHERE id = ?', [targetId]);
       if (!targets[0]) throw new Error('Invalid report target');
       await db.query('INSERT INTO reports (reporter_id, comment_id, reason) VALUES (?, ?, ?)', [actor.id, targetId, reason]);
+      notificationTopicId = targets[0].topic_id;
     } else throw new Error('Invalid report type');
+
+    const reportMessage = `มีรายการรายงานใหม่รอตรวจสอบ: ${reason}`;
+    await db.query(
+      `INSERT INTO notifications (user_id, actor_id, topic_id, type, message)
+       SELECT id, ?, ?, 'report', ?
+       FROM users
+       WHERE role IN ('teacher', 'admin', 'super_admin') AND id <> ?`,
+      [actor.id, notificationTopicId, reportMessage, actor.id],
+    );
 
     // 🚀 ยิง Pusher แจ้งเตือน Admin/Super Admin ทุกคนแบบ Real-time
     try {
-      const [admins] = await db.query("SELECT id FROM users WHERE role IN ('admin', 'super_admin')");
+      const [admins] = await db.query("SELECT id FROM users WHERE role IN ('teacher', 'admin', 'super_admin')");
       for (const admin of admins) {
          await pusherServer.trigger(notificationChannelName(admin.id), 'new-notification', {
-            message: `มีรายการรายงานใหม่รอตรวจสอบ: ${reason}`,
+            message: reportMessage,
             link: '/admin', // กดที่กระดิ่งแล้วเด้งไปหน้าแอดมินเลย
             created_at: new Date().toISOString()
          });
@@ -386,7 +435,19 @@ export default async function TopicDetailPage({ params }) {
             <div className="flex flex-wrap items-center gap-2">
                 {currentUser && <ReportButton targetId={id} type="topic" reportAction={submitReport} />}
                 {isOwner && <Link href={`/edit/${id}`} className="inline-flex min-h-10 items-center gap-2 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-sm font-semibold text-amber-700 transition-colors hover:bg-amber-100 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-300"><Edit3 aria-hidden="true" size={16} /> แก้ไข</Link>}
-                {(isOwner || isAdmin) && <form action={deleteTopic}><button type="submit" className="inline-flex min-h-10 items-center gap-2 rounded-lg border border-red-300 bg-red-50 px-3 py-2 text-sm font-semibold text-red-700 transition-colors hover:bg-red-100 dark:border-red-900 dark:bg-red-950/30 dark:text-red-300"><Trash2 aria-hidden="true" size={16} /> {isAdmin && !isOwner ? 'ลบในฐานะแอดมิน' : 'ลบกระทู้'}</button></form>}
+                {(isOwner || isModerator) && (
+                  <DeleteButton
+                    action={deleteTopic}
+                    id={id}
+                    idName="topicId"
+                    ariaLabel={`ลบกระทู้ ${topic.title}`}
+                    title={`ลบกระทู้ “${topic.title}”?`}
+                    description="กระทู้ ความคิดเห็น การถูกใจ รายการบันทึก รายงาน และโพลที่เกี่ยวข้องจะถูกลบถาวร"
+                    className="inline-flex min-h-10 items-center gap-2 rounded-lg border border-red-300 bg-red-50 px-3 py-2 text-sm font-semibold text-red-700 transition-colors hover:bg-red-100 dark:border-red-900 dark:bg-red-950/30 dark:text-red-300"
+                  >
+                    <Trash2 aria-hidden="true" size={16} /> {isModerator && !isOwner ? 'ลบในฐานะผู้ดูแลเนื้อหา' : 'ลบกระทู้'}
+                  </DeleteButton>
+                )}
             </div>
           </div>
 
@@ -458,7 +519,7 @@ export default async function TopicDetailPage({ params }) {
                       key={comment.id} 
                       comment={comment} 
                       currentUser={currentUser} 
-                      isAdmin={isAdmin} 
+                      isModerator={isModerator}
                       topicUserId={topic.user_id}
                       deleteAction={deleteComment}
                       replyAction={addComment}

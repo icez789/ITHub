@@ -7,6 +7,7 @@ import ThemeToggle from './ThemeToggle';
 import NotificationBell from './NotificationBell';
 import SearchInput from './SearchInput';
 import LogoutButton from './LogoutButton';
+import { isContentModeratorRole } from '../lib/roles';
 
 export default async function Navbar() {
   const user = await getCurrentUser();
@@ -54,13 +55,13 @@ export default async function Navbar() {
                 currentUserId={user.id}
               />
 
-              {(user.role === 'admin' || user.role === 'super_admin') && (
+              {isContentModeratorRole(user.role) && (
                 <Link
                   href="/admin"
                   className="hidden items-center gap-2 rounded-xl border border-[var(--app-border)] px-3 py-2 text-sm font-semibold text-zinc-700 transition-colors hover:bg-zinc-100 lg:flex dark:text-zinc-200 dark:hover:bg-zinc-800"
                 >
                   <ShieldCheck aria-hidden="true" className="h-4 w-4" />
-                  ผู้ดูแล
+                  {user.role === 'teacher' ? 'ศูนย์ดูแลเนื้อหา' : 'ผู้ดูแล'}
                 </Link>
               )}
 

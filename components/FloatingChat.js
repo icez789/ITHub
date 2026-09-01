@@ -7,6 +7,7 @@ import remarkGfm from 'remark-gfm';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { Bot, Maximize2, MessageCircle, Minimize2, Send, Trash2, X } from 'lucide-react';
+import ConfirmDialog from './ConfirmDialog';
 
 const INITIAL_MESSAGES = [{ role: 'bot', text: 'สวัสดีครับ! ITHub Bot 🤖 พร้อมช่วยเหลือ มีอะไรให้ผมรับใช้ครับ?' }];
 
@@ -62,12 +63,11 @@ export default function FloatingChat() {
   };
 
   // 🚀 ฟังก์ชันล้างแชท (เคลียร์ความจำ)
-  const clearChat = () => {
-    if(confirm('ต้องการล้างประวัติการสนทนาทั้งหมดหรือไม่?')) {
-        const initMsg = [{ role: 'bot', text: 'รีเซ็ตระบบเรียบร้อย! มีอะไรให้ผมช่วยไหมครับ? 🤖' }];
-        setMessages(initMsg);
-        localStorage.setItem('ithub_bot_chat', JSON.stringify(initMsg));
-    }
+  const clearChat = async () => {
+    const initMsg = [{ role: 'bot', text: 'รีเซ็ตระบบเรียบร้อย! มีอะไรให้ผมช่วยไหมครับ? 🤖' }];
+    setMessages(initMsg);
+    localStorage.setItem('ithub_bot_chat', JSON.stringify(initMsg));
+    return { success: true, message: 'ล้างประวัติ ITHub Bot แล้ว' };
   };
 
   return (
@@ -92,9 +92,16 @@ export default function FloatingChat() {
             
             <div className="flex items-center gap-1">
               {/* ปุ่มล้างแชท */}
-              <button type="button" onClick={clearChat} title="ล้างแชท" aria-label="ล้างประวัติแชท" className="hover:bg-red-800 p-2 rounded-lg transition">
-                <Trash2 aria-hidden="true" className="h-4 w-4" />
-              </button>
+              <ConfirmDialog
+                trigger={<Trash2 aria-hidden="true" className="h-4 w-4" />}
+                triggerAriaLabel="ล้างประวัติแชท"
+                triggerClassName="rounded-lg p-2 transition hover:bg-red-800"
+                title="ล้างประวัติ ITHub Bot?"
+                description="ข้อความทั้งหมดที่บันทึกไว้ในเบราว์เซอร์นี้จะถูกลบถาวร และเริ่มการสนทนาใหม่"
+                confirmLabel="ยืนยันการล้าง"
+                pendingLabel="กำลังล้าง…"
+                onConfirm={clearChat}
+              />
               
               {/* ปุ่มขยายหน้าจอ */}
               <button type="button" onClick={() => setIsExpanded(!isExpanded)} title={isExpanded ? "ย่อหน้าจอ" : "ขยายหน้าจอ"} aria-label={isExpanded ? "ย่อหน้าต่างแชท" : "ขยายหน้าต่างแชท"} className="hover:bg-red-800 p-2 rounded-lg transition hidden sm:block">
