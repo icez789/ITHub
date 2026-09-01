@@ -330,6 +330,14 @@ YYYY-MM-DD — Phase N — ผู้ดำเนินการ
 - ค้างอยู่:
 ```
 
+### 2026-09-01 — Teacher moderation และ destructive-action UX — Codex
+
+- เปลี่ยนแปลง: เพิ่ม native `<dialog>` แบบ reusable แทน browser confirm สำหรับกระทู้ ความคิดเห็น รายงาน และประวัติ ITHub Bot; เพิ่ม pending/error/focus restoration/backdrop/Escape และ Reduced Motion; เพิ่ม badge “อาจารย์” กับศูนย์ดูแลเนื้อหาที่ซ่อนข้อมูลสมาชิก
+- การตัดสินใจ/เหตุผล: ใช้ red/black/white semantic tokens และ Lucide ตามระบบเดิม; modal ล็อกการปิดระหว่าง mutation เพื่อป้องกันการกดซ้ำหรือเข้าใจผิด; role assignment ใช้ controlled client form เพื่อให้ค่าไม่ย้อนหลัง Server Action refresh ข้าม browser
+- Viewport/theme ที่ตรวจ: modal และ moderation flow บน Chromium/Firefox/WebKit; responsive regression เดิมครอบคลุม 390×844, 768×900, 1024×900 และ 1440×1000 รวม Light/Dark/Reduced Motion
+- Tests: lint/build ผ่าน; Playwright production-mode 111/111 แบบ serial บน Chromium/Firefox/WebKit ตรวจ focus, Escape, backdrop, pending, chat clear, Teacher route guards, Super Admin role transitions และ full FK cascade; รอบสุดท้าย feedback 5/10/41ms และ deletion 572/597/536ms
+- ค้างอยู่: Vercel Preview smoke/URL จะบันทึกใน progress report หลัง push; Production ยังไม่ deploy ตามขอบเขตที่อนุมัติ
+
 ### 2026-09-01 — Spotlight Tour continuity — Codex
 
 - เปลี่ยนแปลง: แยกขั้นที่แสดงออกจากขั้นที่กำลังค้นหาและเพิ่ม phase contract `locating/transitioning/settled/fallback`; คง spotlight กับ tooltip เดิมไว้จน target ใหม่พร้อม; เปลี่ยนตำแหน่งด้วย motion เดียวกันโดยไม่ remount; ย้ายสถานะโหลดไปไว้ในปุ่ม; ทำ missing-target fallback ให้อยู่ตำแหน่งล่าสุดและซ่อน spotlight โดยไม่แวบกลางจอ
