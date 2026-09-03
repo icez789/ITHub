@@ -2,7 +2,7 @@
 
 | รายการ | ค่า |
 | --- | --- |
-| สถานะ | Implementation committed — Production blocked by migration 003 |
+| สถานะ | Phase 1 released to Production |
 | วันที่เริ่ม | 2026-09-02 |
 | ผู้ดำเนินการ | Codex |
 | ขอบเขต | UX/UI บนพฤติกรรมเดิม และ 5 palettes × Light/Dark |
@@ -86,10 +86,10 @@ Semantic tokens หลัก: background/canvas, surface, surface-subtle, surfac
 - [x] production build ผ่าน
 - [x] Playwright full suite ผ่าน
 - [x] Preview deployment READY และ visual smoke ของ App Shell, Theme Picker และ Help ผ่าน
-- [ ] Preview data smoke ของ Home/Topic — ถูกบล็อกเพราะ database target ยังไม่ครบ migration 003
+- [x] Preview data smoke ของ Home/Topic หลังใช้ migration 003
 - [x] Commit implementation หลัง QA และ Preview visual smoke
-- [ ] Deploy Production หลังตรวจรับครบ
-- [x] บันทึก commit SHA, Preview URL, production attempt และ rollback evidence
+- [x] Deploy Production หลังตรวจรับครบ
+- [x] บันทึก commit SHA, Preview URL, Production URL และ release evidence
 
 ## Phase 2 backlog
 
@@ -129,4 +129,17 @@ Personalized Discovery จะทำภายหลัง: การติดต�
 - Production attempt: deployment `dpl_1CiC7foZLz3fYcjiAqD24kB5Zz6P` build ผ่านและ READY แต่ Home smoke test ไม่ผ่านด้วย `ER_BAD_FIELD_ERROR: Unknown column topics.is_pinned`
 - Recovery: rollback alias `https://ithub-puce.vercel.app` ไป `dpl_424HhbXWgdknsSAbmVAXes8im8hi`; ตรวจแล้ว Home/community feed กลับมาใช้งานได้
 - การตัดสินใจ/เหตุผล: ไม่ promote Preview artifact เพราะใช้ Preview DB เก่า และไม่แก้ production schema โดยไม่มีอำนาจขยายขอบเขต; migration ที่ต้องประเมินคือ `database/migrations/003_security_moderation_and_media.sql`
-- ค้างอยู่: อนุมัติและทำ production migration 003 ด้วย workflow สำรองข้อมูล/ตรวจ preflight แล้วจึง deploy commit `501835a` ใหม่และทำ production smoke test
+- ค้างอยู่ ณ เวลานั้น: อนุมัติและทำ production migration 003 ด้วย workflow ตรวจ preflight แล้วจึง deploy commit `501835a` ใหม่และทำ production smoke test
+
+### 2026-09-03 — Production release — Codex
+
+- Database preflight ก่อน migration ผ่าน: ไม่พบ duplicate username, invalid role, orphan records; application tables 11/11; migration 001–002 มีอยู่ครบ และ migration 003 ยังไม่ถูกใช้
+- ใช้ migration ที่มีอยู่แล้ว `database/migrations/003_security_moderation_and_media.sql` ผ่าน `scripts/db-migrate.mjs`; 001–002 ถูกข้าม และ 003 ถูก apply สำเร็จ โดยไม่มีการแก้ migration file หรือเพิ่ม schema สำหรับระบบธีม
+- Database preflight หลัง migration ผ่าน: `invalid_session_versions`, `invalid_topic_moderation_state`, `invalid_media_cleanup_status` และ orphan checks เป็น 0; migration 003 complete
+- Preview data smoke หลัง migration ผ่านทั้ง Home และ Topic `840001` โดยไม่พบ application error
+- Production deployment: `dpl_1CiC7foZLz3fYcjiAqD24kB5Zz6P` (`READY`) จาก implementation commit `501835af7a3d8d96b288abbf9fe9d99f8fc628ae`
+- Production URL: `https://ithub-puce.vercel.app`; deployment URL: `https://it-p65i11o68-thiraphat-s-projects.vercel.app`
+- Production smoke ผ่าน: Home โหลด community feed, Topic `840001` และ Help เปิดได้, Theme Picker เปลี่ยน `data-palette=ocean` และ `data-mode=light` ได้จริง
+- Runtime log scan หลัง smoke: ไม่พบ `error` หรือ `fatal` ของ deployment ในช่วงตรวจ 5 นาที
+- ไฟล์ `.vercel/production-migration.env` ที่ดึงชั่วคราวถูกลบหลังจบงาน; ไม่บันทึก production environment ลง Git
+- ค้างอยู่: ไม่มีใน Phase 1; Personalized Discovery ยังคงอยู่ใน Phase 2 backlog

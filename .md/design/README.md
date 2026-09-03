@@ -13,7 +13,7 @@
 ## แผนที่กำลังใช้งาน
 
 - **ชื่อ:** ITHub UX/UI and Theme Roadmap — Phase 1
-- **สถานะ:** Implementation committed — Production รอ migration 003; deployment เดิมถูก rollback และยังใช้งานได้
+- **สถานะ:** Phase 1 released to Production — migration 003 และ production smoke ผ่านแล้ว
 - **ทิศทาง:** Clean Technical Community with user-selectable atmosphere
 - **อัปเดตล่าสุด:** 2026-09-03
 - **ไฟล์:** [`ITHUB_UX_THEME_ROADMAP.md`](./ITHUB_UX_THEME_ROADMAP.md)
@@ -22,6 +22,7 @@
 
 ## สรุปรอบล่าสุด
 
+- **Production:** [`https://ithub-puce.vercel.app`](https://ithub-puce.vercel.app) — Phase 1 theme release พร้อม 5 palettes × Light/Dark; Home, Topic, Help และ Theme Picker smoke test ผ่าน
 - [`ITHUB_UX_THEME_ROADMAP.md`](./ITHUB_UX_THEME_ROADMAP.md) — Phase 1 สำหรับ Light mode hierarchy, 5 palettes และ checklist การตรวจรับ
 - [`2026-09-02_ITHUB_94_RELEASE.md`](./2026-09-02_ITHUB_94_RELEASE.md) — moderation states/audit, notification center, mutation feedback และ visual/accessibility evidence
 - [`2026-09-01_TEACHER_DELETE_UX_RELEASE.md`](./2026-09-01_TEACHER_DELETE_UX_RELEASE.md) — Teacher role, modal ยืนยันการลบ และผลวัด cascade deletion
