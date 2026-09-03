@@ -83,20 +83,20 @@ export default function CreateTopicPage() {
   return (
     <main className="ithub-page-container mx-auto max-w-3xl pb-24 pt-8 md:pb-12 md:pt-12">
       <div className="rounded-2xl border border-[var(--app-border)] bg-[var(--app-surface)] p-5 shadow-sm sm:p-8">
-        <h1 className="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-2 dark:text-white">
-          <Plus className="text-red-600" aria-hidden="true" size={25} /> ตั้งกระทู้ใหม่
+        <h1 className="mb-6 flex items-center gap-2 text-2xl font-bold text-[var(--app-text)]">
+          <Plus className="text-[var(--app-accent-text)]" aria-hidden="true" size={25} /> ตั้งกระทู้ใหม่
         </h1>
         
         <form action={handleSubmit} className="flex flex-col gap-6">
           
           <div>
-            <label htmlFor="topic-title" className="block text-gray-700 font-bold mb-2 dark:text-gray-200">หัวข้อกระทู้ <span className="text-red-500">*</span></label>
-            <input id="topic-title" name="title" type="text" required minLength={5} maxLength={160} placeholder="เช่น สอบถามเรื่องการประกอบคอม..." className="w-full bg-gray-50 border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-red-500 dark:bg-black dark:border-neutral-700 dark:text-white dark:placeholder-gray-500" />
+            <label htmlFor="topic-title" className="mb-2 block font-bold text-[var(--app-text)]">หัวข้อกระทู้ <span className="text-[var(--app-danger)]">*</span></label>
+            <input id="topic-title" name="title" type="text" required minLength={5} maxLength={160} placeholder="เช่น สอบถามเรื่องการประกอบคอม..." className="w-full rounded-lg border border-[var(--app-border)] bg-[var(--app-surface-subtle)] p-3 text-[var(--app-text)] placeholder:text-[var(--app-text-muted)] focus:border-[var(--app-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--app-focus-ring)]" />
           </div>
 
           <div>
-            <label htmlFor="topic-category" className="block text-gray-700 font-bold mb-2 dark:text-gray-200">หมวดหมู่ <span className="text-red-500">*</span></label>
-            <select id="topic-category" name="category" required className="w-full bg-gray-50 border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-red-500 dark:bg-black dark:border-neutral-700 dark:text-white cursor-pointer">
+            <label htmlFor="topic-category" className="mb-2 block font-bold text-[var(--app-text)]">หมวดหมู่ <span className="text-[var(--app-danger)]">*</span></label>
+            <select id="topic-category" name="category" required className="w-full cursor-pointer rounded-lg border border-[var(--app-border)] bg-[var(--app-surface-subtle)] p-3 text-[var(--app-text)] focus:border-[var(--app-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--app-focus-ring)]">
               <option value="Hardware">Hardware (อุปกรณ์คอมพิวเตอร์)</option>
               <option value="Software">Software (โปรแกรม & OS)</option>
               <option value="Network">Network (เครือข่าย & Internet)</option>
@@ -106,47 +106,47 @@ export default function CreateTopicPage() {
           </div>
 
           <div>
-            <label id="topic-content-label" className="block text-gray-700 font-bold mb-2 dark:text-gray-200">รายละเอียด <span className="text-red-500">*</span></label>
-            <div role="group" aria-labelledby="topic-content-label" className="border border-gray-300 rounded-lg overflow-hidden dark:border-neutral-700">
+            <label id="topic-content-label" className="mb-2 block font-bold text-[var(--app-text)]">รายละเอียด <span className="text-[var(--app-danger)]">*</span></label>
+            <div role="group" aria-labelledby="topic-content-label" className="overflow-hidden rounded-lg border border-[var(--app-border)]">
                <Editor /> 
             </div>
           </div>
 
           <div>
-            <label htmlFor="topic-image" className="block text-gray-700 font-bold mb-2 dark:text-gray-200">รูปภาพประกอบ (ถ้ามี)</label>
-            <input id="topic-image" name="image" type="file" accept="image/*" className="w-full bg-gray-50 border border-gray-300 rounded-lg p-2 text-sm file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-red-50 file:text-red-700 hover:file:bg-red-100 dark:bg-black dark:border-neutral-700 dark:text-gray-300 dark:file:bg-red-900/30 dark:file:text-red-400 cursor-pointer" />
+            <label htmlFor="topic-image" className="mb-2 block font-bold text-[var(--app-text)]">รูปภาพประกอบ (ถ้ามี)</label>
+            <input id="topic-image" name="image" type="file" accept="image/*" className="w-full cursor-pointer rounded-lg border border-[var(--app-border)] bg-[var(--app-surface-subtle)] p-2 text-sm text-[var(--app-text-muted)] file:mr-4 file:rounded-full file:border-0 file:bg-[var(--app-primary-soft)] file:px-4 file:py-2 file:text-sm file:font-semibold file:text-[var(--app-accent-text)] hover:file:bg-[var(--app-surface-elevated)]" />
           </div>
 
           {/* ✅ ส่วนเพิ่มโพล (Poll Toggle) */}
-          <div className="border-t border-gray-200 pt-6 dark:border-neutral-700">
+          <div className="border-t border-[var(--app-border)] pt-6">
              <div className="flex items-center justify-between mb-4">
-                <label className="text-gray-800 font-bold dark:text-white flex items-center gap-2 cursor-pointer">
+                <label className="flex cursor-pointer items-center gap-2 font-bold text-[var(--app-text)]">
                     <input 
                         type="checkbox" 
                         checked={hasPoll} 
                         onChange={(e) => setHasPoll(e.target.checked)} 
-                        className="w-5 h-5 text-red-600 rounded focus:ring-red-500"
+                        className="h-5 w-5 rounded [accent-color:var(--app-primary)] focus:ring-[var(--app-focus-ring)]"
                     />
-                    <BarChart3 className="text-red-600" aria-hidden="true" size={19} /> เพิ่มโพลสำรวจ
+                    <BarChart3 className="text-[var(--app-accent-text)]" aria-hidden="true" size={19} /> เพิ่มโพลสำรวจ
                 </label>
              </div>
 
              {hasPoll && (
-                 <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 dark:bg-neutral-800 dark:border-neutral-700 animate-in fade-in slide-in-from-top-2">
+                 <div className="animate-in fade-in slide-in-from-top-2 rounded-lg border border-[var(--app-border)] bg-[var(--app-surface-subtle)] p-4 motion-reduce:animate-none">
                     <div className="mb-4">
-                        <label htmlFor="poll-question" className="block text-sm font-bold text-gray-700 mb-1 dark:text-gray-300">คำถามโพล</label>
+                        <label htmlFor="poll-question" className="mb-1 block text-sm font-bold text-[var(--app-text)]">คำถามโพล</label>
                         <input 
                             id="poll-question"
                             type="text" 
                             value={pollQuestion}
                             onChange={(e) => setPollQuestion(e.target.value)}
                             placeholder="เช่น คุณชอบ Framework ตัวไหน?" 
-                            className="w-full bg-white border border-gray-300 rounded p-2 text-sm dark:bg-black dark:border-neutral-600 dark:text-white"
+                            className="w-full rounded border border-[var(--app-border)] bg-[var(--app-surface)] p-2 text-sm text-[var(--app-text)] focus:border-[var(--app-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--app-focus-ring)]"
                         />
                     </div>
                     
                     <div className="space-y-2">
-                        <label className="block text-sm font-bold text-gray-700 dark:text-gray-300">ตัวเลือกคำตอบ</label>
+                        <label className="block text-sm font-bold text-[var(--app-text)]">ตัวเลือกคำตอบ</label>
                         {pollOptions.map((opt, idx) => (
                             <div key={idx} className="flex gap-2">
                                 <input
@@ -155,7 +155,7 @@ export default function CreateTopicPage() {
                                     value={opt}
                                     onChange={(e) => handleOptionChange(idx, e.target.value)}
                                     placeholder={`ตัวเลือกที่ ${idx + 1}`}
-                                    className="flex-1 bg-white border border-gray-300 rounded p-2 text-sm dark:bg-black dark:border-neutral-600 dark:text-white"
+                                    className="flex-1 rounded border border-[var(--app-border)] bg-[var(--app-surface)] p-2 text-sm text-[var(--app-text)] focus:border-[var(--app-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--app-focus-ring)]"
                                 />
                                 {pollOptions.length > 2 && (
                                     <button type="button" aria-label={`ลบตัวเลือกโพลที่ ${idx + 1}`} onClick={() => removeOption(idx)} className="rounded-md px-2 text-red-500 hover:bg-red-50 hover:text-red-700"><Trash2 aria-hidden="true" size={17} /></button>
@@ -165,7 +165,7 @@ export default function CreateTopicPage() {
                     </div>
 
                     {pollOptions.length < 8 && (
-                        <button type="button" onClick={addOption} className="mt-3 text-sm text-red-600 hover:text-red-700 font-bold flex items-center gap-1">
+                        <button type="button" onClick={addOption} className="mt-3 flex items-center gap-1 text-sm font-bold text-[var(--app-accent-text)] hover:text-[var(--app-primary-hover)]">
                             <Plus aria-hidden="true" size={16} /> เพิ่มตัวเลือก
                         </button>
                     )}
@@ -173,7 +173,7 @@ export default function CreateTopicPage() {
              )}
           </div>
 
-          <button type="submit" disabled={isSubmitting} className="mt-2 inline-flex items-center justify-center gap-2 rounded-lg bg-[var(--app-primary)] py-4 font-semibold text-white transition-colors hover:bg-[var(--app-primary-hover)] disabled:cursor-wait disabled:opacity-60">
+          <button type="submit" disabled={isSubmitting} className="mt-2 inline-flex items-center justify-center gap-2 rounded-lg bg-[var(--app-primary)] py-4 font-semibold text-[var(--app-primary-contrast)] transition-colors hover:bg-[var(--app-primary-hover)] disabled:cursor-wait disabled:opacity-60">
               {isSubmitting ? <><LoaderCircle className="animate-spin" aria-hidden="true" size={18} /> กำลังโพสต์...</> : <><Send aria-hidden="true" size={18} /> โพสต์กระทู้</>}
           </button>
         </form>

@@ -24,7 +24,7 @@ export default function TopicEngagementActions({ topicId, isAuthenticated, isLik
           <p className="font-semibold text-[var(--app-text)]">อยากมีส่วนร่วมกับกระทู้นี้?</p>
           <p className="mt-0.5 text-sm text-[var(--app-text-muted)]">เข้าสู่ระบบเพื่อกดถูกใจหรือบันทึกไว้อ่านภายหลัง</p>
         </div>
-        <Link href={`/login?next=/topic/${topicId}`} data-tour="engagement-focus" className="inline-flex min-h-10 items-center gap-2 rounded-lg bg-[var(--app-primary)] px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-[var(--app-primary-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2">
+        <Link href={`/login?next=/topic/${topicId}`} data-tour="engagement-focus" className="inline-flex min-h-10 items-center gap-2 rounded-lg bg-[var(--app-primary)] px-4 py-2 text-sm font-semibold text-[var(--app-primary-contrast)] transition-colors hover:bg-[var(--app-primary-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--app-focus-ring)] focus-visible:ring-offset-2">
           <LogIn aria-hidden="true" size={17} /> เข้าสู่ระบบ
         </Link>
       </div>
@@ -34,14 +34,14 @@ export default function TopicEngagementActions({ topicId, isAuthenticated, isLik
   return (
     <div data-tour="engagement-actions" className="mt-8 flex flex-wrap items-center gap-3 border-t border-[var(--app-border)] pt-5">
       <form action={submitLike}>
-        <button type="submit" data-tour="engagement-focus" disabled={likePending} aria-pressed={isLiked} aria-label={isLiked ? `ยกเลิกถูกใจ กระทู้นี้มี ${likeCount} ถูกใจ` : `ถูกใจกระทู้ กระทู้นี้มี ${likeCount} ถูกใจ`} className={`inline-flex min-h-10 items-center gap-2 rounded-lg border px-4 py-2 text-sm font-semibold transition-colors disabled:cursor-wait disabled:opacity-60 ${isLiked ? 'border-red-200 bg-red-50 text-red-700 dark:border-red-900 dark:bg-red-950/40 dark:text-red-300' : 'border-[var(--app-border)] bg-[var(--app-surface)] text-[var(--app-text-muted)] hover:border-red-300 hover:text-red-600'}`}>
+        <button type="submit" data-tour="engagement-focus" disabled={likePending} aria-pressed={isLiked} aria-label={isLiked ? `ยกเลิกถูกใจ กระทู้นี้มี ${likeCount} ถูกใจ` : `ถูกใจกระทู้ กระทู้นี้มี ${likeCount} ถูกใจ`} className={`inline-flex min-h-10 items-center gap-2 rounded-lg border px-4 py-2 text-sm font-semibold transition-colors disabled:cursor-wait disabled:opacity-60 ${isLiked ? 'border-[var(--app-primary)] bg-[var(--app-primary-soft)] text-[var(--app-accent-text)]' : 'border-[var(--app-border)] bg-[var(--app-surface)] text-[var(--app-text-muted)] hover:border-[var(--app-primary)] hover:text-[var(--app-accent-text)]'}`}>
           {likePending ? <LoaderCircle className="animate-spin" aria-hidden="true" size={17} /> : <Heart aria-hidden="true" fill={isLiked ? 'currentColor' : 'none'} size={17} />}
           <span>{likePending ? 'กำลังบันทึก...' : isLiked ? 'ถูกใจแล้ว' : 'ถูกใจ'}</span>
           <span className="rounded-md bg-black/5 px-1.5 py-0.5 text-xs dark:bg-white/10">{likeCount}</span>
         </button>
       </form>
       <form action={submitBookmark}>
-        <button type="submit" disabled={bookmarkPending} aria-pressed={isBookmarked} aria-label={isBookmarked ? 'นำกระทู้ออกจากรายการที่บันทึก' : 'บันทึกกระทู้ไว้อ่านทีหลัง'} className={`inline-flex min-h-10 items-center gap-2 rounded-lg border px-4 py-2 text-sm font-semibold transition-colors disabled:cursor-wait disabled:opacity-60 ${isBookmarked ? 'border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-900 dark:bg-blue-950/40 dark:text-blue-300' : 'border-[var(--app-border)] bg-[var(--app-surface)] text-[var(--app-text-muted)] hover:border-blue-300 hover:text-blue-600'}`}>
+        <button type="submit" disabled={bookmarkPending} aria-pressed={isBookmarked} aria-label={isBookmarked ? 'นำกระทู้ออกจากรายการที่บันทึก' : 'บันทึกกระทู้ไว้อ่านทีหลัง'} className={`inline-flex min-h-10 items-center gap-2 rounded-lg border px-4 py-2 text-sm font-semibold transition-colors disabled:cursor-wait disabled:opacity-60 ${isBookmarked ? 'border-[var(--app-primary)] bg-[var(--app-primary-soft)] text-[var(--app-accent-text)]' : 'border-[var(--app-border)] bg-[var(--app-surface)] text-[var(--app-text-muted)] hover:border-[var(--app-primary)] hover:text-[var(--app-accent-text)]'}`}>
           {bookmarkPending ? <LoaderCircle className="animate-spin" aria-hidden="true" size={17} /> : <Bookmark aria-hidden="true" fill={isBookmarked ? 'currentColor' : 'none'} size={17} />}
           <span>{bookmarkPending ? 'กำลังบันทึก...' : isBookmarked ? 'บันทึกแล้ว' : 'บันทึก'}</span>
         </button>

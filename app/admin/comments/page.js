@@ -67,40 +67,40 @@ export default async function CommentsManagementPage({ searchParams }) {
        <div>
          <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
             <div>
-                <Link href="/admin" className="mb-3 inline-flex items-center gap-2 text-sm font-semibold text-[var(--app-muted)] hover:text-red-600"><ArrowLeft aria-hidden="true" size={16} /> กลับศูนย์จัดการ</Link>
+                <Link href="/admin" className="mb-3 inline-flex items-center gap-2 text-sm font-semibold text-[var(--app-muted)] hover:text-[var(--app-accent-text)]"><ArrowLeft aria-hidden="true" size={16} /> กลับศูนย์จัดการ</Link>
                 <h1 className="flex items-center gap-3 text-3xl font-bold">
-                    <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-red-600 text-white"><MessageCircle aria-hidden="true" size={22} /></span> จัดการความคิดเห็น
+                    <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-[var(--app-primary)] text-[var(--app-primary-contrast)]"><MessageCircle aria-hidden="true" size={22} /></span> จัดการความคิดเห็น
                 </h1>
             </div>
             <form className="relative w-full md:w-96">
                 <label htmlFor="comment-search" className="sr-only">ค้นหาความคิดเห็น</label>
-                <input id="comment-search" name="q" defaultValue={q} placeholder="ค้นหาความคิดเห็น..." className="w-full rounded-xl border border-[var(--app-border)] bg-[var(--app-surface)] py-2.5 pl-10 pr-4 outline-none transition focus:border-red-500 focus:ring-2 focus:ring-red-500/20"/>
+                <input id="comment-search" name="q" defaultValue={q} placeholder="ค้นหาความคิดเห็น..." className="w-full rounded-xl border border-[var(--app-border)] bg-[var(--app-surface-subtle)] py-2.5 pl-10 pr-4 text-[var(--app-text)] outline-none transition focus:border-[var(--app-primary)] focus:ring-2 focus:ring-[var(--app-focus-ring)]"/>
                 <Search className="absolute left-3 top-3 text-[var(--app-muted)]" aria-hidden="true" size={17} />
             </form>
          </div>
 
          <div className="overflow-hidden rounded-2xl border border-[var(--app-border)] bg-[var(--app-surface)] shadow-sm">
-             <div className="divide-y divide-gray-100 dark:divide-neutral-800">
+             <div className="divide-y divide-[var(--app-border)]">
                 {comments.map((c) => (
-                    <div key={c.id} className="p-6 hover:bg-gray-50 dark:hover:bg-neutral-800/30 transition flex gap-4">
+                    <div key={c.id} className="flex gap-4 p-6 transition hover:bg-[var(--app-surface-subtle)]">
                         <div className="flex-shrink-0">
-                            <div className="relative w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden">
+                            <div className="relative flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-[var(--app-surface-subtle)]">
                                 {c.avatar_url ? <Image src={c.avatar_url} alt={`รูปโปรไฟล์ของ ${c.username}`} fill sizes="40px" className="object-cover" /> : c.username.charAt(0)}
                             </div>
                         </div>
                         <div className="flex-1">
                             <div className="flex justify-between items-start">
                                 <div>
-                                    <span className="font-bold text-gray-900 dark:text-white mr-2">{c.username}</span>
-                                    <span className="text-xs text-gray-400">แสดงความคิดเห็นใน </span>
-                                    <Link href={`/topic/${c.topic_id}`} target="_blank" className="text-xs font-bold text-red-500 hover:underline">
+                                    <span className="mr-2 font-bold text-[var(--app-text)]">{c.username}</span>
+                                    <span className="text-xs text-[var(--app-text-muted)]">แสดงความคิดเห็นใน </span>
+                                    <Link href={`/topic/${c.topic_id}`} target="_blank" className="text-xs font-bold text-[var(--app-accent-text)] hover:underline">
                                         {c.topic_title}
                                     </Link>
                                 </div>
-                                <span className="text-xs text-gray-400">{new Date(c.created_at).toLocaleString('th-TH')}</span>
+                                <span className="text-xs text-[var(--app-text-muted)]">{new Date(c.created_at).toLocaleString('th-TH')}</span>
                             </div>
                             
-                            <p className="mt-2 text-gray-600 dark:text-gray-300 text-sm bg-gray-50 dark:bg-black/20 p-3 rounded-lg border border-gray-100 dark:border-neutral-800">
+                            <p className="mt-2 rounded-lg border border-[var(--app-border)] bg-[var(--app-surface-subtle)] p-3 text-sm text-[var(--app-text-muted)]">
                                 {c.content}
                             </p>
 

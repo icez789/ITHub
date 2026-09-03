@@ -78,7 +78,7 @@ const faqs = [
 export default function HelpPage() {
   return (
     <div className="mx-auto max-w-6xl px-5 py-10 sm:px-6 md:py-16">
-      <header className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-gray-950 via-red-950 to-red-700 px-6 py-10 text-white shadow-xl sm:px-10 md:py-14">
+      <header className="ithub-hero relative overflow-hidden rounded-3xl px-6 py-10 text-white shadow-xl sm:px-10 md:py-14">
         <div className="absolute -right-20 -top-24 h-64 w-64 rounded-full bg-red-500/20 blur-3xl" aria-hidden="true" />
         <div className="relative max-w-3xl">
           <p className="text-sm font-bold uppercase tracking-[0.2em] text-red-200">Guide & Support</p>
@@ -87,7 +87,7 @@ export default function HelpPage() {
             เรียนรู้การใช้งาน ITHub ตั้งแต่ค้นหาความรู้ สร้างกระทู้ ไปจนถึงดูแลบัญชีและใช้งานชุมชนอย่างปลอดภัย
           </p>
           <div className="mt-7 flex flex-col gap-3 sm:flex-row">
-            <OnboardingLauncher className="inline-flex items-center justify-center gap-2 rounded-xl bg-white px-5 py-3 font-bold text-red-700 shadow-lg transition hover:bg-red-50" />
+            <OnboardingLauncher className="inline-flex items-center justify-center gap-2 rounded-xl bg-white px-5 py-3 font-bold text-[var(--app-primary-hover)] shadow-lg transition hover:bg-white/90" />
             <a href="#getting-started" className="inline-flex items-center justify-center rounded-xl border border-white/40 px-5 py-3 font-bold transition hover:bg-white/10">
               อ่านคู่มือทั้งหมด
             </a>
@@ -95,13 +95,13 @@ export default function HelpPage() {
         </div>
       </header>
 
-      <nav aria-label="สารบัญคู่มือ" className="mt-8 rounded-2xl border border-gray-200 bg-white p-5 shadow-sm dark:border-neutral-800 dark:bg-neutral-900">
-        <p className="text-sm font-bold text-gray-500 dark:text-gray-400">ไปยังหัวข้อ</p>
+      <nav aria-label="สารบัญคู่มือ" className="mt-8 rounded-2xl border border-[var(--app-border)] bg-[var(--app-surface)] p-5 shadow-sm">
+        <p className="text-sm font-bold text-[var(--app-text-muted)]">ไปยังหัวข้อ</p>
         <ul className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
           {guideSections.map((section) => {
             const Icon = section.Icon;
             return <li key={section.id}>
-              <a href={`#${section.id}`} className="flex h-full items-center gap-3 rounded-xl px-3 py-3 font-semibold text-gray-700 transition hover:bg-red-50 hover:text-red-700 dark:text-gray-200 dark:hover:bg-red-950/30 dark:hover:text-red-300">
+              <a href={`#${section.id}`} className="flex h-full items-center gap-3 rounded-xl px-3 py-3 font-semibold text-[var(--app-text)] transition hover:bg-[var(--app-primary-soft)] hover:text-[var(--app-accent-text)]">
                 <Icon aria-hidden="true" size={18} />
                 <span>{section.title}</span>
               </a>
@@ -112,9 +112,9 @@ export default function HelpPage() {
 
       <section id="getting-started" aria-labelledby="guide-title" className="scroll-mt-24 pt-14">
         <div className="max-w-3xl">
-          <p className="text-sm font-bold uppercase tracking-[0.18em] text-red-600">เริ่มต้นใช้งาน</p>
-          <h2 id="guide-title" className="mt-2 text-3xl font-black text-gray-900 dark:text-white">คู่มือ ITHub ใน 4 ขั้นตอน</h2>
-          <p className="mt-3 leading-7 text-gray-600 dark:text-gray-300">อ่านตามลำดับสำหรับการใช้งานครั้งแรก หรือเลือกเฉพาะหัวข้อที่ต้องการจากสารบัญด้านบน</p>
+          <p className="text-sm font-bold uppercase tracking-[0.18em] text-[var(--app-accent-text)]">เริ่มต้นใช้งาน</p>
+          <h2 id="guide-title" className="mt-2 text-3xl font-black text-[var(--app-text)]">คู่มือ ITHub ใน 4 ขั้นตอน</h2>
+          <p className="mt-3 leading-7 text-[var(--app-text-muted)]">อ่านตามลำดับสำหรับการใช้งานครั้งแรก หรือเลือกเฉพาะหัวข้อที่ต้องการจากสารบัญด้านบน</p>
         </div>
 
         <div className="mt-8 space-y-6">
@@ -122,7 +122,7 @@ export default function HelpPage() {
             const Icon = section.Icon;
             return <article id={section.id} key={section.id} className="scroll-mt-24 overflow-hidden rounded-2xl border border-[var(--app-border)] bg-[var(--app-surface)] shadow-sm">
               <div className="grid md:grid-cols-[11rem_1fr]">
-                <div className="flex items-center justify-between bg-gray-950 p-6 text-white md:flex-col md:items-start md:justify-start md:p-8">
+                <div className="ithub-hero flex items-center justify-between p-6 text-white md:flex-col md:items-start md:justify-start md:p-8">
                   <Icon aria-hidden="true" size={34} />
                   <div className="text-right md:mt-auto md:text-left">
                     <p className="text-xs font-bold uppercase tracking-[0.18em] text-red-300">ขั้นตอน</p>
@@ -130,12 +130,12 @@ export default function HelpPage() {
                   </div>
                 </div>
                 <div className="p-6 sm:p-8">
-                  <h3 className="text-2xl font-black text-gray-900 dark:text-white">{section.title}</h3>
-                  <p className="mt-3 leading-7 text-gray-600 dark:text-gray-300">{section.description}</p>
+                  <h3 className="text-2xl font-black text-[var(--app-text)]">{section.title}</h3>
+                  <p className="mt-3 leading-7 text-[var(--app-text-muted)]">{section.description}</p>
                   <ul className="mt-5 space-y-3">
                     {section.items.map((item) => (
-                      <li key={item} className="flex gap-3 text-sm leading-6 text-gray-700 dark:text-gray-200">
-                        <Check className="mt-1 shrink-0 text-red-600" aria-hidden="true" size={15} />
+                      <li key={item} className="flex gap-3 text-sm leading-6 text-[var(--app-text)]">
+                        <Check className="mt-1 shrink-0 text-[var(--app-accent-text)]" aria-hidden="true" size={15} />
                         <span>{item}</span>
                       </li>
                     ))}
@@ -143,7 +143,7 @@ export default function HelpPage() {
                   <div className="mt-6 rounded-xl border-l-4 border-amber-400 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-950 dark:bg-amber-950/25 dark:text-amber-100">
                     <strong>เคล็ดลับ:</strong> {section.tip}
                   </div>
-                  <Link href={section.action.href} className="mt-6 inline-flex rounded-xl bg-red-600 px-5 py-3 font-bold text-white transition hover:bg-red-700">
+                  <Link href={section.action.href} className="mt-6 inline-flex rounded-xl bg-[var(--app-primary)] px-5 py-3 font-bold text-[var(--app-primary-contrast)] transition hover:bg-[var(--app-primary-hover)]">
                     {section.action.label}
                   </Link>
                 </div>
@@ -156,9 +156,9 @@ export default function HelpPage() {
       <section aria-labelledby="quick-links-title" className="pt-14">
         <h2 id="quick-links-title" className="text-2xl font-black">ทางลัดที่ใช้บ่อย</h2>
         <div className="mt-5 grid gap-4 sm:grid-cols-3">
-          <Link href="/create" className="rounded-2xl border border-[var(--app-border)] bg-[var(--app-surface)] p-6 transition hover:-translate-y-0.5 hover:border-red-400 hover:shadow-md"><PenLine className="text-red-600" aria-hidden="true" size={22} /><h3 className="mt-3 font-bold">สร้างกระทู้</h3><p className="mt-1 text-sm text-[var(--app-text-muted)]">ถามและแบ่งปันความรู้กับชุมชน</p></Link>
-          <Link href="/notifications" className="rounded-2xl border border-[var(--app-border)] bg-[var(--app-surface)] p-6 transition hover:-translate-y-0.5 hover:border-red-400 hover:shadow-md"><Bell className="text-red-600" aria-hidden="true" size={22} /><h3 className="mt-3 font-bold">การแจ้งเตือน</h3><p className="mt-1 text-sm text-[var(--app-text-muted)]">ดูการตอบกลับและกิจกรรมล่าสุด</p></Link>
-          <Link href="/privacy" className="rounded-2xl border border-[var(--app-border)] bg-[var(--app-surface)] p-6 transition hover:-translate-y-0.5 hover:border-red-400 hover:shadow-md"><ShieldCheck className="text-red-600" aria-hidden="true" size={22} /><h3 className="mt-3 font-bold">ความเป็นส่วนตัว</h3><p className="mt-1 text-sm text-[var(--app-text-muted)]">ดูวิธีที่เราดูแลข้อมูลของคุณ</p></Link>
+          <Link href="/create" className="rounded-2xl border border-[var(--app-border)] bg-[var(--app-surface)] p-6 transition hover:-translate-y-0.5 hover:border-[var(--app-primary)] hover:shadow-md"><PenLine className="text-[var(--app-accent-text)]" aria-hidden="true" size={22} /><h3 className="mt-3 font-bold">สร้างกระทู้</h3><p className="mt-1 text-sm text-[var(--app-text-muted)]">ถามและแบ่งปันความรู้กับชุมชน</p></Link>
+          <Link href="/notifications" className="rounded-2xl border border-[var(--app-border)] bg-[var(--app-surface)] p-6 transition hover:-translate-y-0.5 hover:border-[var(--app-primary)] hover:shadow-md"><Bell className="text-[var(--app-accent-text)]" aria-hidden="true" size={22} /><h3 className="mt-3 font-bold">การแจ้งเตือน</h3><p className="mt-1 text-sm text-[var(--app-text-muted)]">ดูการตอบกลับและกิจกรรมล่าสุด</p></Link>
+          <Link href="/privacy" className="rounded-2xl border border-[var(--app-border)] bg-[var(--app-surface)] p-6 transition hover:-translate-y-0.5 hover:border-[var(--app-primary)] hover:shadow-md"><ShieldCheck className="text-[var(--app-accent-text)]" aria-hidden="true" size={22} /><h3 className="mt-3 font-bold">ความเป็นส่วนตัว</h3><p className="mt-1 text-sm text-[var(--app-text-muted)]">ดูวิธีที่เราดูแลข้อมูลของคุณ</p></Link>
         </div>
       </section>
 
@@ -166,15 +166,15 @@ export default function HelpPage() {
         <h2 id="faq-title" className="text-2xl font-black">คำถามที่พบบ่อย</h2>
         <div className="mt-5 space-y-3">
           {faqs.map(([question, answer]) => (
-            <details key={question} className="group rounded-xl border border-gray-200 bg-white p-5 dark:border-neutral-800 dark:bg-neutral-900">
-              <summary className="flex cursor-pointer list-none justify-between gap-4 font-bold">{question}<span aria-hidden="true" className="text-red-600 transition-transform group-open:rotate-45">＋</span></summary>
-              <p className="pt-4 leading-7 text-gray-600 dark:text-gray-300">{answer}</p>
+            <details key={question} className="group rounded-xl border border-[var(--app-border)] bg-[var(--app-surface)] p-5">
+              <summary className="flex cursor-pointer list-none justify-between gap-4 font-bold">{question}<span aria-hidden="true" className="text-[var(--app-accent-text)] transition-transform group-open:rotate-45 motion-reduce:transition-none">＋</span></summary>
+              <p className="pt-4 leading-7 text-[var(--app-text-muted)]">{answer}</p>
             </details>
           ))}
         </div>
       </section>
 
-      <section className="mt-14 rounded-3xl bg-gradient-to-br from-red-600 to-red-900 p-7 text-white md:p-9">
+      <section className="ithub-hero mt-14 rounded-3xl p-7 text-white md:p-9">
         <h2 className="text-2xl font-black">ยังต้องการความช่วยเหลือ?</h2>
         <p className="mt-2 text-red-100">ส่งรายละเอียดปัญหา URL ของหน้า และขั้นตอนที่ทำก่อนพบปัญหา โดยหลีกเลี่ยงการส่งรหัสผ่านหรือข้อมูลลับ</p>
         <div className="mt-5 flex flex-wrap gap-3">

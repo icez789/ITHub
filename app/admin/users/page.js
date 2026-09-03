@@ -115,9 +115,9 @@ export default async function UsersManagementPage({ searchParams }) {
          {/* Header & Breadcrumb */}
          <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
             <div>
-                <Link href="/admin" className="mb-3 inline-flex items-center gap-2 text-sm font-semibold text-[var(--app-muted)] hover:text-red-600"><ArrowLeft aria-hidden="true" size={16} /> กลับศูนย์จัดการ</Link>
+                <Link href="/admin" className="mb-3 inline-flex items-center gap-2 text-sm font-semibold text-[var(--app-muted)] hover:text-[var(--app-accent-text)]"><ArrowLeft aria-hidden="true" size={16} /> กลับศูนย์จัดการ</Link>
                 <h1 className="flex items-center gap-3 text-3xl font-bold">
-                    <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-red-600 text-white"><Users aria-hidden="true" size={22} /></span> จัดการสมาชิก
+                    <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-[var(--app-primary)] text-[var(--app-primary-contrast)]"><Users aria-hidden="true" size={22} /></span> จัดการสมาชิก
                 </h1>
             </div>
             
@@ -128,7 +128,7 @@ export default async function UsersManagementPage({ searchParams }) {
                     defaultValue={q}
                     id="user-search"
                     placeholder="ค้นหาชื่อผู้ใช้หรืออีเมล..."
-                    className="w-full rounded-xl border border-[var(--app-border)] bg-[var(--app-surface)] py-2.5 pl-10 pr-4 outline-none transition focus:border-red-500 focus:ring-2 focus:ring-red-500/20"
+                    className="w-full rounded-xl border border-[var(--app-border)] bg-[var(--app-surface-subtle)] py-2.5 pl-10 pr-4 text-[var(--app-text)] outline-none transition focus:border-[var(--app-primary)] focus:ring-2 focus:ring-[var(--app-focus-ring)]"
                 />
                 <label htmlFor="user-search" className="sr-only">ค้นหาสมาชิก</label>
                 <Search className="absolute left-3 top-3 text-[var(--app-muted)]" aria-hidden="true" size={17} />
@@ -139,8 +139,8 @@ export default async function UsersManagementPage({ searchParams }) {
          {/* Users Table */}
          <div className="overflow-hidden rounded-2xl border border-[var(--app-border)] bg-[var(--app-surface)] shadow-sm">
             <div className="overflow-x-auto">
-                <table className="w-full text-left text-sm text-gray-600 dark:text-gray-400">
-                    <thead className="bg-gray-100 dark:bg-neutral-950 text-gray-500 dark:text-gray-500 uppercase font-bold text-xs">
+                <table className="w-full text-left text-sm text-[var(--app-text-muted)]">
+                    <thead className="bg-[var(--app-surface-subtle)] text-xs font-bold uppercase text-[var(--app-text-muted)]">
                         <tr>
                             <th className="px-6 py-4">สมาชิก</th>
                             <th className="px-6 py-4">สิทธิ์</th>
@@ -148,20 +148,20 @@ export default async function UsersManagementPage({ searchParams }) {
                             <th className="px-6 py-4 text-center">การจัดการ</th>
                         </tr>
                     </thead>
-                    <tbody className="divide-y divide-gray-100 dark:divide-neutral-800">
+                    <tbody className="divide-y divide-[var(--app-border)]">
                         {users.map((u) => {
                              const isTargetSuperAdmin = u.role === 'super_admin';
                              const showActions = !isTargetSuperAdmin && u.id !== currentUser.id;
 
                             return (
-                                <tr key={u.id} className="hover:bg-gray-50 dark:hover:bg-neutral-800/50 transition">
+                                <tr key={u.id} className="transition hover:bg-[var(--app-surface-subtle)]">
                                     <td className="px-6 py-4 flex items-center gap-3">
-                                        <div className="relative w-10 h-10 rounded-full bg-gray-200 dark:bg-neutral-800 flex items-center justify-center font-bold text-gray-600 dark:text-gray-300 overflow-hidden">
+                                        <div className="relative flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-[var(--app-surface-subtle)] font-bold text-[var(--app-text-muted)]">
                                             {u.avatar_url ? <Image src={u.avatar_url} alt={`รูปโปรไฟล์ของ ${u.username}`} fill sizes="40px" className="object-cover" /> : u.username.charAt(0).toUpperCase()}
                                         </div>
                                         <div>
-                                            <div className="font-bold text-gray-900 dark:text-white">{u.username}</div>
-                                            <div className="text-xs text-gray-400">{u.email}</div>
+                                            <div className="font-bold text-[var(--app-text)]">{u.username}</div>
+                                            <div className="text-xs text-[var(--app-text-muted)]">{u.email}</div>
                                         </div>
                                     </td>
                                     <td className="px-6 py-4">
@@ -169,7 +169,7 @@ export default async function UsersManagementPage({ searchParams }) {
                                             u.role === 'super_admin' ? 'border-yellow-500/50 text-yellow-600 bg-yellow-500/10' :
                                             u.role === 'admin' ? 'border-red-500/50 text-red-600 bg-red-500/10' :
                                             u.role === 'teacher' ? 'border-blue-500/50 text-blue-600 bg-blue-500/10 dark:text-blue-300' :
-                                            'border-gray-300 text-gray-500'
+                                            'border-[var(--app-border)] text-[var(--app-text-muted)]'
                                         }`}>
                                             <span className="inline-flex items-center gap-1">
                                               {u.role === 'teacher' ? <GraduationCap aria-hidden="true" size={12} /> : null}
@@ -197,14 +197,14 @@ export default async function UsersManagementPage({ searchParams }) {
                                                 <UserBanButton action={toggleBan} userId={u.id} username={u.username} isBanned={Boolean(u.is_banned)} className={`rounded px-3 py-1.5 text-xs text-white transition ${u.is_banned ? 'bg-gray-500 hover:bg-gray-600' : 'bg-red-600 hover:bg-red-700'}`} />
                                             </div>
                                         ) : (
-                                            <span className="text-xs text-gray-400">จัดการไม่ได้</span>
+                                            <span className="text-xs text-[var(--app-text-muted)]">จัดการไม่ได้</span>
                                         )}
                                     </td>
                                 </tr>
                             )
                         })}
                         {users.length === 0 && (
-                            <tr><td colSpan="4" className="py-8 text-center text-gray-500">ไม่พบสมาชิก</td></tr>
+                            <tr><td colSpan="4" className="py-8 text-center text-[var(--app-text-muted)]">ไม่พบสมาชิก</td></tr>
                         )}
                     </tbody>
                 </table>

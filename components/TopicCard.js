@@ -28,29 +28,29 @@ export default function TopicCard({
       <Link
         href={`/topic/${id}`}
         data-tour="topic-link"
-        className="ithub-card flex min-w-0 gap-3 p-3.5 transition-[border-color,transform,box-shadow] duration-200 hover:-translate-y-0.5 hover:border-red-300 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500/40 sm:gap-4 sm:p-4"
+        className="ithub-card flex min-w-0 gap-3 p-3.5 transition-[border-color,transform,box-shadow] duration-200 hover:-translate-y-0.5 hover:border-[var(--app-primary)] hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--app-focus-ring)] sm:gap-4 sm:p-4"
       >
         <div className="min-w-0 flex-1">
           <div className="mb-1.5 flex flex-wrap items-center gap-2">
-            <span className="rounded-lg bg-red-50 px-2 py-0.5 text-[11px] font-bold text-red-700 dark:bg-red-950/35 dark:text-red-300">
+            <span className="rounded-lg bg-[var(--app-primary-soft)] px-2 py-0.5 text-[11px] font-bold text-[var(--app-accent-text)]">
               {category}
             </span>
             {isPinned ? <span className="inline-flex items-center gap-1 rounded-lg bg-amber-50 px-2 py-0.5 text-[11px] font-bold text-amber-800 dark:bg-amber-950/35 dark:text-amber-300"><Pin aria-hidden="true" size={11} /> ปักหมุด</span> : null}
             {isLocked ? <span className="inline-flex items-center gap-1 rounded-lg bg-zinc-100 px-2 py-0.5 text-[11px] font-bold text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300"><Lock aria-hidden="true" size={11} /> ล็อกแล้ว</span> : null}
-            <span className="text-xs text-zinc-500 dark:text-zinc-400">{formattedDate}</span>
+            <span className="text-xs text-[var(--app-text-muted)]">{formattedDate}</span>
           </div>
 
-          <h3 className="line-clamp-2 text-base font-bold leading-snug text-zinc-950 transition-colors group-hover:text-red-700 sm:text-lg dark:text-zinc-50 dark:group-hover:text-red-300">
+          <h3 className="line-clamp-2 text-base font-bold leading-snug text-[var(--app-text)] transition-colors group-hover:text-[var(--app-accent-text)] sm:text-lg">
             <span data-tour="topic-card-focus">{title}</span>
           </h3>
 
           {excerpt && (
-            <p className="mt-1.5 hidden line-clamp-2 text-sm leading-6 text-zinc-600 sm:block dark:text-zinc-400">
+            <p className="mt-1.5 hidden line-clamp-2 text-sm leading-6 text-[var(--app-text-muted)] sm:block">
               {excerpt}
             </p>
           )}
 
-          <div className="mt-3 flex flex-wrap items-center justify-between gap-x-4 gap-y-2 text-xs text-zinc-500 dark:text-zinc-400">
+          <div className="mt-3 flex flex-wrap items-center justify-between gap-x-4 gap-y-2 text-xs text-[var(--app-text-muted)]">
             <span className="flex min-w-0 items-center gap-1.5">
               <UserRound aria-hidden="true" className="h-3.5 w-3.5 shrink-0" />
               <span className="max-w-36 truncate">{username || 'ไม่ระบุผู้เขียน'}</span>
@@ -64,7 +64,7 @@ export default function TopicCard({
         </div>
 
         {imageUrl && (
-          <div className="relative h-[66px] w-[88px] shrink-0 overflow-hidden rounded-xl bg-zinc-100 sm:h-24 sm:w-36 dark:bg-zinc-800">
+          <div className="relative h-[66px] w-[88px] shrink-0 overflow-hidden rounded-xl bg-[var(--app-surface-subtle)] sm:h-24 sm:w-36">
             <Image
               src={imageUrl}
               alt=""

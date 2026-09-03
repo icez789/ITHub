@@ -32,8 +32,8 @@ function SidebarItem({ href, icon: Icon, label, active, labelClass, tooltipClass
       title={label}
       className={`group/item relative flex min-h-11 items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition-colors duration-150 ${
         active
-          ? 'bg-red-50 text-red-700 dark:bg-red-950/35 dark:text-red-300'
-          : 'text-zinc-600 hover:bg-zinc-100 hover:text-zinc-950 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-white'
+          ? 'bg-[var(--app-primary-soft)] text-[var(--app-accent-text)]'
+          : 'text-[var(--app-text-muted)] hover:bg-[var(--app-surface-subtle)] hover:text-[var(--app-text)]'
       }`}
     >
       <Icon aria-hidden="true" className="h-5 w-5 shrink-0" strokeWidth={2} />
@@ -140,7 +140,7 @@ export default function Sidebar() {
           onClick={toggleSidebar}
           aria-label={isExpanded ? 'ยุบเมนูด้านข้าง' : 'ขยายเมนูด้านข้าง'}
           aria-expanded={isExpanded}
-          className="flex h-9 w-9 items-center justify-center rounded-xl text-zinc-500 transition-colors hover:bg-zinc-100 hover:text-zinc-950 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-white"
+          className="flex h-9 w-9 items-center justify-center rounded-xl text-[var(--app-text-muted)] transition-colors hover:bg-[var(--app-surface-subtle)] hover:text-[var(--app-text)]"
         >
           <span className={defaultResponsive ? 'hidden xl:block' : isExpanded ? 'block' : 'hidden'}><ChevronLeft aria-hidden="true" className="h-5 w-5" /></span>
           <span className={defaultResponsive ? 'block xl:hidden' : isExpanded ? 'hidden' : 'block'}><ChevronRight aria-hidden="true" className="h-5 w-5" /></span>
@@ -175,11 +175,11 @@ export default function Sidebar() {
         </nav>
       </div>
 
-      <nav aria-label="ข้อมูลเว็บไซต์" className={`shrink-0 border-t border-[var(--app-border)] p-4 text-xs text-zinc-500 dark:text-zinc-400 ${labelClass}`}>
+      <nav aria-label="ข้อมูลเว็บไซต์" className={`shrink-0 border-t border-[var(--app-border)] p-4 text-xs text-[var(--app-text-muted)] ${labelClass}`}>
         <div className="flex flex-wrap gap-x-3 gap-y-1">
-          <Link href="/terms" className="hover:text-red-600">ข้อกำหนด</Link>
-          <Link href="/privacy" className="hover:text-red-600">ความเป็นส่วนตัว</Link>
-          <Link href="/help" className="hover:text-red-600">ช่วยเหลือ</Link>
+          <Link href="/terms" className="hover:text-[var(--app-accent-text)]">ข้อกำหนด</Link>
+          <Link href="/privacy" className="hover:text-[var(--app-accent-text)]">ความเป็นส่วนตัว</Link>
+          <Link href="/help" className="hover:text-[var(--app-accent-text)]">ช่วยเหลือ</Link>
         </div>
       </nav>
     </aside>

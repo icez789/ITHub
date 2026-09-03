@@ -79,9 +79,9 @@ export default function NotificationCenter({ initialNotifications, initialUnread
     <>
       <header className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="mb-2 text-sm font-bold uppercase tracking-[0.2em] text-red-600">Updates</p>
-          <h1 className="text-3xl font-bold text-gray-900 md:text-4xl dark:text-white">การแจ้งเตือน</h1>
-          <p className="mt-2 text-gray-500 dark:text-gray-400">{unreadCount > 0 ? `ยังไม่ได้อ่าน ${unreadCount} รายการ` : 'อ่านครบแล้ว'}</p>
+          <p className="mb-2 text-sm font-bold uppercase tracking-[0.2em] text-[var(--app-accent-text)]">Updates</p>
+          <h1 className="text-3xl font-bold text-[var(--app-text)] md:text-4xl">การแจ้งเตือน</h1>
+          <p className="mt-2 text-[var(--app-text-muted)]">{unreadCount > 0 ? `ยังไม่ได้อ่าน ${unreadCount} รายการ` : 'อ่านครบแล้ว'}</p>
         </div>
         {notifications.length > 0 ? <div className="flex flex-wrap gap-2">
           {unreadCount > 0 ? <button type="button" disabled={isPending} onClick={() => run(() => markNotificationsAsRead(), () => {
@@ -104,10 +104,10 @@ export default function NotificationCenter({ initialNotifications, initialUnread
         {notifications.map((notification) => {
           const Icon = typeIcons[notification.type] || Bell;
           const pending = isPending && pendingId === notification.id;
-          return <article key={notification.id} className={`flex items-start gap-3 border-b border-[var(--app-border)] p-4 last:border-0 sm:gap-4 sm:p-5 ${notification.is_read ? '' : 'bg-red-50/60 dark:bg-red-950/10'}`}>
+          return <article key={notification.id} className={`flex items-start gap-3 border-b border-[var(--app-border)] p-4 last:border-0 sm:gap-4 sm:p-5 ${notification.is_read ? '' : 'bg-[var(--app-primary-soft)]'}`}>
             <button type="button" disabled={pending} onClick={() => openNotification(notification)} className="flex min-w-0 flex-1 gap-3 text-left disabled:opacity-60 sm:gap-4">
-              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[var(--app-surface-subtle)] text-[var(--app-primary)]"><Icon aria-hidden="true" size={20} /></span>
-              <span className="min-w-0 flex-1"><span className="flex items-start justify-between gap-4"><span className="font-medium text-gray-800 dark:text-gray-200">{notification.message}</span>{!notification.is_read ? <span className="mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full bg-red-600" aria-label="ยังไม่ได้อ่าน" /> : null}</span><span className="mt-2 block text-xs text-gray-400">{new Intl.DateTimeFormat('th-TH', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'Asia/Bangkok' }).format(new Date(notification.created_at))}</span></span>
+              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[var(--app-surface-subtle)] text-[var(--app-accent-text)]"><Icon aria-hidden="true" size={20} /></span>
+              <span className="min-w-0 flex-1"><span className="flex items-start justify-between gap-4"><span className="font-medium text-[var(--app-text)]">{notification.message}</span>{!notification.is_read ? <span className="mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full bg-[var(--app-primary)]" aria-label="ยังไม่ได้อ่าน" /> : null}</span><span className="mt-2 block text-xs text-[var(--app-text-muted)]">{new Intl.DateTimeFormat('th-TH', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'Asia/Bangkok' }).format(new Date(notification.created_at))}</span></span>
             </button>
             <ConfirmDialog trigger={<Trash2 aria-hidden="true" size={16} />} triggerAriaLabel="ลบการแจ้งเตือนนี้" triggerClassName="rounded-lg p-2 text-[var(--app-text-muted)] transition-colors hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950/30" title="ลบการแจ้งเตือนนี้?" description="รายการนี้จะถูกลบถาวร แต่จะไม่กระทบเนื้อหาต้นทาง" onConfirm={async () => {
               const result = await deleteNotification(notification.id);
@@ -116,7 +116,7 @@ export default function NotificationCenter({ initialNotifications, initialUnread
             }} />
           </article>;
         })}
-      </section> : <section className="rounded-2xl border border-dashed border-[var(--app-border)] bg-[var(--app-surface)] py-20 text-center"><BellOff className="mx-auto mb-4 text-[var(--app-text-muted)]" aria-hidden="true" size={36} /><h2 className="text-xl font-bold">ยังไม่มีการแจ้งเตือน</h2><p className="mb-6 mt-2 text-gray-500 dark:text-gray-400">เมื่อมีคนตอบหรือถูกใจกระทู้ของคุณ รายการจะปรากฏที่นี่</p><Link href="/" className="inline-flex rounded-xl bg-red-600 px-5 py-3 font-semibold text-white transition-colors hover:bg-red-700">สำรวจกระทู้</Link></section>}
+      </section> : <section className="rounded-2xl border border-dashed border-[var(--app-border)] bg-[var(--app-surface)] py-20 text-center"><BellOff className="mx-auto mb-4 text-[var(--app-text-muted)]" aria-hidden="true" size={36} /><h2 className="text-xl font-bold">ยังไม่มีการแจ้งเตือน</h2><p className="mb-6 mt-2 text-[var(--app-text-muted)]">เมื่อมีคนตอบหรือถูกใจกระทู้ของคุณ รายการจะปรากฏที่นี่</p><Link href="/" className="inline-flex rounded-xl bg-[var(--app-primary)] px-5 py-3 font-semibold text-[var(--app-primary-contrast)] transition-colors hover:bg-[var(--app-primary-hover)]">สำรวจกระทู้</Link></section>}
 
       {totalPages > 1 ? <nav aria-label="หน้าการแจ้งเตือน" className="mt-6 flex items-center justify-center gap-3"><Link aria-disabled={page <= 1} tabIndex={page <= 1 ? -1 : undefined} href={`/notifications?page=${Math.max(1, page - 1)}`} className={`rounded-xl border border-[var(--app-border)] px-4 py-2 text-sm font-semibold ${page <= 1 ? 'pointer-events-none opacity-40' : 'hover:bg-[var(--app-surface-subtle)]'}`}>ก่อนหน้า</Link><span className="text-sm text-[var(--app-text-muted)]">หน้า {page} จาก {totalPages}</span><Link aria-disabled={page >= totalPages} tabIndex={page >= totalPages ? -1 : undefined} href={`/notifications?page=${Math.min(totalPages, page + 1)}`} className={`rounded-xl border border-[var(--app-border)] px-4 py-2 text-sm font-semibold ${page >= totalPages ? 'pointer-events-none opacity-40' : 'hover:bg-[var(--app-surface-subtle)]'}`}>ถัดไป</Link></nav> : null}
     </>

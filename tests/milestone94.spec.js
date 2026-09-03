@@ -17,12 +17,15 @@ async function account() {
 
 async function login(page) {
   await page.goto('/login');
+  await expect(page.locator('html')).toHaveAttribute('data-theme-ready', 'true');
   await page.locator('input[name="email"]').fill(email);
   await page.locator('input[name="password"]').fill(password);
   await page.locator('button[type="submit"]').click();
   await expect(page).toHaveURL((url) => url.pathname === '/');
   await expect(page.getByRole('button', { name: 'ออกจากระบบ' })).toBeVisible();
   await page.waitForLoadState('networkidle');
+  await page.waitForTimeout(100);
+  await expect(page).toHaveURL('/');
 }
 
 async function cleanup() {
@@ -62,11 +65,19 @@ test.describe('Milestone 94 security and community flows', () => {
 
     await login(page);
     await page.goto(`/topic/${topicResult.insertId}`);
-    await page.getByRole('button', { name: /ถูกใจกระทู้/ }).click();
-    await expect.poll(async () => Number((await db.query('SELECT COUNT(*) AS count FROM likes WHERE topic_id = ?', [topicResult.insertId]))[0][0].count)).toBe(1);
+    const likeButton = page.locator('#main-content button[data-tour="engagement-focus"]:visible').first();
+    await likeButton.click();
+    await expect(likeButton).toHaveAttribute('aria-pressed', 'true', { timeout: 15_000 });
+    await expect.poll(
+      async () => Number((await db.query('SELECT COUNT(*) AS count FROM likes WHERE topic_id = ?', [topicResult.insertId]))[0][0].count),
+      { timeout: 15_000 },
+    ).toBe(1);
     await page.locator('.ql-editor').last().fill('ความคิดเห็นสำหรับกระทู้ที่ไม่มีเจ้าของ');
     await page.getByRole('button', { name: 'ส่งความคิดเห็น' }).click();
-    await expect.poll(async () => Number((await db.query('SELECT COUNT(*) AS count FROM comments WHERE topic_id = ?', [topicResult.insertId]))[0][0].count)).toBe(1);
+    await expect.poll(
+      async () => Number((await db.query('SELECT COUNT(*) AS count FROM comments WHERE topic_id = ?', [topicResult.insertId]))[0][0].count),
+      { timeout: 15_000 },
+    ).toBe(1);
   });
 
   test('lets a teacher pin and lock a topic and records audit events', async ({ page }, testInfo) => {
@@ -84,7 +95,7 @@ test.describe('Milestone 94 security and community flows', () => {
       return `${topic.is_pinned}:${topic.is_locked}`;
     }).toBe('1:1');
     await page.reload();
-    await expect(page.getByText('กระทู้นี้ถูกล็อกโดยผู้ดูแล')).toBeVisible();
+    await expect(page.locator('#main-content').getByText('กระทู้นี้ถูกล็อกโดยผู้ดูแล').first()).toBeVisible();
     const [[audit]] = await db.query("SELECT COUNT(*) AS count FROM moderation_audit_logs WHERE actor_id = ? AND target_type = 'topic' AND target_id = ? AND action IN ('topic.pin.enable', 'topic.lock.enable')", [actor.id, String(topicResult.insertId)]);
     expect(Number(audit.count)).toBe(2);
   });

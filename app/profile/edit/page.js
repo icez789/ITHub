@@ -106,10 +106,10 @@ export default async function EditProfilePage({ searchParams }) {
       
       {/* Header & Back Button */}
       <div className="mb-8">
-        <Link href="/profile" className="text-gray-500 hover:text-red-600 dark:text-gray-400 dark:hover:text-red-400 mb-4 inline-flex items-center gap-1 transition-colors">
+        <Link href="/profile" className="mb-4 inline-flex items-center gap-1 text-[var(--app-text-muted)] transition-colors hover:text-[var(--app-accent-text)]">
             <ArrowLeft aria-hidden="true" size={17} /> กลับหน้าโปรไฟล์
         </Link>
-        <h1 className="text-3xl font-bold text-gray-800 dark:text-white flex items-center gap-2">
+        <h1 className="flex items-center gap-2 text-3xl font-bold text-[var(--app-text)]">
             <Settings aria-hidden="true" size={25} /> แก้ไขข้อมูลส่วนตัว
         </h1>
       </div>
@@ -136,16 +136,16 @@ export default async function EditProfilePage({ searchParams }) {
           </div>
       )}
 
-      <div className="bg-white p-8 rounded-xl shadow-lg border border-gray-200 dark:bg-neutral-900 dark:border-neutral-800">
+      <div className="ithub-elevated rounded-xl border border-[var(--app-border)] bg-[var(--app-surface)] p-8">
         
         <form action={updateProfile} className="space-y-6">
             
             {/* ส่วนข้อมูลทั่วไป */}
             <div>
-                <h2 className="text-xl font-bold text-gray-800 border-b pb-2 mb-4 dark:text-gray-200">ข้อมูลทั่วไป</h2>
+                <h2 className="mb-4 border-b border-[var(--app-border)] pb-2 text-xl font-bold text-[var(--app-text)]">ข้อมูลทั่วไป</h2>
                 
                 <div className="mb-4">
-                    <label htmlFor="profile-username" className="block text-sm font-bold text-gray-700 mb-1 dark:text-gray-300">ชื่อผู้ใช้ (Username)</label>
+                    <label htmlFor="profile-username" className="mb-1 block text-sm font-bold text-[var(--app-text)]">ชื่อผู้ใช้ (Username)</label>
                     <input 
                         id="profile-username"
                         name="username" 
@@ -155,12 +155,12 @@ export default async function EditProfilePage({ searchParams }) {
                         minLength={3}
                         maxLength={40}
                         autoComplete="username"
-                        className="w-full bg-gray-50 border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-red-500 dark:bg-black dark:border-neutral-700 dark:text-white" 
+                        className="w-full rounded-lg border border-[var(--app-border)] bg-[var(--app-surface-subtle)] p-3 text-[var(--app-text)] focus:border-[var(--app-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--app-focus-ring)]"
                     />
                 </div>
 
                 <div className="mb-4">
-                    <label htmlFor="profile-bio" className="block text-sm font-bold text-gray-700 mb-1 dark:text-gray-300">คำแนะนำตัว (Bio)</label>
+                    <label htmlFor="profile-bio" className="mb-1 block text-sm font-bold text-[var(--app-text)]">คำแนะนำตัว (Bio)</label>
                     <textarea 
                         id="profile-bio"
                         name="bio" 
@@ -168,19 +168,19 @@ export default async function EditProfilePage({ searchParams }) {
                         placeholder="เขียนอะไรสักหน่อยเกี่ยวกับตัวคุณ..."
                         rows="3"
                         maxLength={500}
-                        className="w-full bg-gray-50 border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-red-500 dark:bg-black dark:border-neutral-700 dark:text-white" 
+                        className="w-full rounded-lg border border-[var(--app-border)] bg-[var(--app-surface-subtle)] p-3 text-[var(--app-text)] focus:border-[var(--app-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--app-focus-ring)]"
                     ></textarea>
                 </div>
             </div>
 
             {/* ส่วนเปลี่ยนรหัสผ่าน */}
-            <div className="bg-gray-50 p-6 rounded-lg border border-gray-200 dark:bg-neutral-800 dark:border-neutral-700">
-                <h2 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2 dark:text-gray-200">
-                     <LockKeyhole aria-hidden="true" size={19} /> เปลี่ยนรหัสผ่าน <span className="text-sm font-normal text-gray-500">(ถ้าต้องการ)</span>
+            <div className="rounded-lg border border-[var(--app-border)] bg-[var(--app-surface-subtle)] p-6">
+                <h2 className="mb-4 flex items-center gap-2 text-lg font-bold text-[var(--app-text)]">
+                     <LockKeyhole aria-hidden="true" size={19} /> เปลี่ยนรหัสผ่าน <span className="text-sm font-normal text-[var(--app-text-muted)]">(ถ้าต้องการ)</span>
                 </h2>
 
                 <div className="mb-4">
-                    <label htmlFor="profile-old-password" className="block text-sm font-medium text-gray-600 mb-1 dark:text-gray-400">รหัสผ่านเดิม</label>
+                    <label htmlFor="profile-old-password" className="mb-1 block text-sm font-medium text-[var(--app-text-muted)]">รหัสผ่านเดิม</label>
                     <input 
                         id="profile-old-password"
                         name="oldPassword" 
@@ -188,13 +188,13 @@ export default async function EditProfilePage({ searchParams }) {
                         maxLength={128}
                         autoComplete="current-password"
                         placeholder="กรอกเพื่อยืนยันการเปลี่ยนรหัส"
-                        className="w-full bg-white border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-red-500 dark:bg-black dark:border-neutral-600 dark:text-white" 
+                        className="w-full rounded-lg border border-[var(--app-border)] bg-[var(--app-surface)] p-3 text-[var(--app-text)] focus:border-[var(--app-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--app-focus-ring)]"
                     />
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                        <label htmlFor="profile-new-password" className="block text-sm font-medium text-gray-600 mb-1 dark:text-gray-400">รหัสผ่านใหม่</label>
+                        <label htmlFor="profile-new-password" className="mb-1 block text-sm font-medium text-[var(--app-text-muted)]">รหัสผ่านใหม่</label>
                         <input 
                             id="profile-new-password"
                             name="newPassword" 
@@ -202,11 +202,11 @@ export default async function EditProfilePage({ searchParams }) {
                             minLength={8}
                             maxLength={128}
                             autoComplete="new-password"
-                            className="w-full bg-white border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-red-500 dark:bg-black dark:border-neutral-600 dark:text-white" 
+                            className="w-full rounded-lg border border-[var(--app-border)] bg-[var(--app-surface)] p-3 text-[var(--app-text)] focus:border-[var(--app-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--app-focus-ring)]"
                         />
                     </div>
                     <div>
-                        <label htmlFor="profile-confirm-password" className="block text-sm font-medium text-gray-600 mb-1 dark:text-gray-400">ยืนยันรหัสใหม่</label>
+                        <label htmlFor="profile-confirm-password" className="mb-1 block text-sm font-medium text-[var(--app-text-muted)]">ยืนยันรหัสใหม่</label>
                         <input 
                             id="profile-confirm-password"
                             name="confirmNewPassword" 
@@ -214,7 +214,7 @@ export default async function EditProfilePage({ searchParams }) {
                             minLength={8}
                             maxLength={128}
                             autoComplete="new-password"
-                            className="w-full bg-white border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-red-500 dark:bg-black dark:border-neutral-600 dark:text-white" 
+                            className="w-full rounded-lg border border-[var(--app-border)] bg-[var(--app-surface)] p-3 text-[var(--app-text)] focus:border-[var(--app-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--app-focus-ring)]"
                         />
                     </div>
                 </div>
@@ -222,10 +222,10 @@ export default async function EditProfilePage({ searchParams }) {
 
             {/* ปุ่มบันทึก */}
             <div className="flex justify-end gap-3 pt-4">
-                <Link href="/profile" className="px-6 py-3 rounded-lg border border-gray-300 text-gray-700 font-bold hover:bg-gray-100 transition dark:text-gray-300 dark:border-neutral-600 dark:hover:bg-neutral-800">
+                <Link href="/profile" className="rounded-lg border border-[var(--app-border)] px-6 py-3 font-bold text-[var(--app-text-muted)] transition hover:bg-[var(--app-surface-subtle)]">
                     ยกเลิก
                 </Link>
-                <button type="submit" className="rounded-lg bg-[var(--app-primary)] px-8 py-3 font-semibold text-white transition-colors hover:bg-[var(--app-primary-hover)]">
+                <button type="submit" className="rounded-lg bg-[var(--app-primary)] px-8 py-3 font-semibold text-[var(--app-primary-contrast)] transition-colors hover:bg-[var(--app-primary-hover)]">
                     บันทึกการแก้ไข
                 </button>
             </div>

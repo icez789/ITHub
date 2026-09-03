@@ -106,16 +106,16 @@ export default async function LoginPage({ searchParams }) {
         <form action={login} className="flex flex-col gap-4">
           <div>
             <label htmlFor="login-email" className="mb-1.5 block text-sm font-medium text-[var(--app-text)]">อีเมล</label>
-            <input id="login-email" name="email" type="email" required autoComplete="email" placeholder="name@example.com" className="w-full rounded-lg border border-[var(--app-border)] bg-[var(--app-surface-subtle)] p-3 text-[var(--app-text)] outline-none transition-shadow focus:ring-2 focus:ring-red-500" />
+            <input id="login-email" name="email" type="email" required autoComplete="email" placeholder="name@example.com" className="w-full rounded-lg border border-[var(--app-border)] bg-[var(--app-surface-subtle)] p-3 text-[var(--app-text)] outline-none transition-shadow focus:border-[var(--app-primary)] focus:ring-2 focus:ring-[var(--app-focus-ring)]" />
           </div>
           <div>
             <label htmlFor="login-password" className="mb-1.5 block text-sm font-medium text-[var(--app-text)]">รหัสผ่าน</label>
-            <input id="login-password" name="password" type="password" required minLength={8} maxLength={128} autoComplete="current-password" placeholder="••••••••" className="w-full rounded-lg border border-[var(--app-border)] bg-[var(--app-surface-subtle)] p-3 text-[var(--app-text)] outline-none transition-shadow focus:ring-2 focus:ring-red-500" />
+            <input id="login-password" name="password" type="password" required minLength={8} maxLength={128} autoComplete="current-password" placeholder="••••••••" className="w-full rounded-lg border border-[var(--app-border)] bg-[var(--app-surface-subtle)] p-3 text-[var(--app-text)] outline-none transition-shadow focus:border-[var(--app-primary)] focus:ring-2 focus:ring-[var(--app-focus-ring)]" />
           </div>
           
           <RippleButton 
             type="submit" 
-            className="mt-2 w-full rounded-lg bg-[var(--app-primary)] py-3 font-semibold text-white hover:bg-[var(--app-primary-hover)]"
+            className="mt-2 w-full rounded-lg bg-[var(--app-primary)] py-3 font-semibold text-[var(--app-primary-contrast)] hover:bg-[var(--app-primary-hover)]"
           >
             เข้าสู่ระบบ
           </RippleButton>

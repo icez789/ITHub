@@ -12,6 +12,10 @@ playwright/.cache
 playwright/.auth
 
 # User-owned document generation workspaces
+.codex-artifacts
 deliverables
 output
+tmp
 tools
+*.pptx
+*.pptx.inspect.ndjson

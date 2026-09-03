@@ -37,13 +37,13 @@ export default function RoleAssignmentForm({ userId, username, initialRole, acti
         value={role}
         disabled={pending}
         onChange={(event) => setRole(event.target.value)}
-        className="rounded border border-gray-300 bg-[var(--app-surface)] px-2 py-1.5 text-xs disabled:opacity-60 dark:border-neutral-700"
+        className="rounded border border-[var(--app-border)] bg-[var(--app-surface)] px-2 py-1.5 text-xs text-[var(--app-text)] disabled:opacity-60"
       >
         {ASSIGNABLE_ROLES.map((optionRole) => (
           <option key={optionRole} value={optionRole}>{roleLabel(optionRole)}</option>
         ))}
       </select>
-      <button disabled={pending} className="inline-flex min-w-24 items-center justify-center gap-1 rounded border border-gray-300 px-3 py-1.5 text-xs transition hover:bg-gray-100 disabled:cursor-wait disabled:opacity-60 dark:border-neutral-700 dark:hover:bg-neutral-800">
+      <button disabled={pending} className="inline-flex min-w-24 items-center justify-center gap-1 rounded border border-[var(--app-border)] px-3 py-1.5 text-xs transition hover:bg-[var(--app-surface-subtle)] disabled:cursor-wait disabled:opacity-60">
         {pending ? <LoaderCircle aria-hidden="true" size={13} className="animate-spin motion-reduce:animate-none" /> : null}
         {pending ? 'กำลังบันทึก…' : 'บันทึกสิทธิ์'}
       </button>

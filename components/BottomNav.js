@@ -43,7 +43,7 @@ export default function BottomNav() {
         if (item.isPrimary) {
           return (
             <Link key={item.label} href={item.href} data-tour="create-topic" aria-label={item.label} aria-current={item.active ? 'page' : undefined} className="relative flex h-16 flex-1 items-center justify-center">
-              <span className="absolute -top-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-red-600 text-white shadow-md shadow-red-600/20 ring-4 ring-[var(--app-background)]">
+              <span className="absolute -top-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-[var(--app-primary)] text-[var(--app-primary-contrast)] shadow-md ring-4 ring-[var(--app-background)]">
                 <Icon aria-hidden="true" className="h-5 w-5" strokeWidth={2.25} />
               </span>
               <span className="sr-only">{item.label}</span>
@@ -57,7 +57,7 @@ export default function BottomNav() {
             href={item.href}
             data-tour={item.label === 'ฉัน' || item.label === 'แจ้งเตือน' ? 'personal-nav' : undefined}
             aria-current={item.active ? 'page' : undefined}
-            className={`flex h-16 flex-1 flex-col items-center justify-center gap-1 text-[10px] font-semibold transition-colors ${item.active ? 'text-red-600 dark:text-red-400' : 'text-zinc-500 hover:text-zinc-900 dark:text-zinc-500 dark:hover:text-zinc-200'}`}
+            className={`flex h-16 flex-1 flex-col items-center justify-center gap-1 text-[10px] font-semibold transition-colors ${item.active ? 'text-[var(--app-accent-text)]' : 'text-[var(--app-text-muted)] hover:text-[var(--app-text)]'}`}
           >
             <Icon aria-hidden="true" className="h-5 w-5" />
             <span>{item.label}</span>

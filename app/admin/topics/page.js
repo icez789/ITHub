@@ -69,30 +69,30 @@ export default async function TopicsManagementPage({ searchParams }) {
        <div>
          <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
             <div>
-                <Link href="/admin" className="mb-3 inline-flex items-center gap-2 text-sm font-semibold text-[var(--app-muted)] hover:text-red-600"><ArrowLeft aria-hidden="true" size={16} /> กลับศูนย์จัดการ</Link>
+                <Link href="/admin" className="mb-3 inline-flex items-center gap-2 text-sm font-semibold text-[var(--app-muted)] hover:text-[var(--app-accent-text)]"><ArrowLeft aria-hidden="true" size={16} /> กลับศูนย์จัดการ</Link>
                 <h1 className="flex items-center gap-3 text-3xl font-bold">
-                    <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-red-600 text-white"><FileText aria-hidden="true" size={22} /></span> จัดการกระทู้
+                    <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-[var(--app-primary)] text-[var(--app-primary-contrast)]"><FileText aria-hidden="true" size={22} /></span> จัดการกระทู้
                 </h1>
             </div>
             <form className="relative w-full md:w-96">
                 <label htmlFor="topic-search" className="sr-only">ค้นหากระทู้</label>
-                <input id="topic-search" name="q" defaultValue={q} placeholder="ค้นหากระทู้..." className="w-full rounded-xl border border-[var(--app-border)] bg-[var(--app-surface)] py-2.5 pl-10 pr-4 outline-none transition focus:border-red-500 focus:ring-2 focus:ring-red-500/20"/>
+                <input id="topic-search" name="q" defaultValue={q} placeholder="ค้นหากระทู้..." className="w-full rounded-xl border border-[var(--app-border)] bg-[var(--app-surface-subtle)] py-2.5 pl-10 pr-4 text-[var(--app-text)] outline-none transition focus:border-[var(--app-primary)] focus:ring-2 focus:ring-[var(--app-focus-ring)]"/>
                 <Search className="absolute left-3 top-3 text-[var(--app-muted)]" aria-hidden="true" size={17} />
             </form>
          </div>
 
          <div className="grid gap-4">
             {topics.map((t) => (
-                <article key={t.id} className="flex items-start justify-between rounded-2xl border border-[var(--app-border)] bg-[var(--app-surface)] p-5 shadow-sm transition hover:border-red-500/40">
+                <article key={t.id} className="flex items-start justify-between rounded-2xl border border-[var(--app-border)] bg-[var(--app-surface)] p-5 shadow-sm transition hover:border-[var(--app-primary)]">
                     <div className="flex-1">
-                        <Link href={`/topic/${t.id}`} target="_blank" className="text-lg font-bold text-gray-900 dark:text-white hover:text-red-600 transition block mb-1">
+                        <Link href={`/topic/${t.id}`} target="_blank" className="mb-1 block text-lg font-bold text-[var(--app-text)] transition hover:text-[var(--app-accent-text)]">
                             {t.title}
                         </Link>
-                        <p className="text-sm text-gray-500 dark:text-gray-400 line-clamp-2 mb-3">{t.content}</p>
+                        <p className="mb-3 line-clamp-2 text-sm text-[var(--app-text-muted)]">{t.content}</p>
                         
                         <div className="flex flex-wrap items-center gap-4 text-xs text-[var(--app-muted)]">
-                            <span className="flex items-center gap-1 text-gray-600 dark:text-gray-300">
-                                <span className="relative w-5 h-5 rounded-full bg-gray-200 flex items-center justify-center text-[10px] overflow-hidden">
+                            <span className="flex items-center gap-1 text-[var(--app-text-muted)]">
+                                <span className="relative flex h-5 w-5 items-center justify-center overflow-hidden rounded-full bg-[var(--app-surface-subtle)] text-[10px]">
                                 {t.avatar_url ? <Image src={t.avatar_url} alt={`รูปโปรไฟล์ของ ${t.username || 'สมาชิกที่ถูกลบ'}`} fill sizes="20px" className="object-cover" /> : (t.username || '?').charAt(0)}
                                 </span>
                                 {t.username || 'สมาชิกที่ถูกลบ'}

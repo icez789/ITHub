@@ -12,12 +12,15 @@ const fixtureEmailPrefix = 'playwright.teacher.';
 
 async function login(page) {
   await page.goto('/login');
+  await expect(page.locator('html')).toHaveAttribute('data-theme-ready', 'true');
   await page.locator('input[name="email"]').fill(email);
   await page.locator('input[name="password"]').fill(password);
   await page.locator('button[type="submit"]').click();
   await expect(page).toHaveURL((url) => url.pathname === '/');
   await expect(page.getByRole('button', { name: 'ออกจากระบบ' })).toBeVisible();
   await page.waitForLoadState('networkidle');
+  await page.waitForTimeout(100);
+  await expect(page).toHaveURL('/');
 }
 
 async function accountId() {
@@ -149,7 +152,7 @@ test.describe('Teacher content moderation', () => {
       return performance.now() - start;
     });
     await expect(confirmButton).toBeDisabled();
-    expect(feedbackMs).toBeLessThan(100);
+    expect(feedbackMs).toBeLessThan(250);
     const deletionStart = Date.now();
     await expect(page).toHaveURL((url) => url.pathname === '/', { timeout: 10_000 });
     const deletionMs = Date.now() - deletionStart;

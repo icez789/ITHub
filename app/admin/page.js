@@ -174,12 +174,12 @@ export default async function AdminDashboard() {
       <div>
         
         {/* Header Section */}
-        <div className="flex flex-col md:flex-row justify-between items-end mb-10 border-b border-gray-200 dark:border-red-900/30 pb-6">
+        <div className="mb-10 flex flex-col items-end justify-between border-b border-[var(--app-border)] pb-6 md:flex-row">
             <div>
-                <h1 className="flex items-center gap-3 text-3xl font-bold tracking-tight text-gray-900 dark:text-white md:text-4xl">
-                     <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-red-600 text-white"><LockKeyhole aria-hidden="true" size={23} /></span> {isTeacher ? 'ศูนย์ดูแลเนื้อหา' : 'ศูนย์จัดการระบบ'}
+                <h1 className="flex items-center gap-3 text-3xl font-bold tracking-tight text-[var(--app-text)] md:text-4xl">
+                     <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-[var(--app-primary)] text-[var(--app-primary-contrast)]"><LockKeyhole aria-hidden="true" size={23} /></span> {isTeacher ? 'ศูนย์ดูแลเนื้อหา' : 'ศูนย์จัดการระบบ'}
                 </h1>
-                <p className="text-gray-500 dark:text-gray-400 mt-2 text-sm font-medium">
+                <p className="mt-2 text-sm font-medium text-[var(--app-text-muted)]">
                     {isTeacher ? 'ตรวจสอบรายงาน กระทู้ และความคิดเห็นในชุมชน' : 'ตรวจสอบเนื้อหา สมาชิก และสถานะชุมชน'}
                 </p>
             </div>
@@ -196,15 +196,15 @@ export default async function AdminDashboard() {
            
            {/* Card 1: Users */}
            {!isTeacher && <Link href="/admin/users" className="block group">
-                <div className="relative rounded-xl border border-[var(--app-border)] bg-[var(--app-surface)] p-6 shadow-sm transition hover:-translate-y-0.5 hover:border-red-500/50 hover:shadow-md">
-                    <div className="absolute top-4 right-4 w-10 h-10 bg-red-100 dark:bg-red-900/30 rounded-lg flex items-center justify-center text-red-600 dark:text-red-400 group-hover:bg-red-600 group-hover:text-white transition-colors">
+                <div className="relative rounded-xl border border-[var(--app-border)] bg-[var(--app-surface)] p-6 shadow-sm transition hover:-translate-y-0.5 hover:border-[var(--app-primary)] hover:shadow-md">
+                    <div className="absolute right-4 top-4 flex h-10 w-10 items-center justify-center rounded-lg bg-[var(--app-primary-soft)] text-[var(--app-accent-text)] transition-colors group-hover:bg-[var(--app-primary)] group-hover:text-[var(--app-primary-contrast)]">
                          <Users aria-hidden="true" size={20} />
                     </div>
-                    <h3 className="text-xs font-bold text-gray-500 dark:text-gray-400">สมาชิกทั้งหมด</h3>
-                    <p className="mt-2 text-4xl font-bold text-gray-800 transition-colors group-hover:text-red-600 dark:text-white dark:group-hover:text-red-500">
+                    <h3 className="text-xs font-bold text-[var(--app-text-muted)]">สมาชิกทั้งหมด</h3>
+                    <p className="mt-2 text-4xl font-bold text-[var(--app-text)] transition-colors group-hover:text-[var(--app-accent-text)]">
                         {userCountData[0].count}
                     </p>
-                    <div className="mt-4 flex items-center text-xs text-gray-400 font-mono">
+                    <div className="mt-4 flex items-center font-mono text-xs text-[var(--app-text-muted)]">
                          เปิดหน้าจัดการสมาชิก
                     </div>
                 </div>
@@ -212,15 +212,15 @@ export default async function AdminDashboard() {
 
           {/* Card 2: Topics */}
           <Link href="/admin/topics" className="block group">
-                <div className="relative rounded-xl border border-[var(--app-border)] bg-[var(--app-surface)] p-6 shadow-sm transition hover:-translate-y-0.5 hover:border-red-500/50 hover:shadow-md">
-                    <div className="absolute top-4 right-4 w-10 h-10 bg-red-100 dark:bg-red-900/30 rounded-lg flex items-center justify-center text-red-600 dark:text-red-400 group-hover:bg-red-600 group-hover:text-white transition-colors">
+                <div className="relative rounded-xl border border-[var(--app-border)] bg-[var(--app-surface)] p-6 shadow-sm transition hover:-translate-y-0.5 hover:border-[var(--app-primary)] hover:shadow-md">
+                    <div className="absolute right-4 top-4 flex h-10 w-10 items-center justify-center rounded-lg bg-[var(--app-primary-soft)] text-[var(--app-accent-text)] transition-colors group-hover:bg-[var(--app-primary)] group-hover:text-[var(--app-primary-contrast)]">
                          <FileText aria-hidden="true" size={20} />
                     </div>
-                    <h3 className="text-xs font-bold text-gray-500 dark:text-gray-400">กระทู้ทั้งหมด</h3>
-                    <p className="mt-2 text-4xl font-bold text-gray-800 transition-colors group-hover:text-red-600 dark:text-white dark:group-hover:text-red-500">
+                    <h3 className="text-xs font-bold text-[var(--app-text-muted)]">กระทู้ทั้งหมด</h3>
+                    <p className="mt-2 text-4xl font-bold text-[var(--app-text)] transition-colors group-hover:text-[var(--app-accent-text)]">
                         {topicCountData[0].count}
                     </p>
-                     <div className="mt-4 flex items-center text-xs text-gray-400 font-mono">
+                     <div className="mt-4 flex items-center font-mono text-xs text-[var(--app-text-muted)]">
                          เปิดหน้าจัดการกระทู้
                     </div>
                 </div>
@@ -228,15 +228,15 @@ export default async function AdminDashboard() {
 
           {/* Card 3: Comments */}
           <Link href="/admin/comments" className="block group">
-                <div className="relative rounded-xl border border-[var(--app-border)] bg-[var(--app-surface)] p-6 shadow-sm transition hover:-translate-y-0.5 hover:border-red-500/50 hover:shadow-md">
-                    <div className="absolute top-4 right-4 w-10 h-10 bg-red-100 dark:bg-red-900/30 rounded-lg flex items-center justify-center text-red-600 dark:text-red-400 group-hover:bg-red-600 group-hover:text-white transition-colors">
+                <div className="relative rounded-xl border border-[var(--app-border)] bg-[var(--app-surface)] p-6 shadow-sm transition hover:-translate-y-0.5 hover:border-[var(--app-primary)] hover:shadow-md">
+                    <div className="absolute right-4 top-4 flex h-10 w-10 items-center justify-center rounded-lg bg-[var(--app-primary-soft)] text-[var(--app-accent-text)] transition-colors group-hover:bg-[var(--app-primary)] group-hover:text-[var(--app-primary-contrast)]">
                          <MessageCircle aria-hidden="true" size={20} />
                     </div>
-                    <h3 className="text-xs font-bold text-gray-500 dark:text-gray-400">ความคิดเห็น</h3>
-                    <p className="mt-2 text-4xl font-bold text-gray-800 transition-colors group-hover:text-red-600 dark:text-white dark:group-hover:text-red-500">
+                    <h3 className="text-xs font-bold text-[var(--app-text-muted)]">ความคิดเห็น</h3>
+                    <p className="mt-2 text-4xl font-bold text-[var(--app-text)] transition-colors group-hover:text-[var(--app-accent-text)]">
                         {commentCountData[0].count}
                     </p>
-                    <div className="mt-4 flex items-center text-xs text-gray-400 font-mono">
+                    <div className="mt-4 flex items-center font-mono text-xs text-[var(--app-text-muted)]">
                          เปิดหน้าตรวจสอบความคิดเห็น
                     </div>
                 </div>
@@ -244,15 +244,15 @@ export default async function AdminDashboard() {
 
           {/* Card 4: System Health */}
           <div className="relative rounded-xl border border-[var(--app-border)] bg-[var(--app-surface)] p-6 shadow-sm">
-              <h3 className="mb-4 flex items-center gap-2 text-xs font-bold text-gray-500 dark:text-gray-400"><Activity aria-hidden="true" size={16} /> สถานะระบบ</h3>
+              <h3 className="mb-4 flex items-center gap-2 text-xs font-bold text-[var(--app-text-muted)]"><Activity aria-hidden="true" size={16} /> สถานะระบบ</h3>
               <div className="space-y-4">
                  <div>
-                    <div className="mb-1 flex justify-between text-xs text-gray-500 dark:text-gray-400"><span>ภาระเซิร์ฟเวอร์</span><span className="font-bold text-red-600">12%</span></div>
-                    <div className="h-1.5 w-full rounded-full bg-gray-100 dark:bg-neutral-800"><div className="h-full w-[12%] rounded-full bg-red-500"></div></div>
+                    <div className="mb-1 flex justify-between text-xs text-[var(--app-text-muted)]"><span>ภาระเซิร์ฟเวอร์</span><span className="font-bold text-[var(--app-accent-text)]">12%</span></div>
+                    <div className="h-1.5 w-full rounded-full bg-[var(--app-surface-subtle)]"><div className="h-full w-[12%] rounded-full bg-[var(--app-primary)]"></div></div>
                  </div>
                  <div>
-                    <div className="mb-1 flex justify-between text-xs text-gray-500 dark:text-gray-400"><span>ฐานข้อมูล</span><span className="font-bold text-green-600 dark:text-green-400">ปกติ</span></div>
-                    <div className="h-1.5 w-full rounded-full bg-gray-100 dark:bg-neutral-800"><div className="h-full w-full rounded-full bg-green-500"></div></div>
+                    <div className="mb-1 flex justify-between text-xs text-[var(--app-text-muted)]"><span>ฐานข้อมูล</span><span className="font-bold text-green-600 dark:text-green-400">ปกติ</span></div>
+                    <div className="h-1.5 w-full rounded-full bg-[var(--app-surface-subtle)]"><div className="h-full w-full rounded-full bg-green-500"></div></div>
                  </div>
               </div>
           </div>
@@ -264,7 +264,7 @@ export default async function AdminDashboard() {
             <div className={`${isTeacher ? 'lg:col-span-3' : 'lg:col-span-2'} space-y-8`}>
                 
                 {/* --- Reports Section --- */}
-                <div className="bg-white dark:bg-neutral-900 border border-red-200 dark:border-red-900/50 rounded-xl overflow-hidden shadow-lg shadow-red-500/5 mb-8">
+                <div className="mb-8 overflow-hidden rounded-xl border border-red-200 bg-[var(--app-surface)] shadow-lg shadow-red-500/5 dark:border-red-900/50">
                     <div className="px-6 py-4 border-b border-red-100 dark:border-red-900/30 flex justify-between items-center bg-red-50 dark:bg-red-900/10">
                         <h3 className="font-bold text-red-600 dark:text-red-400 flex items-center gap-2">
                              <AlertTriangle aria-hidden="true" size={18} /> รายงานที่รอตรวจสอบ <span className="px-2 py-0.5 bg-red-600 text-white text-xs rounded-full">{reports.length}</span>
@@ -272,7 +272,7 @@ export default async function AdminDashboard() {
                     </div>
                     <div className="overflow-x-auto">
                         {reports.length > 0 ? (
-                            <table className="w-full text-left text-sm text-gray-600 dark:text-gray-300">
+                            <table className="w-full text-left text-sm text-[var(--app-text-muted)]">
                                 <thead className="bg-red-50 dark:bg-neutral-800 text-red-700 dark:text-red-400 uppercase font-bold text-xs">
                                 <tr>
                                     <th className="px-6 py-3">ประเภท</th>
@@ -324,7 +324,7 @@ export default async function AdminDashboard() {
                                 </tbody>
                             </table>
                         ) : (
-                            <div className="p-8 flex flex-col items-center justify-center text-gray-500 dark:text-gray-400 bg-white dark:bg-neutral-900">
+                            <div className="flex flex-col items-center justify-center bg-[var(--app-surface)] p-8 text-[var(--app-text-muted)]">
                                  <CheckCircle2 className="mb-3 text-emerald-600" aria-hidden="true" size={34} />
                                  <p className="text-lg font-bold">ไม่มีรายการค้าง</p>
                                 <p className="text-sm">ไม่มีรายการร้องเรียนที่รอตรวจสอบในขณะนี้</p>
@@ -335,13 +335,13 @@ export default async function AdminDashboard() {
                 
 
                 {/* --- Recent Topics Table --- */}
-                <div className="bg-white dark:bg-neutral-900 border border-gray-200 dark:border-neutral-800 rounded-xl overflow-hidden shadow-sm">
-                    <div className="px-6 py-4 border-b border-gray-200 dark:border-neutral-800 flex justify-between items-center">
-                        <h3 className="flex items-center gap-2 font-bold text-gray-800 dark:text-gray-200"><Activity aria-hidden="true" size={18} /> กระทู้ล่าสุด</h3>
+                <div className="overflow-hidden rounded-xl border border-[var(--app-border)] bg-[var(--app-surface)] shadow-sm">
+                    <div className="flex items-center justify-between border-b border-[var(--app-border)] px-6 py-4">
+                        <h3 className="flex items-center gap-2 font-bold text-[var(--app-text)]"><Activity aria-hidden="true" size={18} /> กระทู้ล่าสุด</h3>
                     </div>
                     <div className="overflow-x-auto">
-                        <table className="w-full text-left text-sm text-gray-600 dark:text-gray-400">
-                        <thead className="bg-gray-50 dark:bg-neutral-950 text-gray-500 dark:text-gray-500 uppercase font-bold text-xs">
+                        <table className="w-full text-left text-sm text-[var(--app-text-muted)]">
+                        <thead className="bg-[var(--app-surface-subtle)] text-xs font-bold uppercase text-[var(--app-text-muted)]">
                             <tr>
                             <th className="px-6 py-3">ชื่อกระทู้</th>
                             <th className="px-6 py-3">ผู้เขียน</th>
@@ -349,14 +349,14 @@ export default async function AdminDashboard() {
                             <th className="px-6 py-3 text-right">การจัดการ</th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-gray-100 dark:divide-neutral-800">
+                        <tbody className="divide-y divide-[var(--app-border)]">
                             {latestTopics.map((t) => (
-                            <tr key={t.id} className="hover:bg-gray-50 dark:hover:bg-neutral-800/50 transition">
-                                <td className="px-6 py-4 font-bold text-gray-900 dark:text-white truncate max-w-xs">
-                                    <Link href={`/topic/${t.id}`} target="_blank" className="hover:text-red-600 transition">{t.title}</Link>
+                            <tr key={t.id} className="transition hover:bg-[var(--app-surface-subtle)]">
+                                <td className="max-w-xs truncate px-6 py-4 font-bold text-[var(--app-text)]">
+                                    <Link href={`/topic/${t.id}`} target="_blank" className="transition hover:text-[var(--app-accent-text)]">{t.title}</Link>
                                 </td>
                                 <td className="px-6 py-4 flex items-center gap-2">
-                                    <div className="w-6 h-6 rounded-full bg-gray-200 dark:bg-neutral-700 flex items-center justify-center text-[10px] text-gray-600 dark:text-white">
+                                    <div className="flex h-6 w-6 items-center justify-center rounded-full bg-[var(--app-surface-subtle)] text-[10px] text-[var(--app-text-muted)]">
                                         {t.username.charAt(0).toUpperCase()}
                                     </div>
                                     {t.username}
@@ -387,36 +387,36 @@ export default async function AdminDashboard() {
 
             {/* Right Column: User List (Side Panel) */}
             {!isTeacher && <div className="lg:col-span-1">
-                 <div className="bg-white dark:bg-neutral-900 border border-gray-200 dark:border-neutral-800 rounded-xl overflow-hidden shadow-sm h-full flex flex-col">
-                    <div className="px-6 py-4 border-b border-gray-200 dark:border-neutral-800 bg-gray-50 dark:bg-neutral-900">
-                        <h3 className="flex items-center gap-2 font-bold text-gray-800 dark:text-gray-200"><ClipboardList aria-hidden="true" size={18} /> จัดการสมาชิก</h3>
+                 <div className="flex h-full flex-col overflow-hidden rounded-xl border border-[var(--app-border)] bg-[var(--app-surface)] shadow-sm">
+                    <div className="border-b border-[var(--app-border)] bg-[var(--app-surface-subtle)] px-6 py-4">
+                        <h3 className="flex items-center gap-2 font-bold text-[var(--app-text)]"><ClipboardList aria-hidden="true" size={18} /> จัดการสมาชิก</h3>
                     </div>
                     <div className="overflow-y-auto max-h-[600px] p-2 flex-1">
-                        <table className="w-full text-left text-sm text-gray-600 dark:text-gray-400">
-                            <tbody className="divide-y divide-gray-100 dark:divide-neutral-800">
+                        <table className="w-full text-left text-sm text-[var(--app-text-muted)]">
+                            <tbody className="divide-y divide-[var(--app-border)]">
                             {users.map((u) => {
                                 const isTargetSuperAdmin = u.role === 'super_admin';
                                 const showActions = !isTargetSuperAdmin && u.id !== currentUser.id;
 
                                 return (
-                                <tr key={u.id} className="hover:bg-gray-50 dark:hover:bg-neutral-800/50 transition group">
+                                <tr key={u.id} className="group transition hover:bg-[var(--app-surface-subtle)]">
                                     <td className="px-4 py-3">
                                         <div className="flex items-center gap-3">
                                             <div className="relative">
-                                                <div className="relative w-10 h-10 rounded-full bg-gray-200 dark:bg-neutral-700 flex items-center justify-center text-sm font-bold text-gray-700 dark:text-white overflow-hidden ring-2 ring-transparent group-hover:ring-red-500 transition">
+                                                <div className="relative flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-[var(--app-surface-subtle)] text-sm font-bold text-[var(--app-text)] ring-2 ring-transparent transition group-hover:ring-[var(--app-primary)]">
                                                     {u.avatar_url ? <Image src={u.avatar_url} alt={`รูปโปรไฟล์ของ ${u.username}`} fill sizes="40px" className="object-cover" /> : u.username.charAt(0).toUpperCase()}
                                                 </div>
                                                 <div className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-white dark:border-neutral-900 ${u.is_banned ? 'bg-red-500' : 'bg-green-500'}`}></div>
                                             </div>
                                             <div>
-                                                <p className="font-bold text-gray-900 dark:text-white flex items-center gap-1">
+                                                <p className="flex items-center gap-1 font-bold text-[var(--app-text)]">
                                                     {u.username}
                                                 </p>
                                                 <span className={`text-[10px] px-1.5 py-0.5 rounded border font-semibold ${
                                                     u.role === 'super_admin' ? 'border-yellow-300 text-yellow-700 bg-yellow-50 dark:border-yellow-600 dark:text-yellow-400 dark:bg-yellow-900/20' :
                                                     u.role === 'admin' ? 'border-red-300 text-red-700 bg-red-50 dark:border-red-600 dark:text-red-400 dark:bg-red-900/20' :
                                                     u.role === 'teacher' ? 'border-blue-300 text-blue-700 bg-blue-50 dark:border-blue-600 dark:text-blue-400 dark:bg-blue-900/20' :
-                                                    'border-gray-200 text-gray-500 dark:border-neutral-700 dark:text-gray-500'
+                                                    'border-[var(--app-border)] text-[var(--app-text-muted)]'
                                                 }`}>
                                                     {u.role === 'teacher' ? 'อาจารย์' : u.role}
                                                 </span>

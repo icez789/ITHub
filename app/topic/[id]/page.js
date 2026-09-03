@@ -485,7 +485,7 @@ export default async function TopicDetailPage({ params }) {
 
           {/* Header Navigation */}
           <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
-            <Link href="/" className="inline-flex min-h-10 items-center gap-2 rounded-lg px-2 text-sm font-medium text-[var(--app-text-muted)] transition-colors hover:bg-[var(--app-surface-subtle)] hover:text-[var(--app-primary)]"><ArrowLeft aria-hidden="true" size={17} /> กลับหน้าหลัก</Link>
+            <Link href="/" className="inline-flex min-h-10 items-center gap-2 rounded-lg px-2 text-sm font-medium text-[var(--app-text-muted)] transition-colors hover:bg-[var(--app-surface-subtle)] hover:text-[var(--app-accent-text)]"><ArrowLeft aria-hidden="true" size={17} /> กลับหน้าหลัก</Link>
             <div className="flex flex-wrap items-center gap-2">
                 {isModerator ? <TopicModerationActions action={moderateTopic} initialPinned={Boolean(topic.is_pinned)} initialLocked={Boolean(topic.is_locked)} /> : null}
                 {currentUser && <ReportButton targetId={id} type="topic" reportAction={submitReport} />}
@@ -509,8 +509,8 @@ export default async function TopicDetailPage({ params }) {
           {/* Topic Card Container */}
           <article className="mb-10 overflow-hidden rounded-2xl border border-[var(--app-border)] bg-[var(--app-surface)] shadow-sm">
             {/* Topic Header Area */}
-            <header className="border-b border-[var(--app-border)] bg-zinc-950 px-5 py-7 text-white sm:px-8 sm:py-9">
-               <span className="mb-3 inline-block rounded-md bg-red-600 px-2.5 py-1 text-xs font-semibold">{topic.category}</span>
+            <header className="ithub-hero border-b border-black/15 px-5 py-7 text-white sm:px-8 sm:py-9">
+               <span className="mb-3 inline-block rounded-md border border-white/20 bg-white/15 px-2.5 py-1 text-xs font-semibold">{topic.category}</span>
                {topic.is_pinned ? <span className="mb-3 ml-2 inline-flex items-center gap-1 rounded-md bg-amber-400 px-2.5 py-1 text-xs font-semibold text-zinc-950"><Pin aria-hidden="true" size={12} /> ปักหมุด</span> : null}
                {topic.is_locked ? <span className="mb-3 ml-2 inline-flex items-center gap-1 rounded-md bg-zinc-700 px-2.5 py-1 text-xs font-semibold text-white"><Lock aria-hidden="true" size={12} /> ล็อกแล้ว</span> : null}
                <h1 className="max-w-[860px] text-2xl font-bold leading-tight sm:text-3xl md:text-4xl">{topic.title}</h1>
@@ -602,7 +602,7 @@ export default async function TopicDetailPage({ params }) {
             ) : (
               <div className="rounded-lg border border-[var(--app-border)] bg-[var(--app-surface-subtle)] p-4 text-center">
                 <p className="mb-2 text-sm text-[var(--app-text-muted)]">เข้าสู่ระบบเพื่อร่วมตอบคำถามและแลกเปลี่ยนกับชุมชน</p>
-                <Link href={`/login?next=/topic/${id}`} className="font-semibold text-[var(--app-primary)] hover:underline">เข้าสู่ระบบเพื่อแสดงความคิดเห็น</Link>
+                <Link href={`/login?next=/topic/${id}`} className="font-semibold text-[var(--app-accent-text)] hover:underline">เข้าสู่ระบบเพื่อแสดงความคิดเห็น</Link>
               </div>
             )}
           </section>
@@ -611,7 +611,7 @@ export default async function TopicDetailPage({ params }) {
           {relatedTopics.length > 0 && (
             <section className="mx-auto mt-12 max-w-[840px] border-t border-[var(--app-border)] pt-8" aria-labelledby="related-heading">
               <h2 id="related-heading" className="mb-4 flex items-center gap-2 text-xl font-bold text-[var(--app-text)]">
-                <Flame aria-hidden="true" size={21} /> กระทู้ที่เกี่ยวข้องในหมวด <span className="text-[var(--app-primary)]">{topic.category}</span>
+                <Flame aria-hidden="true" size={21} /> กระทู้ที่เกี่ยวข้องในหมวด <span className="text-[var(--app-accent-text)]">{topic.category}</span>
               </h2>
               <div className="overflow-hidden rounded-xl border border-[var(--app-border)] bg-[var(--app-surface)]">
                 {relatedTopics.map((t, index) => (

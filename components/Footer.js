@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { CircleHelp, Mail, MapPin, Phone } from 'lucide-react';
 
-const footerLinkClass = 'hover:text-red-600 transition-colors';
+const footerLinkClass = 'transition-colors hover:text-[var(--app-accent-text)]';
 
 export default function Footer() {
   const currentYear = new Date().getFullYear();
@@ -13,23 +13,23 @@ export default function Footer() {
           <section aria-labelledby="footer-brand" className="space-y-4">
             <Link href="/" className="inline-flex items-center gap-2" aria-label="ไปหน้าแรก ITHub">
               <span className="w-10 h-10 bg-gradient-to-br from-red-600 to-red-800 rounded-lg flex items-center justify-center text-white font-bold text-lg shadow-lg">IT</span>
-              <span id="footer-brand" className="font-bold text-xl tracking-tight text-gray-900 dark:text-white">
+              <span id="footer-brand" className="text-xl font-bold tracking-tight text-[var(--app-text)]">
                 IT<span className="text-red-600">Hub</span>
               </span>
             </Link>
-            <p className="text-gray-500 text-sm leading-relaxed dark:text-gray-400">
+            <p className="text-sm leading-relaxed text-[var(--app-text-muted)]">
               พื้นที่แลกเปลี่ยนความรู้ด้านเทคโนโลยีสำหรับนักศึกษา ผู้เริ่มต้น และคนไอทีทุกระดับ
             </p>
-            <div className="flex flex-wrap gap-2 text-xs font-semibold text-gray-500 dark:text-gray-400">
-              <span className="rounded-full border border-gray-200 dark:border-neutral-700 px-3 py-1">เรียนรู้</span>
-              <span className="rounded-full border border-gray-200 dark:border-neutral-700 px-3 py-1">แบ่งปัน</span>
-              <span className="rounded-full border border-gray-200 dark:border-neutral-700 px-3 py-1">ปลอดภัย</span>
+            <div className="flex flex-wrap gap-2 text-xs font-semibold text-[var(--app-text-muted)]">
+              <span className="rounded-full border border-[var(--app-border)] px-3 py-1">เรียนรู้</span>
+              <span className="rounded-full border border-[var(--app-border)] px-3 py-1">แบ่งปัน</span>
+              <span className="rounded-full border border-[var(--app-border)] px-3 py-1">ปลอดภัย</span>
             </div>
           </section>
 
           <nav aria-label="เมนูลัดท้ายเว็บไซต์">
-            <h2 className="font-bold text-gray-800 mb-4 dark:text-white">เมนูลัด</h2>
-            <ul className="space-y-3 text-sm text-gray-500 dark:text-gray-400">
+            <h2 className="mb-4 font-bold text-[var(--app-text)]">เมนูลัด</h2>
+            <ul className="space-y-3 text-sm text-[var(--app-text-muted)]">
               <li><Link href="/" className={footerLinkClass}>หน้าแรก</Link></li>
               <li><Link href={{ pathname: '/', query: { sort: 'popular' } }} className={footerLinkClass}>กระทู้ยอดนิยม</Link></li>
               <li><Link href="/leaderboard" className={footerLinkClass}>อันดับสมาชิก</Link></li>
@@ -39,8 +39,8 @@ export default function Footer() {
           </nav>
 
           <nav aria-label="หมวดหมู่ท้ายเว็บไซต์">
-            <h2 className="font-bold text-gray-800 mb-4 dark:text-white">หมวดหมู่แนะนำ</h2>
-            <ul className="space-y-3 text-sm text-gray-500 dark:text-gray-400">
+            <h2 className="mb-4 font-bold text-[var(--app-text)]">หมวดหมู่แนะนำ</h2>
+            <ul className="space-y-3 text-sm text-[var(--app-text-muted)]">
               {['Hardware', 'Software', 'Network', 'AI & Data', 'General'].map((category) => (
                 <li key={category}>
                   <Link href={{ pathname: '/', query: { category } }} className={footerLinkClass}>{category}</Link>
@@ -50,8 +50,8 @@ export default function Footer() {
           </nav>
 
           <section aria-labelledby="footer-contact">
-            <h2 id="footer-contact" className="font-bold text-gray-800 mb-4 dark:text-white">ติดต่อและช่วยเหลือ</h2>
-            <ul className="space-y-3 text-sm text-gray-500 dark:text-gray-400">
+            <h2 id="footer-contact" className="mb-4 font-bold text-[var(--app-text)]">ติดต่อและช่วยเหลือ</h2>
+            <ul className="space-y-3 text-sm text-[var(--app-text-muted)]">
               <li className="flex items-start gap-3"><MapPin aria-hidden="true" className="mt-0.5 shrink-0" size={16} /><span>วิทยาลัยเทคนิคเชียงใหม่<br />ถนนเวียงแก้ว ต.ศรีภูมิ อ.เมือง จ.เชียงใหม่</span></li>
               <li><a href="mailto:contact@cmtc.ac.th" className={`inline-flex items-center gap-3 ${footerLinkClass}`}><Mail aria-hidden="true" size={16} />contact@cmtc.ac.th</a></li>
               <li><a href="tel:+6653217708" className={`inline-flex items-center gap-3 ${footerLinkClass}`}><Phone aria-hidden="true" size={16} />053-217-708</a></li>
@@ -60,11 +60,11 @@ export default function Footer() {
           </section>
         </div>
 
-        <div className="border-t border-gray-100 pt-8 flex flex-col md:flex-row justify-between items-center gap-4 dark:border-neutral-800">
-          <p className="text-sm text-gray-400 text-center md:text-left">
+        <div className="flex flex-col items-center justify-between gap-4 border-t border-[var(--app-border)] pt-8 md:flex-row">
+          <p className="text-center text-sm text-[var(--app-text-muted)] md:text-left">
             © {currentYear} <span className="font-bold text-red-600">ITHub</span>. สงวนสิทธิ์ตามกฎหมาย
           </p>
-          <nav aria-label="นโยบายเว็บไซต์" className="flex flex-wrap justify-center gap-5 text-sm text-gray-400">
+          <nav aria-label="นโยบายเว็บไซต์" className="flex flex-wrap justify-center gap-5 text-sm text-[var(--app-text-muted)]">
             <Link href="/privacy" className={footerLinkClass}>นโยบายความเป็นส่วนตัว</Link>
             <Link href="/terms" className={footerLinkClass}>ข้อกำหนดการใช้งาน</Link>
             <Link href="/help" className={footerLinkClass}>ช่วยเหลือ</Link>

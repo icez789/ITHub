@@ -34,13 +34,13 @@ export default function CommentComposer({ action, parentId = null, compact = fal
   }
 
   return <form onSubmit={submit} className={compact ? 'flex flex-col gap-2 sm:flex-row sm:items-start' : ''}>
-    <div className={`overflow-hidden rounded-lg border border-gray-300 bg-white text-black dark:border-neutral-700 dark:bg-black dark:text-white ${compact ? 'min-w-0 flex-1' : 'mb-4'}`} aria-busy={pending}>
-      <Editor key={editorKey} className={compact ? 'h-24 bg-white text-black dark:bg-black dark:text-white' : 'mb-12 h-32 bg-white text-black'} />
+    <div className={`overflow-hidden rounded-lg border border-[var(--app-border)] bg-[var(--app-surface)] text-[var(--app-text)] ${compact ? 'min-w-0 flex-1' : 'mb-4'}`} aria-busy={pending}>
+      <Editor key={editorKey} className={compact ? 'h-24 bg-[var(--app-surface)] text-[var(--app-text)]' : 'mb-12 h-32 bg-[var(--app-surface)] text-[var(--app-text)]'} />
       {parentId ? <input type="hidden" name="parentId" value={parentId} /> : null}
     </div>
     <div className={compact ? 'sm:pt-1' : ''}>
       {error ? <p role="alert" className="mb-2 text-sm font-medium text-red-600 dark:text-red-400">{error}</p> : null}
-      <button type="submit" disabled={pending} className="inline-flex min-h-10 items-center gap-2 rounded-lg bg-[var(--app-primary)] px-5 py-2.5 font-semibold text-white transition-colors hover:bg-[var(--app-primary-hover)] disabled:cursor-wait disabled:opacity-60">
+      <button type="submit" disabled={pending} className="inline-flex min-h-10 items-center gap-2 rounded-lg bg-[var(--app-primary)] px-5 py-2.5 font-semibold text-[var(--app-primary-contrast)] transition-colors hover:bg-[var(--app-primary-hover)] disabled:cursor-wait disabled:opacity-60">
         {pending ? <LoaderCircle aria-hidden="true" className="animate-spin motion-reduce:animate-none" size={17} /> : <Send aria-hidden="true" size={17} />}{pending ? 'กำลังส่ง…' : compact ? 'ส่งคำตอบ' : 'ส่งความคิดเห็น'}
       </button>
     </div>

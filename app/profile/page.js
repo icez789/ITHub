@@ -56,14 +56,14 @@ export default async function ProfilePage() {
     <main className="ithub-page-container mx-auto max-w-5xl pb-24 pt-8 md:pb-12 md:pt-12">
         
         {/* Header Section */}
-        <div className="flex flex-col md:flex-row justify-between items-center mb-8 border-b pb-6 border-gray-200 dark:border-neutral-800">
+        <div className="mb-8 flex flex-col items-center justify-between border-b border-[var(--app-border)] pb-6 md:flex-row">
             <div>
-                <h1 className="text-3xl font-bold text-gray-800 dark:text-white flex items-center gap-3">
+                <h1 className="flex items-center gap-3 text-3xl font-bold text-[var(--app-text)]">
                     โปรไฟล์ของฉัน
                     {/* แสดงยศข้างชื่อ */}
                     <UserBadge role={fullUserData.role} xp={fullUserData.xp} />
                 </h1>
-                <p className="text-gray-500 mt-2 dark:text-gray-400">จัดการข้อมูลส่วนตัวและดูสถิติของคุณ</p>
+                <p className="mt-2 text-[var(--app-text-muted)]">จัดการข้อมูลส่วนตัวและดูสถิติของคุณ</p>
             </div>
         </div>
 
@@ -78,19 +78,19 @@ export default async function ProfilePage() {
             />
 
             {/* ✅ 4. Stats Card (XP & Solved) */}
-            <div className="bg-white dark:bg-neutral-900 p-6 rounded-xl border border-gray-200 dark:border-neutral-800 shadow-sm">
-                <h3 className="font-bold text-gray-800 dark:text-white mb-4 flex items-center gap-2">
+            <div className="rounded-xl border border-[var(--app-border)] bg-[var(--app-surface)] p-6 shadow-sm">
+                <h3 className="mb-4 flex items-center gap-2 font-bold text-[var(--app-text)]">
                     <Trophy aria-hidden="true" size={19} /> สถิติสมาชิก
                 </h3>
                 
                 <div className="mb-4">
-                    <div className="flex justify-between text-xs font-bold mb-1 text-gray-500 dark:text-gray-400">
+                    <div className="mb-1 flex justify-between text-xs font-bold text-[var(--app-text-muted)]">
                         <span>XP ปัจจุบัน</span>
                         <span>{fullUserData.xp} / {nextRankXP} XP</span>
                     </div>
-                    <div className="h-3 w-full bg-gray-100 dark:bg-neutral-800 rounded-full overflow-hidden">
+                    <div className="h-3 w-full overflow-hidden rounded-full bg-[var(--app-surface-subtle)]">
                         <div 
-                            className="h-full bg-gradient-to-r from-red-500 to-orange-500 transition-all duration-1000 ease-out" 
+                            className="h-full bg-[var(--app-primary)] transition-[width] duration-500 ease-out motion-reduce:transition-none"
                             style={{ width: `${xpProgress}%` }}
                         ></div>
                     </div>
@@ -111,46 +111,46 @@ export default async function ProfilePage() {
 
           {/* Right Column: Topics List */}
           <div className="md:col-span-2">
-            <h3 className="text-xl font-bold mb-4 flex items-center gap-2 dark:text-gray-200 border-b pb-2 border-gray-100 dark:border-neutral-800">
+            <h3 className="mb-4 flex items-center gap-2 border-b border-[var(--app-border)] pb-2 text-xl font-bold text-[var(--app-text)]">
               <FileText aria-hidden="true" size={20} /> กระทู้ล่าสุดของคุณ
             </h3>
 
             <div className="space-y-4">
               {myTopics.length > 0 ? (
                 myTopics.map((topic) => (
-                  <div key={topic.id} className="bg-white p-5 rounded-xl shadow-sm border border-gray-200 hover:shadow-md hover:border-red-200 transition-all flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 dark:bg-neutral-900 dark:border-neutral-800 dark:hover:border-red-900/50">
+                  <div key={topic.id} className="flex flex-col items-start justify-between gap-4 rounded-xl border border-[var(--app-border)] bg-[var(--app-surface)] p-5 shadow-sm transition-colors hover:border-[var(--app-primary)] sm:flex-row sm:items-center">
                     <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1">
-                          <span className="text-[10px] font-bold bg-red-50 text-red-600 px-2 py-0.5 rounded border border-red-100 dark:bg-red-900/20 dark:text-red-400 dark:border-red-800/50">
+                          <span className="rounded border border-[var(--app-border)] bg-[var(--app-primary-soft)] px-2 py-0.5 text-[10px] font-bold text-[var(--app-accent-text)]">
                             {topic.category}
                           </span>
-                          <span className="text-xs text-gray-400 dark:text-gray-500">
+                          <span className="text-xs text-[var(--app-text-muted)]">
                             {new Date(topic.created_at).toLocaleDateString('th-TH')}
                           </span>
                         </div>
-                        <Link href={`/topic/${topic.id}`} className="text-lg font-bold text-gray-800 hover:text-red-600 transition-colors line-clamp-1 dark:text-gray-100 dark:hover:text-red-400">
+                        <Link href={`/topic/${topic.id}`} className="line-clamp-1 text-lg font-bold text-[var(--app-text)] transition-colors hover:text-[var(--app-accent-text)]">
                           {topic.title}
                         </Link>
-                        <div className="text-xs text-gray-400 mt-1 flex items-center gap-3">
+                        <div className="mt-1 flex items-center gap-3 text-xs text-[var(--app-text-muted)]">
                             <span className="flex items-center gap-1"><Eye aria-hidden="true" size={14} /> {topic.views}</span>
                             {/* ถ้าอยากโชว์คอมเมนต์ต้อง join table เพิ่ม แต่เอาแค่นี้ก่อนก็สวยแล้ว */}
                         </div>
                      </div>
                      <div className="flex items-center gap-2 w-full sm:w-auto">
-                        <Link href={`/topic/${topic.id}`} className="flex-1 sm:flex-none text-center px-4 py-2 bg-gray-50 text-gray-600 rounded-lg hover:bg-gray-100 text-sm font-medium transition border border-gray-200 dark:bg-neutral-800 dark:text-gray-300 dark:border-neutral-700 dark:hover:bg-neutral-700">
+                        <Link href={`/topic/${topic.id}`} className="flex-1 rounded-lg border border-[var(--app-border)] bg-[var(--app-surface-subtle)] px-4 py-2 text-center text-sm font-medium text-[var(--app-text-muted)] transition hover:bg-[var(--app-surface-elevated)] sm:flex-none">
                           ดู
                         </Link>
-                        <Link href={`/edit/${topic.id}`} className="flex-1 sm:flex-none text-center px-4 py-2 bg-yellow-50 text-yellow-700 rounded-lg hover:bg-yellow-100 text-sm font-medium transition border border-yellow-200 dark:bg-yellow-900/20 dark:text-yellow-400 dark:border-yellow-800 dark:hover:bg-yellow-900/40">
+                        <Link href={`/edit/${topic.id}`} className="flex-1 rounded-lg border border-[var(--app-primary)] bg-[var(--app-primary-soft)] px-4 py-2 text-center text-sm font-medium text-[var(--app-accent-text)] transition hover:bg-[var(--app-surface-elevated)] sm:flex-none">
                           แก้ไข
                         </Link>
                      </div>
                   </div>
                 ))
               ) : (
-                <div className="bg-white p-12 rounded-xl text-center border border-dashed border-gray-300 dark:bg-neutral-900 dark:border-neutral-800">
+                <div className="rounded-xl border border-dashed border-[var(--app-border-strong)] bg-[var(--app-surface)] p-12 text-center">
                   <Inbox className="mx-auto mb-4 text-[var(--app-text-muted)]" aria-hidden="true" size={34} />
-                  <p className="text-gray-400 text-lg mb-6">คุณยังไม่เคยตั้งกระทู้เลย...</p>
-                  <Link href="/create" className="bg-red-600 text-white px-6 py-3 rounded-lg hover:bg-red-700 transition inline-flex items-center gap-2 font-bold shadow-md shadow-red-500/20 dark:bg-red-700 dark:hover:bg-red-600">
+                  <p className="mb-6 text-lg text-[var(--app-text-muted)]">คุณยังไม่เคยตั้งกระทู้เลย...</p>
+                  <Link href="/create" className="inline-flex items-center gap-2 rounded-lg bg-[var(--app-primary)] px-6 py-3 font-bold text-[var(--app-primary-contrast)] transition hover:bg-[var(--app-primary-hover)]">
                     <Plus aria-hidden="true" size={18} /> เริ่มตั้งกระทู้แรก
                   </Link>
                 </div>

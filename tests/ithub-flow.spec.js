@@ -84,11 +84,14 @@ async function expectTourFitsViewport(page) {
 
 async function login(page) {
   await page.goto('/login');
+  await expect(page.locator('html')).toHaveAttribute('data-theme-ready', 'true');
   await page.locator('input[name="email"]').fill(email);
   await page.locator('input[name="password"]').fill(password);
   await page.locator('button[type="submit"]').click();
   await expect(page).toHaveURL((url) => url.pathname === '/');
   await expect(page.locator('[data-tour="create-topic"]:visible').first()).toBeVisible();
+  await page.waitForLoadState('networkidle');
+  await page.waitForTimeout(100);
   await expect(page).toHaveURL('/');
 }
 
@@ -132,6 +135,7 @@ test.describe('ITHub onboarding', () => {
   });
 
   test('moves through six steps, restores URL/hash/history, and records completion', async ({ page }) => {
+    test.setTimeout(60_000);
     await page.addInitScript((storageKey) => window.localStorage.setItem(storageKey, 'completed'), onboardingStorageKey);
     await page.goto('/help?tour=playwright#getting-started');
     const initialHistoryLength = await page.evaluate(() => history.length);
@@ -438,17 +442,68 @@ test.describe('ITHub critical flows', () => {
     }
     for (const query of ['%%%%', '_____']) {
       await page.goto(`/?search=${encodeURIComponent(query)}`);
-      await expect(page.getByText('ยังไม่พบกระทู้ที่ตรงกับเงื่อนไข')).toBeVisible();
+      await expect(page.locator('#main-content').getByText('ยังไม่พบกระทู้ที่ตรงกับเงื่อนไข').first()).toBeVisible();
     }
   });
 
-  test('toggles dark mode', async ({ page }) => {
+  test('selects, persists, resets, and keyboard-closes the theme picker', async ({ page }) => {
     await page.goto('/help');
-    await page.evaluate(() => localStorage.removeItem('theme'));
+    await page.evaluate(() => {
+      localStorage.setItem('theme', 'light');
+      localStorage.setItem('ithub_palette_v1', 'classic');
+    });
     await page.reload();
-    await page.getByTestId('theme-toggle').click();
+
+    const trigger = page.getByTestId('theme-toggle');
+    await trigger.focus();
+    await trigger.click();
+    await expect(page.getByTestId('theme-picker')).toBeVisible();
+    await page.getByTestId('theme-mode-light').focus();
+    await page.getByTestId('theme-mode-light').press('ArrowRight');
+    await page.getByTestId('theme-palette-ocean').click();
     await expect(page.locator('html')).toHaveClass(/dark/);
-    await expect.poll(() => page.evaluate(() => localStorage.getItem('theme'))).toBe('dark');
+    await expect(page.locator('html')).toHaveAttribute('data-mode', 'dark');
+    await expect(page.locator('html')).toHaveAttribute('data-palette', 'ocean');
+    await expect.poll(() => page.evaluate(() => [
+      localStorage.getItem('theme'),
+      localStorage.getItem('ithub_palette_v1'),
+    ])).toEqual(['dark', 'ocean']);
+
+    await page.keyboard.press('Escape');
+    await expect(page.getByTestId('theme-picker')).not.toBeVisible();
+    await expect(trigger).toBeFocused();
+    await page.reload();
+    await expect(page.locator('html')).toHaveClass(/dark/);
+    await expect(page.locator('html')).toHaveAttribute('data-palette', 'ocean');
+
+    await trigger.click();
+    await page.getByRole('button', { name: /คืนค่าเป็นตามระบบ/ }).click();
+    await expect(page.locator('html')).toHaveAttribute('data-mode', 'system');
+    await expect(page.locator('html')).toHaveAttribute('data-palette', 'classic');
+    await expect.poll(() => page.evaluate(() => [
+      localStorage.getItem('theme'),
+      localStorage.getItem('ithub_palette_v1'),
+    ])).toEqual(['system', 'classic']);
+    await page.mouse.click(1, 1);
+    await expect(page.getByTestId('theme-picker')).not.toBeVisible();
+    await expect(trigger).toBeFocused();
+  });
+
+  test('falls back from invalid values and follows live system color changes', async ({ page }) => {
+    await page.emulateMedia({ colorScheme: 'dark' });
+    await page.addInitScript(() => {
+      localStorage.setItem('theme', 'invalid-mode');
+      localStorage.setItem('ithub_palette_v1', 'invalid-palette');
+    });
+    await page.goto('/help', { waitUntil: 'domcontentloaded' });
+    await expect(page.locator('html')).toHaveAttribute('data-mode', 'system');
+    await expect(page.locator('html')).toHaveAttribute('data-palette', 'classic');
+    await expect(page.locator('html')).toHaveClass(/dark/);
+    await expect(page.locator('html')).toHaveAttribute('data-theme-ready', 'true');
+
+    await page.emulateMedia({ colorScheme: 'light' });
+    await expect(page.locator('html')).not.toHaveClass(/dark/);
+    await expect.poll(() => page.evaluate(() => document.documentElement.style.colorScheme)).toBe('light');
   });
 
   test('serves complete footer and information routes', async ({ page }) => {
@@ -556,7 +611,7 @@ test.describe('ITHub critical flows', () => {
     const topicPath = await firstTopic.getAttribute('href');
     await page.goto(topicPath);
     await expect(page).toHaveURL((url) => url.pathname === topicPath);
-    await expect(page.locator('main h1')).toBeVisible();
+    await expect(page.locator('#main-content main h1').first()).toBeVisible();
 
     await expect(page.getByRole('button', { name: /ถูกใจกระทู้|ยกเลิกถูกใจ/ })).toHaveCount(0);
     await expect(page.getByRole('button', { name: /บันทึกกระทู้|นำกระทู้ออก/ })).toHaveCount(0);
@@ -593,7 +648,7 @@ test.describe('ITHub critical flows', () => {
 
   test('leaves no temporary Playwright topics behind', async ({ page }) => {
     await page.goto('/?search=Playwright%20topic');
-    await expect(page.getByText('ยังไม่พบกระทู้ที่ตรงกับเงื่อนไข')).toBeVisible();
+    await expect(page.locator('#main-content').getByText('ยังไม่พบกระทู้ที่ตรงกับเงื่อนไข').first()).toBeVisible();
   });
 });
 
@@ -664,6 +719,96 @@ test.describe('ITHub responsive layout regression', () => {
       const screenshot = await page.screenshot({ fullPage: true, animations: 'disabled' });
       expect(screenshot.byteLength).toBeGreaterThan(10_000);
       await testInfo.attach(`home-${viewport.width}-dark-reduced-motion`, { body: screenshot, contentType: 'image/png' });
+    }
+  });
+
+  test('keeps all five palettes readable in light and dark across the target matrix', async ({ page }, testInfo) => {
+    test.setTimeout(120_000);
+    const palettes = ['classic', 'ocean', 'forest', 'violet', 'amber'];
+    const viewports = [
+      { width: 390, height: 844 },
+      { width: 768, height: 900 },
+      { width: 1024, height: 900 },
+      { width: 1440, height: 1000 },
+    ];
+
+    for (const viewport of viewports) {
+      await page.setViewportSize(viewport);
+      await page.goto('/');
+
+      for (const mode of ['light', 'dark']) {
+        for (const palette of palettes) {
+          const trigger = page.getByTestId('theme-toggle');
+          await trigger.click();
+          await page.getByTestId(`theme-mode-${mode}`).click();
+          await page.getByTestId(`theme-palette-${palette}`).click();
+          await page.keyboard.press('Escape');
+
+          await expect(page.locator('html')).toHaveAttribute('data-mode', mode);
+          await expect(page.locator('html')).toHaveAttribute('data-palette', palette);
+          await expect(page.locator('html')).toHaveClass(mode === 'dark' ? /dark/ : /^(?!.*dark)/);
+          await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth)).toBe(viewport.width);
+          const themeMetrics = await page.evaluate(() => {
+            const style = getComputedStyle(document.documentElement);
+            const values = {
+              primary: style.getPropertyValue('--app-primary').trim(),
+              primaryContrast: style.getPropertyValue('--app-primary-contrast').trim(),
+              surface: style.getPropertyValue('--app-surface').trim(),
+              canvas: style.getPropertyValue('--app-background').trim(),
+              text: style.getPropertyValue('--app-text').trim(),
+            };
+            const channelsFromColor = (color) => {
+              if (color.startsWith('#')) {
+                const expanded = color.length === 4
+                  ? color.slice(1).split('').map((value) => value + value).join('')
+                  : color.slice(1);
+                return expanded.match(/.{2}/g).slice(0, 3).map((value) => Number.parseInt(value, 16));
+              }
+              return color.match(/[\d.]+/g).slice(0, 3).map(Number);
+            };
+            const luminance = (color) => {
+              const channels = channelsFromColor(color).map((value) => value / 255);
+              const linear = channels.map((value) => value <= 0.04045 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4);
+              return (0.2126 * linear[0]) + (0.7152 * linear[1]) + (0.0722 * linear[2]);
+            };
+            const contrast = (first, second) => {
+              const a = luminance(first);
+              const b = luminance(second);
+              return (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05);
+            };
+            return {
+              ...values,
+              textContrast: contrast(values.text, values.surface),
+              controlContrast: contrast(values.primary, values.surface),
+              buttonContrast: contrast(values.primary, values.primaryContrast),
+            };
+          });
+          expect(themeMetrics).toEqual(expect.objectContaining({
+            primary: expect.stringMatching(/^#/),
+            surface: expect.stringMatching(/^#/),
+            canvas: expect.stringMatching(/^#/),
+            text: expect.stringMatching(/^#/),
+          }));
+          expect(themeMetrics.canvas).not.toBe(themeMetrics.surface);
+          expect(themeMetrics.textContrast).toBeGreaterThanOrEqual(4.5);
+          expect(themeMetrics.controlContrast).toBeGreaterThanOrEqual(3);
+          expect(themeMetrics.buttonContrast).toBeGreaterThanOrEqual(4.5);
+
+          if (viewport.width === 390) {
+            const firstTopic = page.locator('#topic-feed article').first();
+            await expect(firstTopic.locator('h3')).toBeVisible();
+            const firstTopicBox = await firstTopic.boundingBox();
+            expect(firstTopicBox).not.toBeNull();
+            expect(firstTopicBox.y).toBeLessThan(viewport.height);
+          }
+
+          if (testInfo.project.name === 'chromium' && (viewport.width === 390 || viewport.width === 1440)) {
+            const screenshot = await page.screenshot({ fullPage: true, animations: 'disabled' });
+            expect(screenshot.byteLength).toBeGreaterThan(10_000);
+            await testInfo.attach(`home-${viewport.width}-${palette}-${mode}`, { body: screenshot, contentType: 'image/png' });
+          }
+        }
+      }
     }
   });
 
@@ -744,6 +889,8 @@ test.describe('ITHub responsive layout regression', () => {
   });
 
   test('keeps topic text within the reading measure on desktop and mobile', async ({ page }, testInfo) => {
+    test.setTimeout(120_000);
+    const palettes = ['classic', 'ocean', 'forest', 'violet', 'amber'];
     for (const viewport of [{ width: 390, height: 844 }, { width: 1440, height: 1000 }]) {
       await page.setViewportSize(viewport);
       await page.goto('/');
@@ -752,23 +899,31 @@ test.describe('ITHub responsive layout regression', () => {
       const topicPath = await firstTopic.getAttribute('href');
 
       for (const theme of ['light', 'dark']) {
-        await page.evaluate((nextTheme) => window.localStorage.setItem('theme', nextTheme), theme);
-        await page.emulateMedia({ colorScheme: theme, reducedMotion: 'reduce' });
-        await page.goto(topicPath);
-        await expect(page.locator('html')).toHaveClass(theme === 'dark' ? /dark/ : /^(?!.*dark)/);
-        const content = page.locator('.view-ql-editor:visible').first();
-        await expect(content).toBeVisible();
+        for (const palette of palettes) {
+          await page.evaluate(({ nextTheme, nextPalette }) => {
+            window.localStorage.setItem('theme', nextTheme);
+            window.localStorage.setItem('ithub_palette_v1', nextPalette);
+          }, { nextTheme: theme, nextPalette: palette });
+          await page.emulateMedia({ colorScheme: theme, reducedMotion: 'reduce' });
+          await page.goto(topicPath);
+          await expect(page.locator('html')).toHaveClass(theme === 'dark' ? /dark/ : /^(?!.*dark)/);
+          await expect(page.locator('html')).toHaveAttribute('data-palette', palette);
+          const content = page.locator('.view-ql-editor:visible').first();
+          await expect(content).toBeVisible();
 
-        const contentBox = await content.boundingBox();
-        expect(contentBox).not.toBeNull();
-        expect(contentBox.width).toBeLessThanOrEqual(860);
-        expect(contentBox.x).toBeGreaterThanOrEqual(0);
-        expect(contentBox.x + contentBox.width).toBeLessThanOrEqual(viewport.width);
-        await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth)).toBe(viewport.width);
+          const contentBox = await content.boundingBox();
+          expect(contentBox).not.toBeNull();
+          expect(contentBox.width).toBeLessThanOrEqual(860);
+          expect(contentBox.x).toBeGreaterThanOrEqual(0);
+          expect(contentBox.x + contentBox.width).toBeLessThanOrEqual(viewport.width);
+          await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth)).toBe(viewport.width);
 
-        const screenshot = await page.screenshot({ fullPage: true, animations: 'disabled' });
-        expect(screenshot.byteLength).toBeGreaterThan(10_000);
-        await testInfo.attach(`topic-${viewport.width}-${theme}`, { body: screenshot, contentType: 'image/png' });
+          if (testInfo.project.name === 'chromium') {
+            const screenshot = await page.screenshot({ fullPage: true, animations: 'disabled' });
+            expect(screenshot.byteLength).toBeGreaterThan(10_000);
+            await testInfo.attach(`topic-${viewport.width}-${palette}-${theme}`, { body: screenshot, contentType: 'image/png' });
+          }
+        }
       }
     }
   });

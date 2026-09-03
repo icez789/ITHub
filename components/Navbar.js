@@ -37,7 +37,7 @@ export default async function Navbar() {
           <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-red-600 text-base font-bold text-white shadow-sm">
             IT
           </span>
-          <span className="hidden text-xl font-bold tracking-tight text-zinc-950 sm:block dark:text-white">
+          <span className="hidden text-xl font-bold tracking-tight text-[var(--app-text)] sm:block">
             IT<span className="text-red-600 dark:text-red-400">Hub</span>
           </span>
         </Link>
@@ -58,7 +58,7 @@ export default async function Navbar() {
               {isContentModeratorRole(user.role) && (
                 <Link
                   href="/admin"
-                  className="hidden items-center gap-2 rounded-xl border border-[var(--app-border)] px-3 py-2 text-sm font-semibold text-zinc-700 transition-colors hover:bg-zinc-100 lg:flex dark:text-zinc-200 dark:hover:bg-zinc-800"
+                  className="hidden items-center gap-2 rounded-xl border border-[var(--app-border)] px-3 py-2 text-sm font-semibold text-[var(--app-text)] transition-colors hover:bg-[var(--app-surface-subtle)] lg:flex"
                 >
                   <ShieldCheck aria-hidden="true" className="h-4 w-4" />
                   {user.role === 'teacher' ? 'ศูนย์ดูแลเนื้อหา' : 'ผู้ดูแล'}
@@ -69,16 +69,16 @@ export default async function Navbar() {
                 href="/create"
                 data-tour="create-topic"
                 data-tour-session="member"
-                className="flex items-center gap-2 rounded-xl bg-red-600 px-3 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-red-700 sm:px-4"
+                className="flex items-center gap-2 rounded-xl bg-[var(--app-primary)] px-3 py-2 text-sm font-semibold text-[var(--app-primary-contrast)] shadow-sm transition-colors hover:bg-[var(--app-primary-hover)] sm:px-4"
               >
                 <Plus aria-hidden="true" className="h-4 w-4" />
                 <span className="hidden sm:inline">สร้างกระทู้</span>
               </Link>
 
-              <Link href="/profile" data-tour="personal-nav" className="hidden items-center gap-3 rounded-xl px-1.5 py-1 transition-colors hover:bg-zinc-100 sm:flex dark:hover:bg-zinc-800">
+              <Link href="/profile" data-tour="personal-nav" className="hidden items-center gap-3 rounded-xl px-1.5 py-1 transition-colors hover:bg-[var(--app-surface-subtle)] sm:flex">
                 <span className="hidden text-right lg:block">
                   <span className="block text-[11px] font-medium text-zinc-500 dark:text-zinc-400">บัญชีของฉัน</span>
-                  <span className="block max-w-28 truncate text-sm font-semibold text-zinc-900 dark:text-zinc-100">{user.username}</span>
+                  <span className="block max-w-28 truncate text-sm font-semibold text-[var(--app-text)]">{user.username}</span>
                 </span>
                 <span className="relative flex h-9 w-9 items-center justify-center overflow-hidden rounded-full border border-[var(--app-border)] bg-zinc-100 dark:bg-zinc-800">
                   {user.avatar_url ? (
@@ -93,10 +93,10 @@ export default async function Navbar() {
             </>
           ) : (
             <>
-              <Link href="/register" className="hidden rounded-xl px-3 py-2 text-sm font-semibold text-zinc-600 transition-colors hover:bg-zinc-100 hover:text-zinc-950 sm:inline-flex dark:text-zinc-300 dark:hover:bg-zinc-800 dark:hover:text-white">
+              <Link href="/register" className="hidden rounded-xl px-3 py-2 text-sm font-semibold text-[var(--app-text-muted)] transition-colors hover:bg-[var(--app-surface-subtle)] hover:text-[var(--app-text)] sm:inline-flex">
                 สมัครสมาชิก
               </Link>
-              <Link href="/login" data-tour="auth-action" className="whitespace-nowrap rounded-xl bg-red-600 px-3.5 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-red-700 sm:px-4">
+              <Link href="/login" data-tour="auth-action" className="whitespace-nowrap rounded-xl bg-[var(--app-primary)] px-3.5 py-2 text-sm font-semibold text-[var(--app-primary-contrast)] shadow-sm transition-colors hover:bg-[var(--app-primary-hover)] sm:px-4">
                 เข้าสู่ระบบ
               </Link>
             </>

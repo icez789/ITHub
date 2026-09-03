@@ -22,7 +22,7 @@ export default async function EditTopicPage({ params }) {
   const topic = topics[0];
 
   // 3. เช็คความปลอดภัย
-  if (!topic) return <div className="text-center p-10 dark:text-white">ไม่พบกระทู้นี้</div>;
+  if (!topic) return <div className="p-10 text-center text-[var(--app-text)]">ไม่พบกระทู้นี้</div>;
   
   if (topic.user_id !== user.id && !isAdmin(user)) {
       redirect('/'); 
@@ -31,8 +31,8 @@ export default async function EditTopicPage({ params }) {
   return (
     <main className="ithub-page-container mx-auto max-w-3xl pb-24 pt-8 md:pb-12 md:pt-12">
        <div className="rounded-2xl border border-[var(--app-border)] bg-[var(--app-surface)] p-5 shadow-sm sm:p-8">
-          <h1 className="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-2 dark:text-white">
-            <Edit3 className="text-amber-600" aria-hidden="true" size={24} /> แก้ไขกระทู้
+          <h1 className="mb-6 flex items-center gap-2 text-2xl font-bold text-[var(--app-text)]">
+            <Edit3 className="text-[var(--app-accent-text)]" aria-hidden="true" size={24} /> แก้ไขกระทู้
           </h1>
           
           {/* ✅ ส่งข้อมูลไปให้ Client Component จัดการต่อ */}

@@ -12,6 +12,8 @@ import { Suspense } from "react";
 import { IBM_Plex_Sans_Thai } from 'next/font/google';
 import 'highlight.js/styles/atom-one-dark.css';
 import { Analytics } from '@vercel/analytics/react';
+import Script from 'next/script';
+import { themeInitializationScript } from '../lib/theme';
 
 const ithubFont = IBM_Plex_Sans_Thai({
   weight: ['400', '500', '600', '700'],
@@ -28,14 +30,15 @@ export const metadata = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="th" suppressHydrationWarning className={ithubFont.variable}>
+    <html lang="th" suppressHydrationWarning className={ithubFont.variable} data-mode="system" data-palette="classic" data-theme-ready="false">
       <body className="min-h-screen bg-[var(--app-background)] text-[var(--app-text)] transition-colors duration-200">
-        <a href="#main-content" className="fixed left-3 top-3 z-[100] -translate-y-24 rounded-lg bg-red-600 px-4 py-2 font-bold text-white shadow-lg transition-transform focus:translate-y-0">
+        <Script id="ithub-theme-init" strategy="beforeInteractive">{themeInitializationScript}</Script>
+        <a href="#main-content" className="fixed left-3 top-3 z-[100] -translate-y-24 rounded-lg bg-[var(--app-primary)] px-4 py-2 font-bold text-[var(--app-primary-contrast)] shadow-lg transition-transform focus:translate-y-0">
           ข้ามไปยังเนื้อหา
         </a>
         
         <NextTopLoader 
-          color="#dc2626"   
+          color="var(--app-primary)"
           initialPosition={0.08}
           crawlSpeed={200}
           height={3}        

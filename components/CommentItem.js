@@ -58,7 +58,7 @@ export default function CommentItem({
         <div className={`w-10 h-10 rounded-full flex-shrink-0 flex items-center justify-center font-bold border 
             ${isSolved 
                 ? 'bg-green-100 text-green-700 border-green-500 dark:bg-green-900 dark:text-green-300' 
-                : 'bg-gray-100 text-red-600 border-gray-300 dark:bg-neutral-800 dark:border-neutral-700 dark:text-red-400'
+                : 'bg-[var(--app-primary-soft)] text-[var(--app-accent-text)] border-[var(--app-border)]'
             }`}>
           {(comment.username || '?').charAt(0).toUpperCase()}
         </div>
@@ -66,7 +66,7 @@ export default function CommentItem({
         <div className="flex-1">
           <div className="flex flex-wrap justify-between items-center mb-2 gap-2">
              <div className="flex items-center gap-2 flex-wrap">
-                <span className="font-bold text-gray-800 dark:text-gray-200">{comment.username || 'ผู้เยี่ยมชม'}</span>
+                <span className="font-bold text-[var(--app-text)]">{comment.username || 'ผู้เยี่ยมชม'}</span>
                 
                 <UserBadge role={comment.role} xp={comment.xp} />
                 
@@ -89,7 +89,7 @@ export default function CommentItem({
           
           {/* 🚀 แยกการเรนเดอร์ระหว่างบอท (Markdown) กับคนปกติ (HTML) */}
           {isBot ? (
-            <div className="markdown-body text-gray-800 dark:text-gray-200 [&_p]:mb-2 [&_p:last-child]:mb-0 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_strong]:font-semibold text-sm">
+            <div className="markdown-body text-[var(--app-text)] [&_p]:mb-2 [&_p:last-child]:mb-0 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_strong]:font-semibold text-sm">
               <ReactMarkdown
                 remarkPlugins={[remarkGfm]}
                 components={{
@@ -106,7 +106,7 @@ export default function CommentItem({
                         {String(children).replace(/\n$/, '')}
                       </SyntaxHighlighter>
                     ) : (
-                      <code className="bg-gray-200 dark:bg-neutral-700 text-red-600 dark:text-red-400 px-1 py-0.5 rounded text-xs font-mono" {...props}>
+                      <code className="rounded bg-[var(--app-surface-subtle)] px-1 py-0.5 font-mono text-xs text-[var(--app-accent-text)]" {...props}>
                         {children}
                       </code>
                     );
@@ -118,7 +118,7 @@ export default function CommentItem({
             </div>
           ) : (
             <div 
-              className="text-gray-700 whitespace-pre-wrap leading-relaxed dark:text-gray-300 prose max-w-none dark:prose-invert text-sm" 
+              className="prose max-w-none whitespace-pre-wrap text-sm leading-relaxed text-[var(--app-text)] dark:prose-invert"
               dangerouslySetInnerHTML={{ __html: comment.content }} 
             />
           )}
@@ -128,7 +128,7 @@ export default function CommentItem({
                 <button 
                     type="button"
                     onClick={() => setIsReplying(!isReplying)}
-                    className="flex items-center gap-1 text-xs font-semibold text-[var(--app-text-muted)] transition-colors hover:text-blue-600"
+                    className="flex items-center gap-1 text-xs font-semibold text-[var(--app-text-muted)] transition-colors hover:text-[var(--app-accent-text)]"
                 >
                     <Reply aria-hidden="true" size={14} /> ตอบกลับ
                 </button>

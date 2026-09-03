@@ -55,14 +55,14 @@ function SearchInputForRoute({ pathname, queryString, initialSearch, className }
 
   return (
     <div data-tour="search" className={`relative ${className}`}>
-      <Search aria-hidden="true" className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
+      <Search aria-hidden="true" className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--app-text-muted)]" />
       <input
         type="search"
         value={text}
         onInput={handleChange}
         aria-label="ค้นหากระทู้"
         placeholder="ค้นหาหัวข้อหรือเนื้อหากระทู้"
-        className="w-full rounded-xl border border-[var(--app-border)] bg-[var(--app-surface-subtle)] py-2 pl-10 pr-4 text-sm text-zinc-800 outline-none transition-colors placeholder:text-zinc-400 focus:border-red-500 focus:bg-[var(--app-surface)] focus:ring-2 focus:ring-red-500/15 dark:text-zinc-100 dark:placeholder:text-zinc-500"
+        className="w-full rounded-xl border border-[var(--app-border)] bg-[var(--app-surface-subtle)] py-2 pl-10 pr-4 text-sm text-[var(--app-text)] outline-none transition-colors placeholder:text-[var(--app-text-muted)] focus:border-[var(--app-primary)] focus:bg-[var(--app-surface)] focus:ring-2 focus:ring-[var(--app-focus-ring)]/20"
       />
     </div>
   );

@@ -8,7 +8,7 @@ import { roleLabel } from '../lib/roles';
 
 export default function ProfileAvatar({ user, updateAvatar, myTopicsCount }) {
   return (
-    <div className="bg-white p-6 rounded-xl shadow-md text-center border-t-4 border-gray-800 dark:bg-neutral-900 dark:border-neutral-700">
+    <div className="rounded-xl border border-[var(--app-border)] border-t-4 border-t-[var(--app-primary)] bg-[var(--app-surface)] p-6 text-center shadow-md">
       
       {/* ส่วนรูปโปรไฟล์ */}
       <div className="relative w-32 h-32 mx-auto mb-4 group">
@@ -28,14 +28,12 @@ export default function ProfileAvatar({ user, updateAvatar, myTopicsCount }) {
         </label>
       </div>
       
-      <h2 className="text-2xl font-bold text-gray-800 dark:text-white">{user.username}</h2>
-      <p className="text-gray-500 text-sm mb-4 dark:text-gray-400">{user.email}</p>
+      <h2 className="text-2xl font-bold text-[var(--app-text)]">{user.username}</h2>
+      <p className="mb-4 text-sm text-[var(--app-text-muted)]">{user.email}</p>
       
       {/* ส่วน Bio */}
       {user.bio && (
-        <div className="mb-6 text-gray-600 italic text-sm p-3 rounded-lg border border-gray-100 
-                        bg-gray-50 dark:bg-neutral-800 dark:border-neutral-700 dark:text-gray-300 
-                        break-words whitespace-pre-wrap">
+        <div className="mb-6 break-words whitespace-pre-wrap rounded-lg border border-[var(--app-border)] bg-[var(--app-surface-subtle)] p-3 text-sm italic text-[var(--app-text-muted)]">
           <span aria-hidden="true">“</span>{user.bio}<span aria-hidden="true">”</span>
         </div>
       )}
@@ -48,15 +46,15 @@ export default function ProfileAvatar({ user, updateAvatar, myTopicsCount }) {
           </Link>
 
           {/* ปุ่มดูรายการที่บันทึก (Saved Topics) */}
-          <Link href="/profile/saved" className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-blue-200 bg-blue-50 px-4 py-2 font-semibold text-blue-700 transition-colors hover:bg-blue-100 dark:border-blue-900 dark:bg-blue-950/30 dark:text-blue-300">
+          <Link href="/profile/saved" className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-[var(--app-primary)] bg-[var(--app-primary-soft)] px-4 py-2 font-semibold text-[var(--app-accent-text)] transition-colors hover:border-[var(--app-border-strong)]">
             <Bookmark aria-hidden="true" size={17} /> รายการที่บันทึกไว้
           </Link>
       </div>
       
       {/* ส่วนสถิติ */}
-      <div className="text-left bg-gray-50 p-4 rounded-lg text-sm space-y-2 dark:bg-black dark:border dark:border-neutral-800">
+      <div className="space-y-2 rounded-lg border border-[var(--app-border)] bg-[var(--app-surface-subtle)] p-4 text-left text-sm">
         <div className="flex justify-between">
-          <span className="text-gray-500 dark:text-gray-400">สถานะ:</span>
+          <span className="text-[var(--app-text-muted)]">สถานะ:</span>
           <span className={`font-bold ${
             user.role === 'super_admin' ? 'text-amber-600' :
             user.role === 'admin' ? 'text-red-600' :
@@ -67,12 +65,12 @@ export default function ProfileAvatar({ user, updateAvatar, myTopicsCount }) {
           </span>
         </div>
         <div className="flex justify-between">
-          <span className="text-gray-500 dark:text-gray-400">วันที่สมัคร:</span>
-          <span className="dark:text-gray-300">{new Date(user.created_at).toLocaleDateString('th-TH')}</span>
+          <span className="text-[var(--app-text-muted)]">วันที่สมัคร:</span>
+          <span>{new Date(user.created_at).toLocaleDateString('th-TH')}</span>
         </div>
         <div className="flex justify-between">
-          <span className="text-gray-500 dark:text-gray-400">กระทู้ทั้งหมด:</span>
-          <span className="font-bold dark:text-gray-300">{myTopicsCount}</span>
+          <span className="text-[var(--app-text-muted)]">กระทู้ทั้งหมด:</span>
+          <span className="font-bold">{myTopicsCount}</span>
         </div>
       </div>
     </div>

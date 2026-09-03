@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { votePoll } from '../lib/actions';
 import { toast } from 'react-hot-toast';
 import { pusherClient } from '../lib/pusherClient'; // ✅ Import Pusher Client
-import { BarChart3, CheckCircle2, Crown, Handshake } from 'lucide-react';
+import { BarChart3, CheckCircle2, Crown, Handshake, Pencil } from 'lucide-react';
 
 export default function PollUI({ poll, options: initialOptions, userVote: initialUserVote, currentUser }) {
   const router = useRouter();
@@ -87,11 +87,11 @@ export default function PollUI({ poll, options: initialOptions, userVote: initia
 
   // ... (ส่วน return JSX เหมือนเดิมเป๊ะ ไม่ต้องแก้) ...
   return (
-    <div className="bg-white dark:bg-neutral-900 border border-gray-200 dark:border-neutral-800 rounded-xl p-6 mb-8 shadow-sm">
+    <div className="mb-8 rounded-xl border border-[var(--app-border)] bg-[var(--app-surface)] p-6 shadow-sm">
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
-            <BarChart3 className="text-red-600 dark:text-red-400" aria-hidden="true" size={22} />
-            <h3 className="text-xl font-bold text-gray-800 dark:text-white">{poll.question}</h3>
+            <BarChart3 className="text-[var(--app-accent-text)]" aria-hidden="true" size={22} />
+            <h3 className="text-xl font-bold text-[var(--app-text)]">{poll.question}</h3>
         </div>
       </div>
 
@@ -112,28 +112,28 @@ export default function PollUI({ poll, options: initialOptions, userVote: initia
                 onClick={() => handleSelect(opt.id)}
                 className={`w-full text-left relative overflow-hidden rounded-lg border-2 transition-all p-4 z-10
                     ${isSelected 
-                        ? 'border-red-600 dark:border-red-500 ring-1 ring-red-500' 
-                        : 'border-gray-300 dark:border-neutral-700 bg-white dark:bg-neutral-900'
+                        ? 'border-[var(--app-primary)] ring-1 ring-[var(--app-focus-ring)]'
+                        : 'border-[var(--app-border)] bg-[var(--app-surface)]'
                     }
-                    ${isEditMode && !isSelected ? 'hover:border-red-400 dark:hover:border-red-500 hover:bg-gray-50 dark:hover:bg-neutral-800' : ''}
+                    ${isEditMode && !isSelected ? 'hover:border-[var(--app-primary)] hover:bg-[var(--app-surface-subtle)]' : ''}
                     ${!isEditMode ? 'cursor-default' : 'cursor-pointer'}
                 `}
               >
                 <div 
                     className={`absolute top-0 left-0 h-full transition-all duration-700 ease-out -z-10
                         ${isSelected 
-                            ? 'bg-red-600/15 dark:bg-red-500/30' 
-                            : 'bg-gray-500/15 dark:bg-gray-500/30' 
+                            ? 'bg-[var(--app-primary-soft)]'
+                            : 'bg-[var(--app-surface-subtle)]'
                         }
                     `} 
                     style={{ width: `${percent}%` }}
                 ></div>
 
                 <div className="relative flex justify-between items-center">
-                    <span className={`font-bold flex items-center gap-2 ${isSelected ? 'text-red-700 dark:text-red-400' : 'text-gray-800 dark:text-gray-200'}`}>
+                    <span className={`flex items-center gap-2 font-bold ${isSelected ? 'text-[var(--app-accent-text)]' : 'text-[var(--app-text)]'}`}>
                         {isEditMode && (
-                            <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${isSelected ? 'border-red-600' : 'border-gray-400 group-hover:border-red-400'}`}>
-                                {isSelected && <div className="w-2.5 h-2.5 rounded-full bg-red-600"></div>}
+                            <div className={`flex h-5 w-5 items-center justify-center rounded-full border-2 transition-all ${isSelected ? 'border-[var(--app-primary)]' : 'border-[var(--app-border-strong)] group-hover:border-[var(--app-primary)]'}`}>
+                                {isSelected && <div className="h-2.5 w-2.5 rounded-full bg-[var(--app-primary)]"></div>}
                             </div>
                         )}
                         
@@ -150,7 +150,7 @@ export default function PollUI({ poll, options: initialOptions, userVote: initia
                         )}
                     </span>
                     
-                    <span className={`text-sm font-mono font-bold ${isSelected ? 'text-red-700 dark:text-red-400' : 'text-gray-600 dark:text-gray-400'}`}>
+                    <span className={`font-mono text-sm font-bold ${isSelected ? 'text-[var(--app-accent-text)]' : 'text-[var(--app-text-muted)]'}`}>
                         {opt.vote_count} ({percent}%)
                     </span>
                 </div>
@@ -160,9 +160,9 @@ export default function PollUI({ poll, options: initialOptions, userVote: initia
         })}
       </div>
 
-      <div className="mt-6 flex flex-wrap items-center justify-between border-t border-gray-200 dark:border-neutral-800 pt-5 gap-4">
-        <span className="text-sm text-gray-500 dark:text-gray-400 font-medium">
-            รวมทั้งหมด <span className="font-bold text-gray-800 dark:text-gray-200">{totalVotes.toLocaleString()}</span> คะแนน
+      <div className="mt-6 flex flex-wrap items-center justify-between gap-4 border-t border-[var(--app-border)] pt-5">
+        <span className="text-sm font-medium text-[var(--app-text-muted)]">
+            รวมทั้งหมด <span className="font-bold text-[var(--app-text)]">{totalVotes.toLocaleString()}</span> คะแนน
         </span>
         
         {isEditMode ? (
@@ -173,7 +173,7 @@ export default function PollUI({ poll, options: initialOptions, userVote: initia
                             setIsEditMode(false); 
                             setSelectedOption(userVote);
                         }}
-                        className="px-4 py-2 text-sm font-bold text-gray-600 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200 transition bg-gray-100 hover:bg-gray-200 dark:bg-neutral-800 dark:hover:bg-neutral-700 rounded-lg"
+                        className="rounded-lg bg-[var(--app-surface-subtle)] px-4 py-2 text-sm font-bold text-[var(--app-text-muted)] transition hover:text-[var(--app-text)]"
                     >
                         ยกเลิก
                     </button>
@@ -184,7 +184,7 @@ export default function PollUI({ poll, options: initialOptions, userVote: initia
                     className={`px-6 py-2 rounded-lg font-bold text-white text-sm shadow-sm transition-all
                         ${!selectedOption || selectedOption === userVote
                             ? 'bg-gray-400 cursor-not-allowed dark:bg-neutral-700 dark:text-gray-500' 
-                            : 'bg-red-600 hover:bg-red-700 hover:shadow-md active:scale-95'
+                            : 'bg-[var(--app-primary)] hover:bg-[var(--app-primary-hover)] hover:shadow-md'
                         }
                     `}
                 >
@@ -202,12 +202,9 @@ export default function PollUI({ poll, options: initialOptions, userVote: initia
                         setIsEditMode(true);
                         setSelectedOption(userVote);
                     }}
-                    className="flex items-center gap-2 px-4 py-1.5 rounded-lg border-2 border-gray-300 dark:border-neutral-700 text-sm font-bold text-gray-600 dark:text-gray-300 hover:border-red-500 hover:text-red-600 dark:hover:border-red-500 dark:hover:text-red-400 transition-all bg-white dark:bg-neutral-900 hover:shadow-sm active:scale-95"
+                    className="flex items-center gap-2 rounded-lg border-2 border-[var(--app-border)] bg-[var(--app-surface)] px-4 py-1.5 text-sm font-bold text-[var(--app-text-muted)] transition-colors hover:border-[var(--app-primary)] hover:text-[var(--app-accent-text)]"
                 >
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
-                        <path d="M5.433 13.917l1.262-3.155A4 4 0 017.58 9.42l6.92-6.918a2.121 2.121 0 013 3l-6.92 6.918c-.383.383-.84.685-1.343.886l-3.154 1.262a.5.5 0 01-.65-.65z" />
-                        <path d="M3.5 5.75c0-.69.56-1.25 1.25-1.25H10A.75.75 0 0010 3H4.75A2.75 2.75 0 002 5.75v9.5A2.75 2.75 0 004.75 18h9.5A2.75 2.75 0 0017 15.25V10a.75.75 0 00-1.5 0v5.25c0 .69-.56 1.25-1.25 1.25h-9.5c-.69 0-1.25-.56-1.25-1.25v-9.5z" />
-                    </svg>
+                    <Pencil aria-hidden="true" className="h-4 w-4" />
                     เปลี่ยนคำตอบ
                 </button>
             </div>

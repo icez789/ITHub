@@ -89,28 +89,28 @@ export default async function RegisterPage({ searchParams }) {
           
           <div>
             <label htmlFor="register-username" className="mb-1.5 block text-sm font-medium text-[var(--app-text)]">ชื่อผู้ใช้</label>
-            <input id="register-username" name="username" type="text" required minLength={3} maxLength={40} autoComplete="username" placeholder="เช่น Somchai IT" className="w-full rounded-lg border border-[var(--app-border)] bg-[var(--app-surface-subtle)] p-3 text-[var(--app-text)] outline-none transition-shadow focus:ring-2 focus:ring-red-500" />
+            <input id="register-username" name="username" type="text" required minLength={3} maxLength={40} autoComplete="username" placeholder="เช่น Somchai IT" className="w-full rounded-lg border border-[var(--app-border)] bg-[var(--app-surface-subtle)] p-3 text-[var(--app-text)] outline-none transition-shadow focus:border-[var(--app-primary)] focus:ring-2 focus:ring-[var(--app-focus-ring)]" />
           </div>
 
           <div>
             <label htmlFor="register-email" className="mb-1.5 block text-sm font-medium text-[var(--app-text)]">อีเมล</label>
-            <input id="register-email" name="email" type="email" required autoComplete="email" placeholder="name@example.com" className="w-full rounded-lg border border-[var(--app-border)] bg-[var(--app-surface-subtle)] p-3 text-[var(--app-text)] outline-none transition-shadow focus:ring-2 focus:ring-red-500" />
+            <input id="register-email" name="email" type="email" required autoComplete="email" placeholder="name@example.com" className="w-full rounded-lg border border-[var(--app-border)] bg-[var(--app-surface-subtle)] p-3 text-[var(--app-text)] outline-none transition-shadow focus:border-[var(--app-primary)] focus:ring-2 focus:ring-[var(--app-focus-ring)]" />
           </div>
 
           <div>
             <label htmlFor="register-password" className="mb-1.5 block text-sm font-medium text-[var(--app-text)]">รหัสผ่าน</label>
-            <input id="register-password" name="password" type="password" required minLength={8} maxLength={128} autoComplete="new-password" placeholder="อย่างน้อย 8 ตัวอักษร" className="w-full rounded-lg border border-[var(--app-border)] bg-[var(--app-surface-subtle)] p-3 text-[var(--app-text)] outline-none transition-shadow focus:ring-2 focus:ring-red-500" />
+            <input id="register-password" name="password" type="password" required minLength={8} maxLength={128} autoComplete="new-password" placeholder="อย่างน้อย 8 ตัวอักษร" className="w-full rounded-lg border border-[var(--app-border)] bg-[var(--app-surface-subtle)] p-3 text-[var(--app-text)] outline-none transition-shadow focus:border-[var(--app-primary)] focus:ring-2 focus:ring-[var(--app-focus-ring)]" />
           </div>
 
           <div>
             <label htmlFor="register-confirm-password" className="mb-1.5 block text-sm font-medium text-[var(--app-text)]">ยืนยันรหัสผ่าน</label>
-            <input id="register-confirm-password" name="confirmPassword" type="password" required minLength={8} maxLength={128} autoComplete="new-password" placeholder="กรอกรหัสผ่านอีกครั้ง" className="w-full rounded-lg border border-[var(--app-border)] bg-[var(--app-surface-subtle)] p-3 text-[var(--app-text)] outline-none transition-shadow focus:ring-2 focus:ring-red-500" />
+            <input id="register-confirm-password" name="confirmPassword" type="password" required minLength={8} maxLength={128} autoComplete="new-password" placeholder="กรอกรหัสผ่านอีกครั้ง" className="w-full rounded-lg border border-[var(--app-border)] bg-[var(--app-surface-subtle)] p-3 text-[var(--app-text)] outline-none transition-shadow focus:border-[var(--app-primary)] focus:ring-2 focus:ring-[var(--app-focus-ring)]" />
           </div>
 
           {/* ปุ่ม Submit */}
           <RippleButton 
             type="submit" 
-            className="mt-2 w-full rounded-lg bg-[var(--app-primary)] py-3 font-semibold text-white hover:bg-[var(--app-primary-hover)]"
+            className="mt-2 w-full rounded-lg bg-[var(--app-primary)] py-3 font-semibold text-[var(--app-primary-contrast)] hover:bg-[var(--app-primary-hover)]"
           >
             สมัครสมาชิก
           </RippleButton>

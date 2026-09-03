@@ -61,13 +61,13 @@ export default function EditTopicForm({ topic }) {
         <input type="hidden" name="topicId" value={topic.id} />
 
         <div>
-            <label htmlFor="edit-topic-title" className="block text-gray-700 font-bold mb-2 dark:text-gray-200">หัวข้อกระทู้ <span className="text-red-500">*</span></label>
-            <input id="edit-topic-title" name="title" type="text" required minLength={5} maxLength={160} defaultValue={topic.title} className="w-full bg-gray-50 border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-yellow-500 dark:bg-black dark:border-neutral-700 dark:text-white" />
+            <label htmlFor="edit-topic-title" className="mb-2 block font-bold text-[var(--app-text)]">หัวข้อกระทู้ <span className="text-[var(--app-danger)]">*</span></label>
+            <input id="edit-topic-title" name="title" type="text" required minLength={5} maxLength={160} defaultValue={topic.title} className="w-full rounded-lg border border-[var(--app-border)] bg-[var(--app-surface-subtle)] p-3 text-[var(--app-text)] focus:border-[var(--app-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--app-focus-ring)]" />
         </div>
 
         <div>
-            <label htmlFor="edit-topic-category" className="block text-gray-700 font-bold mb-2 dark:text-gray-200">หมวดหมู่ <span className="text-red-500">*</span></label>
-            <select id="edit-topic-category" name="category" required defaultValue={topic.category} className="w-full bg-gray-50 border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-yellow-500 dark:bg-black dark:border-neutral-700 dark:text-white cursor-pointer">
+            <label htmlFor="edit-topic-category" className="mb-2 block font-bold text-[var(--app-text)]">หมวดหมู่ <span className="text-[var(--app-danger)]">*</span></label>
+            <select id="edit-topic-category" name="category" required defaultValue={topic.category} className="w-full cursor-pointer rounded-lg border border-[var(--app-border)] bg-[var(--app-surface-subtle)] p-3 text-[var(--app-text)] focus:border-[var(--app-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--app-focus-ring)]">
                 <option value="Hardware">Hardware (อุปกรณ์คอมพิวเตอร์)</option>
                 <option value="Software">Software (โปรแกรม & OS)</option>
                 <option value="Network">Network (เครือข่าย & Internet)</option>
@@ -77,40 +77,40 @@ export default function EditTopicForm({ topic }) {
         </div>
 
         <div>
-            <label id="edit-topic-content-label" className="block text-gray-700 font-bold mb-2 dark:text-gray-200">รายละเอียด <span className="text-red-500">*</span></label>
-            <div role="group" aria-labelledby="edit-topic-content-label" className="border border-gray-300 rounded-lg overflow-hidden dark:border-neutral-700">
+            <label id="edit-topic-content-label" className="mb-2 block font-bold text-[var(--app-text)]">รายละเอียด <span className="text-[var(--app-danger)]">*</span></label>
+            <div role="group" aria-labelledby="edit-topic-content-label" className="overflow-hidden rounded-lg border border-[var(--app-border)]">
                 <Editor defaultValue={topic.content} /> 
             </div>
             {/* ✅ Tip: บอกวิธีลบรูปใน Editor ให้ User รู้ */}
-            <p className="text-xs text-gray-400 mt-1">* หากต้องการลบรูปในเนื้อหา ให้คลิกที่รูปแล้วกดปุ่ม Backspace หรือ Delete</p>
+            <p className="mt-1 text-xs text-[var(--app-text-muted)]">* หากต้องการลบรูปในเนื้อหา ให้คลิกที่รูปแล้วกดปุ่ม Backspace หรือ Delete</p>
         </div>
 
         {/* ✅ ส่วนจัดการรูปภาพ (ปรับปรุงใหม่) */}
-        <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 dark:bg-neutral-800 dark:border-neutral-700">
-            <label className="block text-gray-700 font-bold mb-3 dark:text-gray-200">รูปภาพปกกระทู้</label>
+        <div className="rounded-lg border border-[var(--app-border)] bg-[var(--app-surface-subtle)] p-4">
+            <label className="mb-3 block font-bold text-[var(--app-text)]">รูปภาพปกกระทู้</label>
             
             {imagePreview ? (
                 // 🅰️ กรณีมีรูปโชว์อยู่
                 <div className="flex flex-col gap-3">
                     <div className="relative inline-block w-fit group">
-                        <Image src={imagePreview} alt="ตัวอย่างรูปภาพกระทู้" width={320} height={192} unoptimized className="h-48 w-auto rounded-lg border border-gray-300 object-cover bg-white" />
+                        <Image src={imagePreview} alt="ตัวอย่างรูปภาพกระทู้" width={320} height={192} unoptimized className="h-48 w-auto rounded-lg border border-[var(--app-border)] bg-[var(--app-surface)] object-cover" />
                         <button type="button" onClick={handleRemoveImage} aria-label="ลบรูปปกกระทู้" className="absolute -top-2 -right-2 bg-red-600 text-white rounded-full p-1.5 shadow-md hover:bg-red-700 transition-transform hover:scale-110" title="ลบรูปนี้">
                             <X aria-hidden="true" size={16} />
                         </button>
                     </div>
                     
                     <div className="flex items-center gap-2">
-                        <label htmlFor="imageInput" className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-600 transition-colors hover:bg-gray-50 dark:border-neutral-600 dark:bg-black dark:text-gray-300">
+                        <label htmlFor="imageInput" className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-[var(--app-border)] bg-[var(--app-surface)] px-4 py-2 text-sm font-semibold text-[var(--app-text-muted)] transition-colors hover:bg-[var(--app-surface-elevated)]">
                             <RefreshCw aria-hidden="true" size={16} /> เปลี่ยนรูปใหม่
                         </label>
-                        <span className="text-xs text-gray-400">ไฟล์เดิมจะถูกแทนที่</span>
+                        <span className="text-xs text-[var(--app-text-muted)]">ไฟล์เดิมจะถูกแทนที่</span>
                     </div>
                 </div>
             ) : (
                 // 🅱️ กรณีไม่มีรูป (หรือถูกลบไปแล้ว)
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-yellow-500 transition-colors bg-white dark:bg-black dark:border-neutral-700">
-                    <div className="text-gray-400 mb-3">ยังไม่มีรูปภาพปก</div>
-                    <label htmlFor="imageInput" className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-yellow-200 bg-yellow-50 px-6 py-3 font-semibold text-yellow-700 transition-colors hover:bg-yellow-100 dark:border-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400">
+                <div className="rounded-lg border-2 border-dashed border-[var(--app-border-strong)] bg-[var(--app-surface)] p-6 text-center transition-colors hover:border-[var(--app-primary)]">
+                    <div className="mb-3 text-[var(--app-text-muted)]">ยังไม่มีรูปภาพปก</div>
+                    <label htmlFor="imageInput" className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-[var(--app-primary)] bg-[var(--app-primary-soft)] px-6 py-3 font-semibold text-[var(--app-accent-text)] transition-colors hover:bg-[var(--app-surface-elevated)]">
                         <ImagePlus aria-hidden="true" size={18} /> เพิ่มรูปภาพปก
                     </label>
                 </div>
@@ -128,10 +128,10 @@ export default function EditTopicForm({ topic }) {
         </div>
 
         <div className="flex gap-3 mt-4">
-            <Link href={`/topic/${topic.id}`} className="flex-1 py-3 text-center border border-gray-300 rounded-lg text-gray-600 font-bold hover:bg-gray-100 transition dark:text-gray-300 dark:border-neutral-600 dark:hover:bg-neutral-800">
+            <Link href={`/topic/${topic.id}`} className="flex-1 rounded-lg border border-[var(--app-border)] py-3 text-center font-bold text-[var(--app-text-muted)] transition hover:bg-[var(--app-surface-subtle)]">
                 ยกเลิก
             </Link>
-            <button type="submit" disabled={isSubmitting} className="inline-flex flex-[2] items-center justify-center gap-2 rounded-lg bg-[var(--app-primary)] py-3 font-semibold text-white transition-colors hover:bg-[var(--app-primary-hover)] disabled:cursor-wait disabled:opacity-60">
+            <button type="submit" disabled={isSubmitting} className="inline-flex flex-[2] items-center justify-center gap-2 rounded-lg bg-[var(--app-primary)] py-3 font-semibold text-[var(--app-primary-contrast)] transition-colors hover:bg-[var(--app-primary-hover)] disabled:cursor-wait disabled:opacity-60">
                 {isSubmitting ? <LoaderCircle aria-hidden="true" className="animate-spin motion-reduce:animate-none" size={18} /> : <Save aria-hidden="true" size={18} />} {isSubmitting ? 'กำลังบันทึก…' : 'บันทึกการแก้ไข'}
             </button>
         </div>

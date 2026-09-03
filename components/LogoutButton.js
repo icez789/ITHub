@@ -12,7 +12,7 @@ export default function LogoutButton() {
       onClick={() => startTransition(() => logout())}
       disabled={isPending}
       aria-label="ออกจากระบบ"
-      className="text-sm text-gray-500 hover:text-red-600 border border-gray-300 hover:border-red-600 px-2 sm:px-3 py-2 rounded-lg transition-all bg-white disabled:cursor-wait disabled:opacity-60 dark:bg-neutral-900 dark:text-gray-400 dark:border-neutral-700 dark:hover:text-red-500 dark:hover:border-red-500"
+      className="rounded-lg border border-[var(--app-border)] bg-[var(--app-surface)] px-2 py-2 text-sm text-[var(--app-text-muted)] transition-colors hover:border-[var(--app-primary)] hover:text-[var(--app-accent-text)] disabled:cursor-wait disabled:opacity-60 sm:px-3"
       title="ออกจากระบบ"
     >
       <span className="sm:hidden" aria-hidden="true">ออก</span>

@@ -9,14 +9,30 @@
 
 :root {
   color-scheme: light;
-  --app-background: #f7f7f8;
+  --brand-red: #dc2626;
+  --app-background: #f2f4f7;
   --app-surface: #ffffff;
-  --app-surface-subtle: #f4f4f5;
+  --app-surface-subtle: #f7f8fa;
+  --app-surface-elevated: #ffffff;
   --app-text: #18181b;
-  --app-text-muted: #71717a;
-  --app-border: #e4e4e7;
-  --app-primary: #dc2626;
-  --app-primary-hover: #b91c1c;
+  --app-text-muted: #606773;
+  --app-border: #d8dde5;
+  --app-border-strong: #c6cdd6;
+  --app-primary: #b91c1c;
+  --app-primary-hover: #991b1b;
+  --app-primary-contrast: #ffffff;
+  --app-accent-text: #b91c1c;
+  --app-primary-soft: #fee2e2;
+  --app-focus-ring: #dc2626;
+  --app-selection: rgba(185, 28, 28, 0.18);
+  --app-shadow-color: 15, 23, 42;
+  --app-hero-from: #18181b;
+  --app-hero-via: #7f1d1d;
+  --app-hero-to: #b91c1c;
+  --app-success: #15803d;
+  --app-warning: #a16207;
+  --app-danger: #b91c1c;
+  --app-info: #0369a1;
 }
 
 html.dark {
@@ -24,11 +40,198 @@ html.dark {
   --app-background: #09090b;
   --app-surface: #18181b;
   --app-surface-subtle: #27272a;
+  --app-surface-elevated: #202024;
   --app-text: #fafafa;
   --app-text-muted: #a1a1aa;
   --app-border: #3f3f46;
-  --app-primary: #ef4444;
-  --app-primary-hover: #dc2626;
+  --app-border-strong: #52525b;
+  --app-primary: #f87171;
+  --app-primary-hover: #fb7185;
+  --app-primary-contrast: #2d0a0a;
+  --app-accent-text: #f87171;
+  --app-primary-soft: #450a0a;
+  --app-focus-ring: #f87171;
+  --app-selection: rgba(248, 113, 113, 0.24);
+  --app-shadow-color: 0, 0, 0;
+  --app-hero-from: #18181b;
+  --app-hero-via: #7f1d1d;
+  --app-hero-to: #b91c1c;
+  --app-success: #4ade80;
+  --app-warning: #facc15;
+  --app-danger: #f87171;
+  --app-info: #38bdf8;
+}
+
+html[data-palette="ocean"] {
+  --app-background: #eff6ff;
+  --app-surface: #ffffff;
+  --app-surface-subtle: #e6f0fa;
+  --app-surface-elevated: #ffffff;
+  --app-text: #10243e;
+  --app-text-muted: #52677f;
+  --app-border: #bfd1e4;
+  --app-border-strong: #9fb9d4;
+  --app-primary: #0369a1;
+  --app-primary-hover: #075985;
+  --app-accent-text: #0369a1;
+  --app-primary-soft: #dff2fd;
+  --app-focus-ring: #0284c7;
+  --app-selection: rgba(3, 105, 161, 0.2);
+  --app-shadow-color: 15, 51, 80;
+  --app-hero-from: #082f49;
+  --app-hero-via: #075985;
+  --app-hero-to: #0369a1;
+}
+
+html.dark[data-palette="ocean"] {
+  --app-background: #07111f;
+  --app-surface: #0d1b2a;
+  --app-surface-subtle: #13283c;
+  --app-surface-elevated: #142638;
+  --app-text: #f0f8ff;
+  --app-text-muted: #9bb0c5;
+  --app-border: #28445e;
+  --app-border-strong: #3b5c78;
+  --app-primary: #38bdf8;
+  --app-primary-hover: #7dd3fc;
+  --app-primary-contrast: #082f49;
+  --app-accent-text: #38bdf8;
+  --app-primary-soft: #082f49;
+  --app-focus-ring: #38bdf8;
+  --app-selection: rgba(56, 189, 248, 0.24);
+  --app-shadow-color: 0, 5, 15;
+  --app-hero-from: #061b2a;
+  --app-hero-via: #075985;
+  --app-hero-to: #0369a1;
+}
+
+html[data-palette="forest"] {
+  --app-background: #f0f5f1;
+  --app-surface: #fcfefc;
+  --app-surface-subtle: #e7efe9;
+  --app-surface-elevated: #ffffff;
+  --app-text: #14251b;
+  --app-text-muted: #5b6c60;
+  --app-border: #c7d7cc;
+  --app-border-strong: #a9c0b0;
+  --app-primary: #166534;
+  --app-primary-hover: #14532d;
+  --app-accent-text: #166534;
+  --app-primary-soft: #dcfce7;
+  --app-focus-ring: #16a34a;
+  --app-selection: rgba(22, 101, 52, 0.2);
+  --app-shadow-color: 20, 55, 33;
+  --app-hero-from: #0f2e1b;
+  --app-hero-via: #166534;
+  --app-hero-to: #15803d;
+}
+
+html.dark[data-palette="forest"] {
+  --app-background: #07130c;
+  --app-surface: #0f2016;
+  --app-surface-subtle: #193023;
+  --app-surface-elevated: #162a1d;
+  --app-text: #f1faf3;
+  --app-text-muted: #a2b9a8;
+  --app-border: #31513c;
+  --app-border-strong: #45694f;
+  --app-primary: #4ade80;
+  --app-primary-hover: #86efac;
+  --app-primary-contrast: #052e16;
+  --app-accent-text: #4ade80;
+  --app-primary-soft: #052e16;
+  --app-focus-ring: #4ade80;
+  --app-selection: rgba(74, 222, 128, 0.24);
+  --app-shadow-color: 0, 8, 3;
+  --app-hero-from: #071f10;
+  --app-hero-via: #14532d;
+  --app-hero-to: #166534;
+}
+
+html[data-palette="violet"] {
+  --app-background: #f5f3ff;
+  --app-surface: #ffffff;
+  --app-surface-subtle: #eeeafb;
+  --app-surface-elevated: #ffffff;
+  --app-text: #211a35;
+  --app-text-muted: #665e7b;
+  --app-border: #d6ccf0;
+  --app-border-strong: #b9a9df;
+  --app-primary: #6d28d9;
+  --app-primary-hover: #5b21b6;
+  --app-accent-text: #6d28d9;
+  --app-primary-soft: #ede9fe;
+  --app-focus-ring: #7c3aed;
+  --app-selection: rgba(109, 40, 217, 0.2);
+  --app-shadow-color: 45, 27, 78;
+  --app-hero-from: #2e1065;
+  --app-hero-via: #5b21b6;
+  --app-hero-to: #7c3aed;
+}
+
+html.dark[data-palette="violet"] {
+  --app-background: #0f0a1a;
+  --app-surface: #1a1228;
+  --app-surface-subtle: #281b3a;
+  --app-surface-elevated: #221730;
+  --app-text: #faf7ff;
+  --app-text-muted: #b5a7cb;
+  --app-border: #47345e;
+  --app-border-strong: #604879;
+  --app-primary: #a78bfa;
+  --app-primary-hover: #c4b5fd;
+  --app-primary-contrast: #2e1065;
+  --app-accent-text: #a78bfa;
+  --app-primary-soft: #2e1065;
+  --app-focus-ring: #a78bfa;
+  --app-selection: rgba(167, 139, 250, 0.24);
+  --app-shadow-color: 6, 2, 14;
+  --app-hero-from: #1e0b3b;
+  --app-hero-via: #4c1d95;
+  --app-hero-to: #6d28d9;
+}
+
+html[data-palette="amber"] {
+  --app-background: #f8f3e8;
+  --app-surface: #fffcf5;
+  --app-surface-subtle: #f3ead9;
+  --app-surface-elevated: #fffef9;
+  --app-text: #2a2115;
+  --app-text-muted: #746651;
+  --app-border: #ddd0b8;
+  --app-border-strong: #c6b28e;
+  --app-primary: #92400e;
+  --app-primary-hover: #78350f;
+  --app-accent-text: #92400e;
+  --app-primary-soft: #fef3c7;
+  --app-focus-ring: #b45309;
+  --app-selection: rgba(146, 64, 14, 0.2);
+  --app-shadow-color: 69, 47, 20;
+  --app-hero-from: #451a03;
+  --app-hero-via: #78350f;
+  --app-hero-to: #b45309;
+}
+
+html.dark[data-palette="amber"] {
+  --app-background: #171108;
+  --app-surface: #241a0d;
+  --app-surface-subtle: #332513;
+  --app-surface-elevated: #2c2011;
+  --app-text: #fff8e7;
+  --app-text-muted: #c7b99c;
+  --app-border: #59452b;
+  --app-border-strong: #735b39;
+  --app-primary: #fbbf24;
+  --app-primary-hover: #fcd34d;
+  --app-primary-contrast: #451a03;
+  --app-accent-text: #fbbf24;
+  --app-primary-soft: #451a03;
+  --app-focus-ring: #fbbf24;
+  --app-selection: rgba(251, 191, 36, 0.24);
+  --app-shadow-color: 10, 6, 1;
+  --app-hero-from: #281203;
+  --app-hero-via: #652d0d;
+  --app-hero-to: #92400e;
 }
 
 html,
@@ -46,7 +249,7 @@ body {
 }
 
 ::selection {
-  background: rgba(220, 38, 38, 0.18);
+  background: var(--app-selection);
 }
 
 .ithub-surface {
@@ -58,7 +261,18 @@ body {
   background: var(--app-surface);
   border: 1px solid var(--app-border);
   border-radius: 1rem;
-  box-shadow: 0 1px 2px rgba(24, 24, 27, 0.04);
+  box-shadow: 0 1px 2px rgba(var(--app-shadow-color), 0.07);
+}
+
+.ithub-elevated {
+  background: var(--app-surface-elevated);
+  border-color: var(--app-border);
+  color: var(--app-text);
+  box-shadow: 0 18px 50px rgba(var(--app-shadow-color), 0.18);
+}
+
+.ithub-hero {
+  background: linear-gradient(135deg, var(--app-hero-from), var(--app-hero-via), var(--app-hero-to));
 }
 
 .ithub-muted {
@@ -84,20 +298,7 @@ body {
   }
 }
 
-/* 2. Animations */
-@keyframes rainbow-move {
-  0% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
-}
-
-.animate-rainbow {
-  background: linear-gradient(270deg, #ff0000, #ff7f00, #ffff00, #00ff00, #0000ff, #4b0082, #9400d3, #ff0000);
-  background-size: 400% 400%;
-  animation: rainbow-move 10s ease infinite;
-}
-
-/* 3. Utility Classes */
+/* 2. Utility Classes */
 @layer utilities {
   .no-scrollbar::-webkit-scrollbar {
     display: none;
@@ -109,7 +310,7 @@ body {
 }
 
 :where(a, button, input, select, textarea):focus-visible {
-  outline: 2px solid #dc2626;
+  outline: 2px solid var(--app-focus-ring);
   outline-offset: 3px;
 }
 
@@ -124,7 +325,7 @@ body {
   }
 }
 
-/* 4. Global Styles */
+/* 3. Global Styles */
 .prose img {
   max-width: 100%;
   height: auto;
@@ -138,6 +339,22 @@ body {
 /* ปรับความสูงขั้นต่ำ */
 .ql-editor {
   min-height: 200px;
+  color: var(--app-text);
+}
+
+.ithub-editor .ql-toolbar.ql-snow,
+.ithub-editor .ql-container.ql-snow {
+  border-color: var(--app-border) !important;
+  background-color: var(--app-surface) !important;
+  color: var(--app-text) !important;
+}
+
+.ithub-editor .ql-snow .ql-stroke { stroke: var(--app-text-muted) !important; }
+.ithub-editor .ql-snow .ql-fill { fill: var(--app-text-muted) !important; }
+.ithub-editor .ql-snow .ql-picker { color: var(--app-text-muted) !important; }
+
+.ithub-editor .ql-editor.ql-blank::before {
+  color: var(--app-text-muted) !important;
 }
 
 /* Quill renders the code-language control as a native select. Keep the
@@ -165,7 +382,7 @@ body {
 }
 
 .ithub-editor .ql-code-block-container select.ql-ui:focus-visible {
-  outline: 2px solid #ef4444;
+  outline: 2px solid var(--app-focus-ring);
   outline-offset: 2px;
 }
 
@@ -200,19 +417,19 @@ body {
 /* พื้นหลัง Toolbar และ Editor Area */
 html.dark body .ql-toolbar.ql-snow,
 html.dark body .ql-container.ql-snow {
-  background-color: #171717 !important; /* สีเทาเข้ม */
-  border-color: #404040 !important;
-  color: #e5e5e5 !important;
+  background-color: var(--app-surface) !important;
+  border-color: var(--app-border) !important;
+  color: var(--app-text) !important;
 }
 
 /* เปลี่ยนสีไอคอนเครื่องมือต่างๆ ให้เป็นสีขาว/เทา */
-html.dark body .ql-snow .ql-stroke { stroke: #e5e5e5 !important; }
-html.dark body .ql-snow .ql-fill { fill: #e5e5e5 !important; }
-html.dark body .ql-snow .ql-picker { color: #e5e5e5 !important; }
+html.dark body .ql-snow .ql-stroke { stroke: var(--app-text-muted) !important; }
+html.dark body .ql-snow .ql-fill { fill: var(--app-text-muted) !important; }
+html.dark body .ql-snow .ql-picker { color: var(--app-text-muted) !important; }
 
 /* แก้สี Placeholder (ข้อความจางๆ) */
 html.dark body .ql-editor.ql-blank::before {
-  color: #a3a3a3 !important;
+  color: var(--app-text-muted) !important;
   font-style: italic;
 }
 
@@ -220,25 +437,25 @@ html.dark body .ql-editor.ql-blank::before {
 
 /* พื้นหลังกล่องเมนูที่เด้งออกมา */
 html.dark body .ql-snow .ql-picker-options {
-  background-color: #262626 !important;
-  border-color: #525252 !important;
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5) !important;
+  background-color: var(--app-surface-elevated) !important;
+  border-color: var(--app-border) !important;
+  box-shadow: 0 10px 15px -3px rgba(var(--app-shadow-color), 0.3) !important;
   z-index: 9999 !important;
 }
 
 /* สีตัวหนังสือในเมนู */
 html.dark body .ql-snow .ql-picker-item {
-  color: #d4d4d4 !important;
+  color: var(--app-text-muted) !important;
 }
 
 /* สีตอนเอาเมาส์ชี้ (Hover) หรือเลือกอยู่ */
 html.dark body .ql-snow .ql-picker-item:hover,
 html.dark body .ql-snow .ql-picker-item.ql-selected {
-  color: #ffffff !important;
-  background-color: #ef4444 !important; /* สีแดง Theme เรา */
+  color: var(--app-primary-contrast) !important;
+  background-color: var(--app-primary) !important;
 }
 
 /* แก้สีหัวข้อ (Label) ด้านบน */
 html.dark body .ql-snow .ql-picker-label {
-  color: #e5e5e5 !important;
+  color: var(--app-text) !important;
 }

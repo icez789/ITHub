@@ -34,7 +34,7 @@ export default async function SavedTopicsPage() {
                 <ArrowLeft aria-hidden="true" size={20} />
             </Link>
             <h1 className="flex items-center gap-2 text-3xl font-bold text-[var(--app-text)]">
-                <Bookmark aria-hidden="true" className="text-blue-600" size={26} /> กระทู้ที่บันทึกไว้
+                <Bookmark aria-hidden="true" className="text-[var(--app-accent-text)]" size={26} /> กระทู้ที่บันทึกไว้
             </h1>
         </div>
 
@@ -60,9 +60,9 @@ export default async function SavedTopicsPage() {
                     />
                 ))
             ) : (
-                <div className="col-span-full text-center py-20 text-gray-500 dark:text-gray-400 bg-white dark:bg-neutral-900 rounded-xl border border-dashed border-gray-300 dark:border-neutral-800">
+                <div className="col-span-full rounded-xl border border-dashed border-[var(--app-border-strong)] bg-[var(--app-surface)] py-20 text-center text-[var(--app-text-muted)]">
                     <p className="text-lg">คุณยังไม่มีกระทู้ที่บันทึกไว้</p>
-                    <Link href="/" className="text-blue-600 hover:underline mt-2 inline-block dark:text-blue-400">
+                    <Link href="/" className="mt-2 inline-block text-[var(--app-accent-text)] hover:underline">
                         ไปสำรวจกระทู้น่าสนใจ
                     </Link>
                 </div>

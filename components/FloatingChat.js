@@ -84,7 +84,7 @@ export default function FloatingChat() {
         >
           
           {/* Header */}
-          <div className="flex items-center justify-between bg-red-600 p-3 text-white sm:p-4 dark:bg-red-700">
+          <div className="flex items-center justify-between bg-[var(--app-primary)] p-3 text-[var(--app-primary-contrast)] sm:p-4">
             <div id="ithub-chat-title" className="flex items-center gap-2 font-bold">
               <Bot aria-hidden="true" className="h-5 w-5" />
               ITHub Bot
@@ -95,7 +95,7 @@ export default function FloatingChat() {
               <ConfirmDialog
                 trigger={<Trash2 aria-hidden="true" className="h-4 w-4" />}
                 triggerAriaLabel="ล้างประวัติแชท"
-                triggerClassName="rounded-lg p-2 transition hover:bg-red-800"
+                triggerClassName="rounded-lg p-2 transition hover:bg-black/15"
                 title="ล้างประวัติ ITHub Bot?"
                 description="ข้อความทั้งหมดที่บันทึกไว้ในเบราว์เซอร์นี้จะถูกลบถาวร และเริ่มการสนทนาใหม่"
                 confirmLabel="ยืนยันการล้าง"
@@ -104,25 +104,25 @@ export default function FloatingChat() {
               />
               
               {/* ปุ่มขยายหน้าจอ */}
-              <button type="button" onClick={() => setIsExpanded(!isExpanded)} title={isExpanded ? "ย่อหน้าจอ" : "ขยายหน้าจอ"} aria-label={isExpanded ? "ย่อหน้าต่างแชท" : "ขยายหน้าต่างแชท"} className="hover:bg-red-800 p-2 rounded-lg transition hidden sm:block">
+              <button type="button" onClick={() => setIsExpanded(!isExpanded)} title={isExpanded ? "ย่อหน้าจอ" : "ขยายหน้าจอ"} aria-label={isExpanded ? "ย่อหน้าต่างแชท" : "ขยายหน้าต่างแชท"} className="hidden rounded-lg p-2 transition hover:bg-black/15 sm:block">
                 {isExpanded ? <Minimize2 aria-hidden="true" className="h-4 w-4" /> : <Maximize2 aria-hidden="true" className="h-4 w-4" />}
               </button>
 
               {/* ปุ่มปิด */}
-              <button type="button" onClick={() => setIsOpen(false)} title="ซ่อนแชท" aria-label="ปิดหน้าต่างแชท" className="hover:bg-red-800 p-2 rounded-lg transition">
+              <button type="button" onClick={() => setIsOpen(false)} title="ซ่อนแชท" aria-label="ปิดหน้าต่างแชท" className="rounded-lg p-2 transition hover:bg-black/15">
                 <X aria-hidden="true" className="h-4.5 w-4.5" />
               </button>
             </div>
           </div>
 
           {/* พื้นที่แสดงข้อความ */}
-          <div className="flex-1 overflow-y-auto p-4 bg-gray-50 dark:bg-neutral-950 space-y-4">
+          <div className="flex-1 space-y-4 overflow-y-auto bg-[var(--app-background)] p-4">
             {messages.map((msg, idx) => (
               <div key={idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                 <div className={`max-w-[85%] p-3 rounded-2xl text-sm leading-relaxed ${
                   msg.role === 'user' 
-                    ? 'bg-red-600 text-white rounded-tr-none shadow-md' 
-                    : 'bg-white dark:bg-neutral-800 text-gray-800 dark:text-gray-200 border border-gray-200 dark:border-neutral-700 rounded-tl-none shadow-sm'
+                    ? 'bg-[var(--app-primary)] text-[var(--app-primary-contrast)] rounded-tr-none shadow-md'
+                    : 'bg-[var(--app-surface)] text-[var(--app-text)] border border-[var(--app-border)] rounded-tl-none shadow-sm'
                 }`}>
                   {msg.role === 'user' ? (
                     // ข้อความของ user แสดงเป็น plain text ธรรมดา ปลอดภัยกว่า ไม่ต้อง parse markdown
@@ -146,7 +146,7 @@ export default function FloatingChat() {
                                 {String(children).replace(/\n$/, '')}
                               </SyntaxHighlighter>
                             ) : (
-                              <code className="bg-gray-200 dark:bg-neutral-700 px-1 py-0.5 rounded text-xs" {...props}>
+                              <code className="rounded bg-[var(--app-surface-subtle)] px-1 py-0.5 text-xs" {...props}>
                                 {children}
                               </code>
                             );
@@ -162,7 +162,7 @@ export default function FloatingChat() {
             ))}
             {isLoading && (
               <div className="flex justify-start">
-                <div className="bg-white dark:bg-neutral-800 p-4 rounded-2xl rounded-tl-none shadow-sm border border-gray-200 dark:border-neutral-700">
+                <div className="rounded-2xl rounded-tl-none border border-[var(--app-border)] bg-[var(--app-surface)] p-4 shadow-sm">
                   <div className="flex gap-1">
                     <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
                     <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
@@ -175,7 +175,7 @@ export default function FloatingChat() {
           </div>
 
           {/* กล่องพิมพ์ข้อความ */}
-          <div className="p-3 bg-white dark:bg-neutral-900 border-t border-gray-200 dark:border-neutral-800">
+          <div className="border-t border-[var(--app-border)] bg-[var(--app-surface)] p-3">
             <form onSubmit={handleSend} className="flex gap-2">
               <input 
                 type="text" 
@@ -183,14 +183,14 @@ export default function FloatingChat() {
                 onChange={(e) => setInput(e.target.value)}
                 placeholder="พิมพ์ข้อความที่นี่..." 
                 aria-label="ข้อความถึง ITHub Bot"
-                className="flex-1 px-4 py-2 bg-gray-100 dark:bg-neutral-800 border-transparent focus:border-red-500 focus:bg-white dark:focus:bg-neutral-900 rounded-full text-sm outline-none transition dark:text-white"
+                className="flex-1 rounded-full border border-transparent bg-[var(--app-surface-subtle)] px-4 py-2 text-sm text-[var(--app-text)] outline-none transition focus:border-[var(--app-primary)] focus:bg-[var(--app-surface)]"
                 disabled={isLoading}
               />
               <button 
                 type="submit" 
                 aria-label="ส่งข้อความ"
                 disabled={isLoading || !input.trim()}
-                className="rounded-xl bg-red-600 p-2.5 text-white transition-colors hover:bg-red-700 disabled:opacity-50"
+                className="rounded-xl bg-[var(--app-primary)] p-2.5 text-[var(--app-primary-contrast)] transition-colors hover:bg-[var(--app-primary-hover)] disabled:opacity-50"
               >
                 <Send aria-hidden="true" className="h-4.5 w-4.5" />
               </button>
@@ -205,7 +205,7 @@ export default function FloatingChat() {
           type="button"
           onClick={() => setIsOpen(true)}
           aria-label="เปิด ITHub Bot"
-          className="flex h-12 w-12 items-center justify-center rounded-2xl border border-[var(--app-border)] bg-[var(--app-surface)] text-red-600 shadow-md transition-colors hover:bg-red-50 hover:text-red-700 dark:text-red-400 dark:hover:bg-red-950/35"
+          className="flex h-12 w-12 items-center justify-center rounded-2xl border border-[var(--app-border)] bg-[var(--app-surface)] text-[var(--app-accent-text)] shadow-md transition-colors hover:border-[var(--app-primary)] hover:bg-[var(--app-primary-soft)]"
         >
           <MessageCircle aria-hidden="true" className="h-5 w-5" strokeWidth={2.25} />
         </button>
