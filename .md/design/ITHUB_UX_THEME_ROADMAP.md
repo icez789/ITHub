@@ -2,7 +2,7 @@
 
 | รายการ | ค่า |
 | --- | --- |
-| สถานะ | QA passed — Preview/Production release in progress |
+| สถานะ | Implementation committed — Production blocked by migration 003 |
 | วันที่เริ่ม | 2026-09-02 |
 | ผู้ดำเนินการ | Codex |
 | ขอบเขต | UX/UI บนพฤติกรรมเดิม และ 5 palettes × Light/Dark |
@@ -86,10 +86,10 @@ Semantic tokens หลัก: background/canvas, surface, surface-subtle, surfac
 - [x] production build ผ่าน
 - [x] Playwright full suite ผ่าน
 - [x] Preview deployment READY และ visual smoke ของ App Shell, Theme Picker และ Help ผ่าน
-- [ ] Preview data smoke ของ Home/Topic — ถูกบล็อกด้วย schema ของ Preview environment ที่เก่ากว่า production
-- [ ] Commit implementation หลัง Preview ผ่าน
+- [ ] Preview data smoke ของ Home/Topic — ถูกบล็อกเพราะ database target ยังไม่ครบ migration 003
+- [x] Commit implementation หลัง QA และ Preview visual smoke
 - [ ] Deploy Production หลังตรวจรับครบ
-- [ ] บันทึก commit SHA, Preview URL และ Production URL
+- [x] บันทึก commit SHA, Preview URL, production attempt และ rollback evidence
 
 ## Phase 2 backlog
 
@@ -124,5 +124,9 @@ Personalized Discovery จะทำภายหลัง: การติดต�
 - Regression hardening: locator ของ Like ยึด visible stable instance ระหว่าง route transition; login helpers รอ theme hydration/navigation; onboarding test รองรับเวลาครบหกขั้น; delete-feedback budget รองรับ WebKit runner โดยยังต่ำกว่า 250ms
 - Preview: `https://it-9weiuuifc-thiraphat-s-projects.vercel.app` (`READY`, force build ไม่ใช้ stale cache)
 - Preview smoke: App Shell, Ocean Light canvas `#eff6ff`, Theme Picker mode/palette/Escape/focus restoration และหน้า Help ผ่าน
-- Preview environment issue: Home/Topic พบ `ER_BAD_FIELD_ERROR: Unknown column topics.is_pinned`; production เดิมโหลดข้อมูลได้และมี schema ที่รองรับ จึงไม่แก้ database ตามขอบเขต Phase 1
-- ค้างอยู่: บันทึก implementation commit SHA และ Production deploy/smoke test
+- Preview environment issue: Home/Topic พบ `ER_BAD_FIELD_ERROR: Unknown column topics.is_pinned`; deployment production เดิมยังโหลดหน้าได้ แต่ artifact ใหม่ยืนยันว่า schema ปัจจุบันยังไม่ครบ migration 003 จึงไม่แก้ database ตามขอบเขต Phase 1
+- Implementation commit: `501835a` (`feat: add multi-palette theme system`)
+- Production attempt: deployment `dpl_1CiC7foZLz3fYcjiAqD24kB5Zz6P` build ผ่านและ READY แต่ Home smoke test ไม่ผ่านด้วย `ER_BAD_FIELD_ERROR: Unknown column topics.is_pinned`
+- Recovery: rollback alias `https://ithub-puce.vercel.app` ไป `dpl_424HhbXWgdknsSAbmVAXes8im8hi`; ตรวจแล้ว Home/community feed กลับมาใช้งานได้
+- การตัดสินใจ/เหตุผล: ไม่ promote Preview artifact เพราะใช้ Preview DB เก่า และไม่แก้ production schema โดยไม่มีอำนาจขยายขอบเขต; migration ที่ต้องประเมินคือ `database/migrations/003_security_moderation_and_media.sql`
+- ค้างอยู่: อนุมัติและทำ production migration 003 ด้วย workflow สำรองข้อมูล/ตรวจ preflight แล้วจึง deploy commit `501835a` ใหม่และทำ production smoke test

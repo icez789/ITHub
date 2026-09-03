@@ -13,7 +13,7 @@
 ## แผนที่กำลังใช้งาน
 
 - **ชื่อ:** ITHub UX/UI and Theme Roadmap — Phase 1
-- **สถานะ:** QA passed — Preview ready; Production release in progress
+- **สถานะ:** Implementation committed — Production รอ migration 003; deployment เดิมถูก rollback และยังใช้งานได้
 - **ทิศทาง:** Clean Technical Community with user-selectable atmosphere
 - **อัปเดตล่าสุด:** 2026-09-03
 - **ไฟล์:** [`ITHUB_UX_THEME_ROADMAP.md`](./ITHUB_UX_THEME_ROADMAP.md)
