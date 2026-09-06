@@ -101,7 +101,7 @@
 - [ ] รัน migration 004 และ post-migration integrity check
 - [x] Deploy Phase 2.1 Preview บน `test_e2e` หลังผู้ใช้อนุมัติ
 - [x] Smoke และ error/warning log check Phase 2.1 Preview
-- [ ] Commit หลัง Preview ผ่าน
+- [x] Commit หลัง Preview ผ่าน (`aad419a`)
 - [ ] Deploy/Smoke/Log check Phase 2.1 บน Production
 - [ ] เริ่ม Phase 2.2 หลัง Phase 2.1 ผ่าน Production smoke
 - [ ] Deploy/Smoke/Log check Phase 2.2 บน Preview แล้ว Production
@@ -141,7 +141,7 @@ Engagement        +0..10 จาก likes, comments และ views
 
 | Release | Commit | Preview | Production | สถานะ |
 | --- | --- | --- | --- | --- |
-| Phase 2.1 | รอบันทึก SHA หลัง commit | [READY](https://it-epupdu523-thiraphat-s-projects.vercel.app) — isolated `test_e2e` | ยังไม่ deploy — ต้องยืนยัน database target | Preview smoke ผ่าน 2 รอบติดต่อกัน |
+| Phase 2.1 | `aad419a0816346fd15d04296f0388c5b5323faea` | [READY](https://it-epupdu523-thiraphat-s-projects.vercel.app) — isolated `test_e2e` | ยังไม่ deploy — ต้องยืนยัน database target | Preview smoke ผ่าน 2 รอบติดต่อกัน; local commit แล้ว |
 | Phase 2.2 | รอ 2.1 smoke | ยังไม่ deploy | ยังไม่ deploy | ปิด release switch |
 
 ## Implementation log
@@ -206,14 +206,16 @@ Engagement        +0..10 จาก likes, comments และ views
 - `vercel logs <preview> --level error --level warning --since 30m --limit 50` ไม่พบรายการในช่วงที่ตรวจ; ไม่ใช่การรับประกันว่าไม่มีปัญหาในอนาคต และยังไม่อ้างผล live Pusher/Gemini/Cloudinary ที่ตั้งเป็น preview-disabled
 - `npm run lint` ผ่าน; `npm run test:unit` 15/15 ผ่านหลังปรับ helper; full regression เดิม 161 passed / 4 intentional skips และ Phase 2.1 gate 3/3 ยังคงเป็นหลักฐานของ feature code ที่ deploy
 - เปิด Preview ผ่าน official temporary share URL โดยไม่ปิด deployment protection; ไม่เก็บ share token, database credentials หรือ screenshots ของบัญชี QA ใน Git
+- Post-smoke `npm run db:check:e2e` ผ่าน: required tables 11/11, integrity counters ทั้งหมด 0; staged secret-value scan และ `git diff --cached --check` ผ่าน
+- Feature commit `aad419a0816346fd15d04296f0388c5b5323faea` บน `codex/ithub-94-milestone` รวม 36 ไฟล์ Phase 2 เท่านั้น; Preview สร้างจาก workspace ก่อน commit โดย feature source ตรงกัน (หลัง deploy แก้เฉพาะ smoke diagnostics/docs); ยังไม่ได้ push
 
 #### Release blockers ที่ยังไม่ผ่าน
 
 1. **Production smoke:** automatic approval ปฏิเสธการสร้าง QA account บนเว็บจริง เพราะยังยืนยันไม่ได้ว่า `.env` ที่ใช้ database ชื่อ `test` เป็นฐานเดียวกับ Production สำหรับ cleanup; topic IDs ที่ตรงกันไม่เพียงพอ จึงยังไม่สร้างบัญชี ไม่รัน migration 004 และไม่ deploy Production
 2. **Isolated Preview — resolved:** ข้อจำกัด approval เดิมได้รับการอนุมัติจากผู้ใช้แล้ว; Preview READY และ smoke ผ่านตาม log ข้างต้น
-3. **Commit:** Preview ผ่านแล้ว พร้อม stage เฉพาะ Phase 2 code/tests/docs; ไม่รวม presentation/artifacts ของผู้ใช้ และไม่ push ซึ่งอาจเริ่ม deployment ที่ใช้ environment คนละชุด
+3. **Commit — resolved:** commit เฉพาะ Phase 2 code/tests/docs แล้ว; ไม่รวม presentation/artifacts ของผู้ใช้ และไม่ push ซึ่งอาจเริ่ม deployment ที่ใช้ environment คนละชุด
 
-ขั้นต่อไป: commit งานที่ตรวจบน Preview แล้ว จากนั้นยืนยัน Production connection/backup แยกต่างหากก่อน migration 004 และ Production release; ห้าม promote Preview ที่ผูก `_e2e` เป็น Production
+ขั้นต่อไป: ยืนยัน Production connection/backup แยกต่างหากก่อน migration 004 และ Production release; ห้าม promote Preview ที่ผูก `_e2e` เป็น Production
 
 ## ไม่รวม
 
