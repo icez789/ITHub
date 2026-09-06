@@ -3,11 +3,12 @@ import { randomBytes } from 'node:crypto';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { isDiscoveryPreviewUrl, previewDatabaseIdentity } from './discovery-preview-safety.mjs';
 
-// Usage: node --env-file=.env.e2e.local scripts/deploy-discovery-preview.mjs /path/to/vercel/dist/index.js
+// Usage: node --env-file=.env.e2e.local scripts/deploy-discovery-preview.mjs /path/to/vercel/dist/index.js 2.1|2.2
 // This command has no production option and never changes project-wide env vars.
 const databaseIdentity = previewDatabaseIdentity();
-const cli = process.argv[2];
-if (!cli || process.argv.length !== 3) throw new Error('Provide the installed Vercel CLI entrypoint');
+const [cli, phase = '2.1'] = process.argv.slice(2);
+if (!cli || process.argv.length > 4) throw new Error('Provide the installed Vercel CLI entrypoint and optional release phase');
+if (!['2.1', '2.2'].includes(phase)) throw new Error('Release phase must be 2.1 or 2.2');
 const project = JSON.parse(await readFile('.vercel/project.json', 'utf8'));
 if (project.projectId !== 'prj_yR99omrouUbHTC8vcFPrGbujfPUF'
   || project.orgId !== 'team_DzUs49ePhJqJD0veBMIPnY11') {
@@ -22,7 +23,7 @@ const values = {
   DB_NAME: process.env.DB_NAME,
   SESSION_SECRET: randomBytes(48).toString('base64url'),
   NEXT_SERVER_ACTIONS_ENCRYPTION_KEY: randomBytes(32).toString('base64'),
-  ITHUB_DISCOVERY_FOR_YOU_ENABLED: 'false',
+  ITHUB_DISCOVERY_FOR_YOU_ENABLED: phase === '2.2' ? 'true' : 'false',
   ITHUB_ENVIRONMENT: 'preview',
   ITHUB_E2E_ALLOW_WRITES: 'false',
   ITHUB_E2E_ENVIRONMENT: 'preview',
@@ -38,7 +39,7 @@ const values = {
 };
 const args = [cli, 'deploy', '--yes', '--force', '--target=preview', '--json',
   '--scope', project.orgId,
-  '--meta', 'ithubDiscoveryPhase=2.1', '--meta', `ithubDatabase=${process.env.DB_NAME}`];
+  '--meta', `ithubDiscoveryPhase=${phase}`, '--meta', `ithubDatabase=${process.env.DB_NAME}`];
 for (const [key, value] of Object.entries(values)) {
   args.push('--env', `${key}=${value}`, '--build-env', `${key}=${value}`);
 }
@@ -66,6 +67,6 @@ if (!url) {
   throw new Error('Deployment completed but no verified Preview URL was returned');
 }
 await mkdir('.vercel/release-evidence', { recursive: true });
-const manifest = { url, phase: '2.1', database: process.env.DB_NAME, databaseIdentity, deployedAt: new Date().toISOString() };
+const manifest = { url, phase, database: process.env.DB_NAME, databaseIdentity, deployedAt: new Date().toISOString() };
 await writeFile('.vercel/release-evidence/preview-deployment.json', JSON.stringify(manifest, null, 2));
-console.log(JSON.stringify({ url, phase: '2.1', database: process.env.DB_NAME, status: 'ready' }));
+console.log(JSON.stringify({ url, phase, database: process.env.DB_NAME, status: 'ready' }));

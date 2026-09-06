@@ -11,9 +11,11 @@ const origin = 'https://ithub-puce.vercel.app';
 const expect = baseExpect.configure({ timeout: 20_000 });
 
 async function main() {
-  if (process.argv.length !== 3 || process.argv[2] !== '--confirmed-production-test') {
+  const [confirmation, phase = '2.1'] = process.argv.slice(2);
+  if (confirmation !== '--confirmed-production-test' || process.argv.length > 4) {
     throw new Error('Explicit Production database confirmation is required');
   }
+  if (!['2.1', '2.2'].includes(phase)) throw new Error('Release phase must be 2.1 or 2.2');
   const local = parseEnv(await readFile('.env', 'utf8'));
   if (local.DB_NAME !== 'test' || ['DB_HOST', 'DB_PORT', 'DB_USER', 'DB_PASSWORD', 'DB_NAME']
     .some((key) => String(process.env[key] || '') !== String(local[key] || ''))) {
@@ -27,7 +29,7 @@ async function main() {
   const email = `codex.release.${suffix}@example.invalid`;
   const username = `release_qa_${suffix}`;
   const password = randomBytes(24).toString('base64url');
-  const evidence = `.vercel/release-evidence/production-2.1-${suffix}`;
+  const evidence = `.vercel/release-evidence/production-${phase}-${suffix}`;
   await mkdir(evidence, { recursive: true });
   const browser = await chromium.launch();
   let stage = 'guest';
@@ -58,7 +60,7 @@ async function main() {
     expect(cookie?.secure).toBe(true);
     expect(cookie?.httpOnly).toBe(true);
     expect(cookie?.sameSite).toBe('Lax');
-    await expect(page.getByRole('link', { name: 'สำหรับคุณ', exact: true })).toHaveCount(0);
+    await expect(page.getByRole('link', { name: 'สำหรับคุณ', exact: true })).toHaveCount(phase === '2.2' ? 1 : 0);
     const topicPath = await page.locator('#topic-feed a[href^="/topic/"]').first().getAttribute('href');
     const [[topic]] = await db.query('SELECT category FROM topics WHERE id = ?', [Number(topicPath.split('/').pop())]);
     if (!topic) throw new Error('Topic missing from confirmed database');
@@ -75,6 +77,14 @@ async function main() {
     await expect(page.locator(`#topic-feed a[href="${topicPath}"]`)).toHaveCount(1);
     await page.goto(`${origin}/profile/following`);
     await expect(page.getByRole('button', { name: /^เลิกติดตาม / })).toHaveCount(2);
+    if (phase === '2.2') {
+      stage = 'for-you feed';
+      await page.goto(`${origin}/?feed=for-you`);
+      await expect(page.locator(`#topic-feed a[href="${topicPath}"]`)).toHaveCount(1);
+      await expect(page.getByText('ติดตามผู้เขียนและหมวดนี้', { exact: true }).first()).toBeVisible();
+      await expect(page.getByLabel('เรียงลำดับกระทู้')).toHaveCount(0);
+    }
+    stage = 'notification preferences';
     await page.goto(`${origin}/notifications`);
     await expect(page.locator('input[name="comments_enabled"]')).toBeChecked();
     await expect(page.locator('input[name="followed_authors_enabled"]')).not.toBeChecked();
@@ -88,7 +98,8 @@ async function main() {
       await page.setViewportSize({ width, height: width === 390 ? 844 : 1000 });
       for (const mode of ['light', 'dark']) {
         await page.evaluate((value) => localStorage.setItem('theme', value), mode);
-        for (const [index, route] of ['/?feed=following', '/profile/following', '/notifications'].entries()) {
+        const routes = ['/?feed=following', '/profile/following', '/notifications', ...(phase === '2.2' ? ['/?feed=for-you'] : [])];
+        for (const [index, route] of routes.entries()) {
           await page.goto(`${origin}${route}`);
           await expect(page.locator('#main-content')).toBeVisible();
           await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth)).toBe(width);
@@ -102,7 +113,7 @@ async function main() {
     // The unique email+username are generated above; no existing member is edited.
     const [result] = await db.query('DELETE FROM users WHERE email = ? AND username = ?', [email, username]);
     cleanup = result.affectedRows === 1;
-    const report = { origin, phase: '2.1', passed, stage, cleanup, evidence, checkedAt: new Date().toISOString() };
+    const report = { origin, phase, passed, stage, cleanup, evidence, checkedAt: new Date().toISOString() };
     await writeFile(`${evidence}/result.json`, JSON.stringify(report, null, 2));
     console.log(JSON.stringify(report));
   }

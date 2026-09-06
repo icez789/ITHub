@@ -2,7 +2,7 @@
 
 | รายการ | ค่า |
 | --- | --- |
-| สถานะ | Phase 2.1 Production READY และ smoke ผ่าน — Phase 2.2 For You ยังปิด |
+| สถานะ | Phase 2.2 For You Preview READY และ smoke ผ่าน — Production ยังใช้ Phase 2.1 |
 | วันที่เริ่ม | 2026-09-03 |
 | ผู้ดำเนินการ | Codex |
 | Release 2.1 | Follow, Following feed และ Notification preferences |
@@ -104,8 +104,9 @@
 - [x] Commit หลัง Preview ผ่าน (`aad419a`)
 - [x] Deploy/Smoke/Log check Phase 2.1 บน Production
 - [x] บันทึก source commit, migration result และ Preview/Production URLs ของ Phase 2.1
-- [ ] เริ่ม Phase 2.2 หลัง Phase 2.1 ผ่าน Production smoke
-- [ ] Deploy/Smoke/Log check Phase 2.2 บน Preview แล้ว Production
+- [x] เริ่ม Phase 2.2 หลัง Phase 2.1 ผ่าน Production smoke
+- [x] Deploy/Smoke/Log check Phase 2.2 บน Preview
+- [ ] Deploy/Smoke/Log check Phase 2.2 บน Production
 - [ ] บันทึก commit SHA, migration result และ URLs
 
 ## Interface contract
@@ -143,7 +144,7 @@ Engagement        +0..10 จาก likes, comments และ views
 | Release | Commit | Preview | Production | สถานะ |
 | --- | --- | --- | --- | --- |
 | Phase 2.1 | feature `aad419a0816346fd15d04296f0388c5b5323faea`; deployed source `7f2b24e` | [READY](https://it-epupdu523-thiraphat-s-projects.vercel.app) — isolated `test_e2e` | [LIVE](https://ithub-puce.vercel.app) / [deployment](https://it-gafqtmtmw-thiraphat-s-projects.vercel.app) | Preview และ Production smoke ผ่าน; migration 004 complete |
-| Phase 2.2 | ยังไม่ release | ยังไม่ deploy | ยังไม่ deploy | 2.1 smoke ผ่านแล้ว; ยังปิด release switch |
+| Phase 2.2 | release tooling รอ commit | [READY](https://it-czg2d3ge4-thiraphat-s-projects.vercel.app) — isolated `test_e2e` | ยังไม่ deploy | Preview smoke ผ่าน; Production ยังปิด release switch |
 
 ## Implementation log
 
@@ -240,7 +241,19 @@ Engagement        +0..10 จาก likes, comments และ views
 2. **Isolated Preview — resolved:** ข้อจำกัด approval เดิมได้รับการอนุมัติจากผู้ใช้แล้ว; Preview READY และ smoke ผ่านตาม log ข้างต้น
 3. **Commit — resolved:** commit เฉพาะ Phase 2 code/tests/docs แล้ว; ไม่รวม presentation/artifacts ของผู้ใช้ และไม่ push ซึ่งอาจเริ่ม deployment ที่ใช้ environment คนละชุด
 
-ขั้นต่อไป: Phase 2.2 Preview สำหรับ For You ก่อนเปิด flag บน Production; ห้าม promote Preview ที่ผูก `_e2e` เป็น Production และยังไม่ push branch จนจัดการ environment ของ Git-triggered Preview ให้ชัดเจน
+### 2026-09-07 — Phase 2.2 Preview release — Codex
+
+- ขยาย `deploy-discovery-preview.mjs` ให้รับ release phase แบบ allowlist `2.1|2.2`; เปิด `ITHUB_DISCOVERY_FOR_YOU_ENABLED=true` เฉพาะ 2.2 และบันทึก phase ลง deployment metadata/manifest โดยคง guard project/team/`_e2e`/Preview URL เดิม
+- ขยาย `discovery-production-smoke.mjs` ให้รองรับ 2.2 โดยตรวจแท็บ For You, personalized result, เหตุผล “ติดตามผู้เขียนและหมวดนี้”, ไม่มี sort control และเพิ่ม For You ใน visual routes; ยังต้องใช้ owner-confirmed `.env` guard เดิม
+- `npm run lint` ผ่าน; `npm run test:unit` 15/15 ผ่าน; `npm run db:check:e2e` ผ่านก่อน deploy และหลัง smoke โดย required tables 11/11 และ integrity counters ทั้งหมด 0
+- Preview deployment `dpl_ExPqNzhp9LJGGtJemqJ72E8pxqHk`, URL `https://it-czg2d3ge4-thiraphat-s-projects.vercel.app`, สถานะ READY; Next.js 16.3.4 remote build ผ่านในประมาณ 40 วินาที ใช้ isolated `test_e2e` และ preview-disabled external services เหมือน 2.1
+- Guarded Chromium smoke 2.2 ผ่าน 1/1: Guest เห็น Login CTA และแท็บ For You, สมัคร/เข้าสู่ระบบด้วยบัญชี QA ชั่วคราว, category/author follow, Following dedup, management, For You reason/no-sort และ notification preference persistence ผ่าน; cleanup บัญชี QA ผ่าน
+- Visual smoke 16 screenshots: Following/management/notifications/For You × 390×844 และ 1440×1000 × Light/Dark; overflow assertions ผ่าน ตรวจภาพ For You mobile-light/desktop-dark และ Following mobile-dark ด้วยตาแล้ว หลักฐาน `.vercel/release-evidence/2.2-4c87b4c3a3154275/`
+- Agent-browser guest check ยืนยันแท็บ “สำหรับคุณ”, heading “คัดสรรสำหรับคุณ” และ Login CTA บน protected Preview; ใช้ temporary share URL โดยไม่ปิด protection และปิด browser session หลังตรวจ
+- `vercel logs <preview> --level error --level warning --since 20m --limit 50` ไม่พบรายการในช่วงที่ตรวจ; ยังไม่อ้าง live Pusher/Gemini/Cloudinary เพราะ Preview ตั้งเป็น disabled
+- Production ยังเป็น Phase 2.1 และ `ITHUB_DISCOVERY_FOR_YOU_ENABLED=false`; ไม่ promote Preview ที่ผูก `test_e2e`
+
+ขั้นต่อไป: commit release tooling/docs ที่ผ่าน Preview แล้ว deploy Production ใหม่ด้วยค่า Production เดิมและเปิด For You เฉพาะ deployment จากนั้น guarded smoke/log check; ห้าม promote Preview ที่ผูก `_e2e`
 
 ## ไม่รวม
 
