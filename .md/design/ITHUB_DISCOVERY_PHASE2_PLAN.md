@@ -2,7 +2,7 @@
 
 | รายการ | ค่า |
 | --- | --- |
-| สถานะ | Implementation 2.1/2.2 และ full regression ผ่าน — Phase 2.1 Preview READY/smoke ผ่าน; Production รอยืนยัน database target |
+| สถานะ | Phase 2.1 Production READY และ smoke ผ่าน — Phase 2.2 For You ยังปิด |
 | วันที่เริ่ม | 2026-09-03 |
 | ผู้ดำเนินการ | Codex |
 | Release 2.1 | Follow, Following feed และ Notification preferences |
@@ -97,12 +97,13 @@
 
 ### Milestone 8 — Preview และ Production Release
 
-- [ ] ยืนยันว่า connection และ backup/snapshot เป็นของ Production จริง ก่อน migration 004
-- [ ] รัน migration 004 และ post-migration integrity check
+- [x] เจ้าของยืนยัน connection `.env` / `test` เป็น Production และสร้าง backup ใหม่ก่อน migration 004
+- [x] รัน migration 004 และ post-migration integrity check บน Production ผ่าน
 - [x] Deploy Phase 2.1 Preview บน `test_e2e` หลังผู้ใช้อนุมัติ
 - [x] Smoke และ error/warning log check Phase 2.1 Preview
 - [x] Commit หลัง Preview ผ่าน (`aad419a`)
-- [ ] Deploy/Smoke/Log check Phase 2.1 บน Production
+- [x] Deploy/Smoke/Log check Phase 2.1 บน Production
+- [x] บันทึก source commit, migration result และ Preview/Production URLs ของ Phase 2.1
 - [ ] เริ่ม Phase 2.2 หลัง Phase 2.1 ผ่าน Production smoke
 - [ ] Deploy/Smoke/Log check Phase 2.2 บน Preview แล้ว Production
 - [ ] บันทึก commit SHA, migration result และ URLs
@@ -141,8 +142,8 @@ Engagement        +0..10 จาก likes, comments และ views
 
 | Release | Commit | Preview | Production | สถานะ |
 | --- | --- | --- | --- | --- |
-| Phase 2.1 | `aad419a0816346fd15d04296f0388c5b5323faea` | [READY](https://it-epupdu523-thiraphat-s-projects.vercel.app) — isolated `test_e2e` | ยังไม่ deploy — ต้องยืนยัน database target | Preview smoke ผ่าน 2 รอบติดต่อกัน; local commit แล้ว |
-| Phase 2.2 | รอ 2.1 smoke | ยังไม่ deploy | ยังไม่ deploy | ปิด release switch |
+| Phase 2.1 | feature `aad419a0816346fd15d04296f0388c5b5323faea`; deployed source `7f2b24e` | [READY](https://it-epupdu523-thiraphat-s-projects.vercel.app) — isolated `test_e2e` | [LIVE](https://ithub-puce.vercel.app) / [deployment](https://it-gafqtmtmw-thiraphat-s-projects.vercel.app) | Preview และ Production smoke ผ่าน; migration 004 complete |
+| Phase 2.2 | ยังไม่ release | ยังไม่ deploy | ยังไม่ deploy | 2.1 smoke ผ่านแล้ว; ยังปิด release switch |
 
 ## Implementation log
 
@@ -217,13 +218,29 @@ Engagement        +0..10 จาก likes, comments และ views
 - ต้องการคำยืนยันจากเจ้าของระบบว่า connection ใน `C:\client\.env` ซึ่งใช้ `DB_NAME=test` เป็นฐานของ Production `ithub-puce.vercel.app` หรือให้ระบุไฟล์ connection ที่ถูกต้องในเครื่อง โดยไม่ส่งรหัสผ่านในแชต
 - ยังไม่รัน migration 004, ไม่สร้าง Production QA account, ไม่เปลี่ยน env บน Vercel และไม่ deploy/push; ข้อจำกัดนี้เป็นการยืนยัน database target ไม่ใช่การขออนุญาต Preview ซ้ำ
 
-#### Release blockers ที่ยังไม่ผ่าน
+### 2026-09-06 — Phase 2.1 Production release — Codex
 
-1. **Production smoke:** automatic approval ปฏิเสธการสร้าง QA account บนเว็บจริง เพราะยังยืนยันไม่ได้ว่า `.env` ที่ใช้ database ชื่อ `test` เป็นฐานเดียวกับ Production สำหรับ cleanup; topic IDs ที่ตรงกันไม่เพียงพอ จึงยังไม่สร้างบัญชี ไม่รัน migration 004 และไม่ deploy Production
+- เจ้าของตอบยืนยันว่า connection ใน `C:\client\.env` ที่ใช้ `DB_NAME=test` เป็น Production ของ `ithub-puce.vercel.app`; จึงผ่าน target-confirmation gate โดยไม่ดึงหรือเปิดเผย Vercel secrets
+- สร้าง backup ใหม่ `.vercel/backups/phase2-2026-09-06T09-19-56-449Z.sql`: 14 tables, 19,152 bytes, SHA-256 `dfd6c111b780aa5f6eeeb977c91fc7b5cf1fc1ba6027578e80783c9fdc390970`; checksum ตรงกับไฟล์ ตรวจครบก่อน migration แต่ยังไม่ได้ทดสอบ restore
+- `node --env-file=.env scripts/db-preflight.mjs` ผ่าน; `scripts/db-migrate.mjs` skip 001–003 และ apply `004_personalized_discovery.sql`; `scripts/db-check.mjs` ผ่าน required tables 11/11 และ integrity counters ทั้งหมด 0; preflight หลัง deploy ยืนยัน 004 complete
+- Deploy ใหม่ด้วย `vercel deploy --prod --force --scope team_DzUs49ePhJqJD0veBMIPnY11` โดยใช้ Production secrets เดิมบน Vercel ไม่ promote `_e2e` Preview และไม่เปลี่ยน project-wide env
+- กำหนด runtime/build overrides เฉพาะ deployment: `ITHUB_DISCOVERY_FOR_YOU_ENABLED=false`, `ITHUB_E2E_ALLOW_WRITES=false`, `ITHUB_E2E_ENVIRONMENT=production`, `ITHUB_ENVIRONMENT=production`; คง service/session secrets เดิม
+- Deployment `dpl_6M56EYipoMTGQQaiNUaqKPMTud2C`, URL `https://it-gafqtmtmw-thiraphat-s-projects.vercel.app`, alias `https://ithub-puce.vercel.app`, สถานะ READY; Next.js 16.3.4 remote production build ผ่านในประมาณ 38 วินาที; source HEAD ก่อน deploy `7f2b24e` (feature `aad419a`)
+- เพิ่ม `scripts/discovery-production-smoke.mjs` แยกจาก Preview runner: รับเฉพาะ flag `--confirmed-production-test`, fixed Production origin, connection ต้องตรง `.env` และ 004 complete; ไม่ลด guard ของ Preview/E2E scripts
+- `node --env-file=.env scripts/discovery-production-smoke.mjs --confirmed-production-test` ผ่าน 1/1: Guest CTA, register/login, ยืนยันบัญชี QA ตรงฐาน Production, secure/HttpOnly/SameSite=Lax session cookie, category/author follow, Following dedup, private management, notification defaults และ persistence; ยืนยันว่า For You ไม่มีแท็บ
+- Production visual smoke 12 screenshots: Following/management/notifications × 390×844 และ 1440×1000 × Light/Dark; overflow assertions ผ่านและตรวจภาพด้วยตาแล้ว หลักฐาน `.vercel/release-evidence/production-2.1-27e22e13127d488f/`; result.json แสดง `passed=true`, `cleanup=true`
+- ลบเฉพาะบัญชี QA ที่สร้างขึ้นและ private follows/preferences ผ่าน cascade แล้ว; ไม่สร้างกระทู้หรือแก้บัญชีเดิม การเปิด Topic ระหว่าง smoke อาจเพิ่ม view counter ตามพฤติกรรมแอปเดิม
+- ตรวจ browser แบบ Guest ด้วย agent-browser และปิด session หลังเสร็จ; `vercel logs <new production> --level error --level warning --since 15m --limit 50` ไม่พบรายการทั้งก่อนและหลัง smoke ไม่ได้ตั้ง recurring monitoring/drains ใหม่ และยังไม่อ้างว่าทดสอบ live realtime delivery/AI/media ครบ
+- Syntax check และ scoped ESLint ของ production smoke helper ผ่าน; รัน `npm run lint` และ `npm run test:unit` หลังเพิ่ม helper ผ่านอีกครั้ง (15/15); ไม่แก้ production feature code ในรอบ release นี้ หลักฐาน full regression เดิม 161 passed / 4 intentional skips ยังใช้กับ feature source เดิม
+- Phase 2.1 release ครบแล้ว; Phase 2.2 ยังไม่เปิด flag และยังต้องผ่าน Preview/Production release แยกตาม checklist ไม่ปิด Milestone 8 ทั้งหมดล่วงหน้า
+
+#### ประวัติ Release blockers — resolved สำหรับ Phase 2.1
+
+1. **Production target/smoke — resolved:** เคยหยุดเพราะไม่ยืนยัน connection; เจ้าของยืนยัน `.env` / `test` แล้ว จึง backup/migrate/deploy และ guarded smoke ผ่านตาม log ข้างต้น
 2. **Isolated Preview — resolved:** ข้อจำกัด approval เดิมได้รับการอนุมัติจากผู้ใช้แล้ว; Preview READY และ smoke ผ่านตาม log ข้างต้น
 3. **Commit — resolved:** commit เฉพาะ Phase 2 code/tests/docs แล้ว; ไม่รวม presentation/artifacts ของผู้ใช้ และไม่ push ซึ่งอาจเริ่ม deployment ที่ใช้ environment คนละชุด
 
-ขั้นต่อไป: ยืนยัน Production connection/backup แยกต่างหากก่อน migration 004 และ Production release; ห้าม promote Preview ที่ผูก `_e2e` เป็น Production
+ขั้นต่อไป: Phase 2.2 Preview สำหรับ For You ก่อนเปิด flag บน Production; ห้าม promote Preview ที่ผูก `_e2e` เป็น Production และยังไม่ push branch จนจัดการ environment ของ Git-triggered Preview ให้ชัดเจน
 
 ## ไม่รวม
 
