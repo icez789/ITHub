@@ -55,6 +55,7 @@ export default function Sidebar() {
   const searchParams = useSearchParams();
   const currentSort = searchParams.get('sort');
   const currentCategory = searchParams.get('category');
+  const currentFeed = searchParams.get('feed');
   const [preference, setPreference] = useState(null);
   const [wideViewport, setWideViewport] = useState(false);
 
@@ -102,13 +103,13 @@ export default function Sidebar() {
       label: 'หน้าแรก',
       href: '/',
       icon: Home,
-      active: isHydrated && pathname === '/' && !currentSort && !currentCategory,
+      active: isHydrated && pathname === '/' && !currentSort && !currentCategory && !currentFeed,
     },
     {
       label: 'มาแรง',
       href: { pathname: '/', query: { sort: 'likes' } },
       icon: Flame,
-      active: isHydrated && pathname === '/' && currentSort === 'likes',
+      active: isHydrated && pathname === '/' && currentSort === 'likes' && !currentFeed,
     },
     { label: 'อันดับสมาชิก', href: '/leaderboard', icon: Trophy, active: isHydrated && pathname === '/leaderboard' },
   ];
@@ -167,7 +168,7 @@ export default function Sidebar() {
               label={item.label}
               icon={item.icon}
               href={{ pathname: '/', query: { category: item.value } }}
-              active={isHydrated && pathname === '/' && currentCategory === item.value}
+              active={isHydrated && pathname === '/' && currentCategory === item.value && !currentFeed}
               labelClass={labelClass}
               tooltipClass={tooltipClass}
             />

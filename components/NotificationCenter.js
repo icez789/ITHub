@@ -4,15 +4,16 @@ import { useEffect, useRef, useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Pusher from 'pusher-js';
-import { AlertTriangle, Bell, BellOff, CheckCheck, Heart, LoaderCircle, MessageCircle, Trash2 } from 'lucide-react';
+import { AlertTriangle, BadgeCheck, Bell, BellOff, CheckCheck, Heart, LoaderCircle, MessageCircle, Rss, Trash2 } from 'lucide-react';
 import ConfirmDialog from './ConfirmDialog';
+import NotificationPreferencesForm from './NotificationPreferencesForm';
 import { notificationChannelName } from '../lib/pusherChannels';
 import { deleteAllNotifications, deleteNotification, markNotificationAsRead, markNotificationsAsRead } from '../lib/actions';
 
-const typeIcons = { comment: MessageCircle, like: Heart, report: AlertTriangle };
+const typeIcons = { comment: MessageCircle, like: Heart, report: AlertTriangle, solution: BadgeCheck, follow_topic: Rss };
 const notificationKey = (item) => item.id ? `id:${Number(item.id)}` : `content:${item.message || ''}|${item.link || ''}`;
 
-export default function NotificationCenter({ initialNotifications, initialUnreadCount, currentUserId, page, totalPages }) {
+export default function NotificationCenter({ initialNotifications, initialUnreadCount, currentUserId, page, totalPages, preferences }) {
   const router = useRouter();
   const [notifications, setNotifications] = useState(initialNotifications);
   const [unreadCount, setUnreadCount] = useState(initialUnreadCount);
@@ -97,6 +98,8 @@ export default function NotificationCenter({ initialNotifications, initialUnread
           }} />
         </div> : null}
       </header>
+
+      <NotificationPreferencesForm preferences={preferences} />
 
       {error ? <p role="alert" className="mb-4 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-900 dark:bg-red-950/30 dark:text-red-300">{error}</p> : null}
 

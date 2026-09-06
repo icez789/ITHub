@@ -2,6 +2,8 @@ import { spawn } from 'node:child_process';
 import { assertE2eSafety } from './e2e-safety.mjs';
 
 assertE2eSafety();
+// Exercise Phase 2.2 locally; releases explicitly enable it after Phase 2.1 smoke.
+process.env.ITHUB_DISCOVERY_FOR_YOU_ENABLED ??= 'true';
 if (!process.env.SESSION_SECRET && process.env.AUTH_SECRET) {
   process.env.SESSION_SECRET = process.env.AUTH_SECRET;
 }

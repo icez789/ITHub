@@ -18,6 +18,7 @@ import TopicEngagementActions from '../../../components/TopicEngagementActions';
 import DeleteButton from '../../../components/DeleteButton';
 import TopicModerationActions from '../../../components/TopicModerationActions';
 import CommentComposer from '../../../components/CommentComposer';
+import FollowButton from '../../../components/FollowButton';
 
 // Libs & Styles
 import { pusherServer } from '../../../lib/pusher'; 
@@ -30,6 +31,7 @@ import { deleteCommentCascade, deleteTopicCascade, setTopicModerationState } fro
 import { notificationChannelName } from '../../../lib/pusherChannels';
 import { destroyMediaAsset } from '../../../lib/mediaCleanup';
 import { shouldNotifyOwner } from '../../../lib/notificationPolicy';
+import { getFollowState, isNotificationEnabled } from '../../../lib/discovery';
 
 export async function generateMetadata({ params }) {
   const { id } = await params;
@@ -150,6 +152,9 @@ export default async function TopicDetailPage({ params }) {
   const isLiked = userLike.length > 0;
   const isBookmarked = bookmark.length > 0;
   const isOwner = currentUser && (currentUser.id === topic.user_id);
+  const authorFollowState = currentUser && topic.user_id && !isOwner
+    ? await getFollowState(currentUser.id, { authorId: topic.user_id })
+    : { authorFollowing: false };
 
   // --- Server Actions ---
 
@@ -212,7 +217,9 @@ export default async function TopicDetailPage({ params }) {
         [topicId, content, actor.id, parentId],
       );
       await connection.query('UPDATE users SET xp = COALESCE(xp, 0) + 2 WHERE id = ?', [actor.id]);
-      if (!parentId && shouldNotifyOwner(freshTopic.user_id, actor.id)) {
+      if (!parentId
+        && shouldNotifyOwner(freshTopic.user_id, actor.id)
+        && await isNotificationEnabled(freshTopic.user_id, 'comments_enabled', connection)) {
         const [notificationResult] = await connection.query(
           'INSERT INTO notifications (user_id, actor_id, topic_id, type, message) VALUES (?, ?, ?, ?, ?)',
           [freshTopic.user_id, actor.id, topicId, 'comment', `${actor.username} แสดงความคิดเห็นในกระทู้ของคุณ`],
@@ -227,7 +234,7 @@ export default async function TopicDetailPage({ params }) {
       connection.release();
     }
 
-    if (!parentId && shouldNotifyOwner(freshTopic.user_id, actor.id)) {
+    if (notificationId) {
       try {
         await pusherServer.trigger(notificationChannelName(freshTopic.user_id), 'new-notification', {
           id: notificationId,
@@ -281,7 +288,8 @@ export default async function TopicDetailPage({ params }) {
       } else {
         added = true;
         await connection.query('INSERT INTO likes (user_id, topic_id) VALUES (?, ?)', [actor.id, topicId]);
-        if (shouldNotifyOwner(topicOwnerId, actor.id)) {
+        if (shouldNotifyOwner(topicOwnerId, actor.id)
+          && await isNotificationEnabled(topicOwnerId, 'likes_enabled', connection)) {
           const [notificationResult] = await connection.query(
             'INSERT INTO notifications (user_id, actor_id, topic_id, type, message) VALUES (?, ?, ?, ?, ?)',
             [topicOwnerId, actor.id, topicId, 'like', `${actor.username} ถูกใจกระทู้ของคุณ`],
@@ -298,7 +306,7 @@ export default async function TopicDetailPage({ params }) {
       connection?.release();
     }
 
-    if (added && shouldNotifyOwner(topicOwnerId, actor.id)) {
+    if (added && notificationId) {
       try {
         await pusherServer.trigger(notificationChannelName(topicOwnerId), 'new-notification', {
           id: notificationId,
@@ -520,6 +528,19 @@ export default async function TopicDetailPage({ params }) {
                    {/* แสดงยศตาม XP */}
                    <UserBadge role={topic.role} xp={topic.xp} />
                  </span>
+                 {topic.user_id && !isOwner ? (
+                   <FollowButton
+                     key={topic.user_id}
+                     kind="author"
+                     target={topic.user_id}
+                     label={topic.username || 'ผู้เขียน'}
+                     initialFollowing={authorFollowState.authorFollowing}
+                     isAuthenticated={Boolean(currentUser)}
+                     loginHref={`/login?next=${encodeURIComponent(`/topic/${id}`)}`}
+                     tone="inverse"
+                     compact
+                   />
+                 ) : null}
                  <span className="flex items-center gap-1.5"><CalendarDays aria-hidden="true" size={15} /> {new Date(topic.created_at).toLocaleDateString('th-TH')}</span>
                  <span className="flex items-center gap-1.5"><Eye aria-hidden="true" size={15} /> {topic.views.toLocaleString()} ครั้ง</span>
                </div>

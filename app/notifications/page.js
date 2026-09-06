@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation';
 import db from '../../lib/db';
 import { getCurrentUser } from '../../lib/auth';
 import NotificationCenter from '../../components/NotificationCenter';
+import { getNotificationPreferences } from '../../lib/discovery';
 
 export const metadata = {
   title: 'การแจ้งเตือน | ITHub',
@@ -18,7 +19,7 @@ export default async function NotificationsPage({ searchParams }) {
   const pageSize = 20;
   const offset = (page - 1) * pageSize;
 
-  const [[notifications], [countRows], [unreadRows]] = await Promise.all([
+  const [[notifications], [countRows], [unreadRows], preferences] = await Promise.all([
     db.query(
       `SELECT n.id, n.topic_id, n.type, n.message, n.is_read, n.created_at,
               actor.username AS actor_name, actor.avatar_url AS actor_avatar
@@ -31,6 +32,7 @@ export default async function NotificationsPage({ searchParams }) {
     ),
     db.query('SELECT COUNT(*) AS count FROM notifications WHERE user_id = ?', [user.id]),
     db.query('SELECT COUNT(*) AS count FROM notifications WHERE user_id = ? AND is_read = 0', [user.id]),
+    getNotificationPreferences(user.id),
   ]);
   const totalPages = Math.max(1, Math.ceil(Number(countRows[0].count) / pageSize));
   if (page > totalPages) redirect(`/notifications?page=${totalPages}`);
@@ -44,6 +46,7 @@ export default async function NotificationsPage({ searchParams }) {
         currentUserId={user.id}
         page={page}
         totalPages={totalPages}
+        preferences={preferences}
       />
     </main>
   );

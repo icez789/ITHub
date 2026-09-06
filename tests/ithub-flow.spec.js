@@ -130,8 +130,10 @@ test.describe('ITHub onboarding', () => {
     await expect(tour.dialog).not.toBeVisible();
     await expect(page).toHaveURL('/help');
     await expect.poll(() => page.evaluate((key) => localStorage.getItem(key), onboardingStorageKey)).toBe('dismissed');
-    await page.reload();
-    await expect(tour.dialog).not.toBeVisible();
+    const persistedPage = await page.context().newPage();
+    await persistedPage.goto('/');
+    await expect(onboarding(persistedPage).dialog).not.toBeVisible();
+    await persistedPage.close();
   });
 
   test('moves through six steps, restores URL/hash/history, and records completion', async ({ page }) => {
@@ -216,7 +218,7 @@ test.describe('ITHub onboarding', () => {
     await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth)).toBe(375);
   });
 
-  test('keeps all steps in view across the design breakpoint matrix', async ({ browser }) => {
+  test('keeps all steps in view across the design breakpoint matrix', async ({ browser }, testInfo) => {
     test.setTimeout(90_000);
     const matrix = [
       { width: 390, height: 844, theme: 'light', reducedMotion: 'no-preference' },
@@ -241,15 +243,40 @@ test.describe('ITHub onboarding', () => {
         window.localStorage.removeItem(key);
         window.localStorage.setItem('theme', theme);
       }, { key: onboardingStorageKey, theme: entry.theme });
-      await matrixPage.goto('/');
-      for (const [index, [id, heading]] of headings.entries()) {
-        const tour = await expectTourStep(matrixPage, id, heading);
-        await expectTourFitsViewport(matrixPage);
-        await expect.poll(() => matrixPage.evaluate(() => document.documentElement.scrollWidth)).toBe(entry.width);
-        if (index < headings.length - 1) await tour.dialog.getByRole('button', { name: 'ถัดไป' }).click();
+      try {
+        await matrixPage.goto('/');
+        for (const [index, [id, heading]] of headings.entries()) {
+          await test.step(`${entry.width}px ${entry.theme} ${entry.reducedMotion}: ${id}`, async () => {
+            const tour = await expectTourStep(matrixPage, id, heading);
+            await expectTourFitsViewport(matrixPage);
+            await expect.poll(() => matrixPage.evaluate(() => document.documentElement.scrollWidth)).toBe(entry.width);
+            if (index < headings.length - 1) {
+              await expect(tour.root).toHaveAttribute('data-tour-phase', 'settled');
+              // Wait for the tour's scheduled focus handoff as well as layout.
+              // Otherwise a very fast click can race that handoff in Firefox.
+              await expect(tour.dialog).toBeFocused();
+              await tour.dialog.getByRole('button', { name: 'ถัดไป' }).click();
+            }
+          });
+        }
+        await expect(matrixPage.locator('html')).toHaveClass(entry.theme === 'dark' ? /dark/ : /^(?!.*dark)/);
+      } catch (error) {
+        await testInfo.attach(`tour-matrix-${entry.width}`, { body: await matrixPage.screenshot(), contentType: 'image/png' });
+        const state = await matrixPage.locator('[data-tour-root="true"]').evaluate((root) => ({
+          phase: root.dataset.tourPhase,
+          step: root.dataset.tourStep,
+          buttons: [...root.querySelectorAll('button')].map((button) => ({
+            label: button.textContent,
+            disabled: button.disabled,
+            rect: button.getBoundingClientRect().toJSON(),
+            inert: Boolean(button.closest('[inert]')),
+          })),
+        }));
+        console.log('Tour matrix failure:', entry, state);
+        throw error;
+      } finally {
+        await context.close();
       }
-      await expect(matrixPage.locator('html')).toHaveClass(entry.theme === 'dark' ? /dark/ : /^(?!.*dark)/);
-      await context.close();
     }
   });
 

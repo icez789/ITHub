@@ -18,7 +18,7 @@ export default async function Navbar() {
     try {
       const [notisResult, countResult] = await Promise.all([
         db.query(
-          'SELECT id, topic_id, message, created_at FROM notifications WHERE user_id = ? ORDER BY created_at DESC LIMIT 10',
+          'SELECT id, topic_id, type, message, created_at FROM notifications WHERE user_id = ? ORDER BY created_at DESC LIMIT 10',
           [user.id],
         ),
         db.query('SELECT COUNT(*) as count FROM notifications WHERE user_id = ? AND is_read = 0', [user.id]),

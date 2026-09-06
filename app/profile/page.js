@@ -6,7 +6,7 @@ import ProfileAvatar from '../../components/ProfileAvatar';
 import UserBadge from '../../components/UserBadge'; // ✅ 1. เพิ่ม UserBadge
 import { getCurrentUser } from '../../lib/auth';
 import { updateAvatar } from '../../lib/actions';
-import { Eye, FileText, Inbox, Plus, Trophy } from 'lucide-react';
+import { Eye, FileText, Inbox, Plus, Rss, Trophy } from 'lucide-react';
 
 export default async function ProfilePage() {
   const userSession = await getCurrentUser();
@@ -56,7 +56,7 @@ export default async function ProfilePage() {
     <main className="ithub-page-container mx-auto max-w-5xl pb-24 pt-8 md:pb-12 md:pt-12">
         
         {/* Header Section */}
-        <div className="mb-8 flex flex-col items-center justify-between border-b border-[var(--app-border)] pb-6 md:flex-row">
+        <div className="mb-8 flex flex-col items-start justify-between gap-4 border-b border-[var(--app-border)] pb-6 md:flex-row md:items-center">
             <div>
                 <h1 className="flex items-center gap-3 text-3xl font-bold text-[var(--app-text)]">
                     โปรไฟล์ของฉัน
@@ -65,6 +65,9 @@ export default async function ProfilePage() {
                 </h1>
                 <p className="mt-2 text-[var(--app-text-muted)]">จัดการข้อมูลส่วนตัวและดูสถิติของคุณ</p>
             </div>
+            <Link href="/profile/following" className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-[var(--app-border)] bg-[var(--app-surface)] px-4 py-2 text-sm font-semibold text-[var(--app-text)] transition-colors hover:border-[var(--app-primary)] hover:text-[var(--app-accent-text)]">
+              <Rss aria-hidden="true" size={17} /> จัดการสิ่งที่ติดตาม
+            </Link>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">

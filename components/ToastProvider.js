@@ -1,21 +1,19 @@
 'use client';
 
 import { Toaster, toast } from 'react-hot-toast';
-import { useSearchParams, useRouter, usePathname } from 'next/navigation';
+import { useSearchParams, usePathname } from 'next/navigation';
 import { useEffect, Suspense } from 'react';
 
 // สร้าง Component ย่อยสำหรับจัดการ Logic
 function ToastLogic() {
   const searchParams = useSearchParams();
-  const router = useRouter();
   const pathname = usePathname();
 
   useEffect(() => {
     const notify = searchParams.get('notify');
 
-    if (notify) {
-      // หน่วงเวลาเล็กน้อยเพื่อให้แน่ใจว่าหน้าเว็บโหลดเสร็จแล้วค่อยเด้ง
-      setTimeout(() => {
+    const currentUrl = new URL(window.location.href);
+    if (notify && currentUrl.pathname === pathname && currentUrl.searchParams.get('notify') === notify) {
         if (notify === 'login_success') toast.success('เข้าสู่ระบบสำเร็จ ยินดีต้อนรับครับ');
         if (notify === 'logout_success') toast.success('ออกจากระบบเรียบร้อย');
         if (notify === 'create_success') toast.success('สร้างกระทู้เรียบร้อย');
@@ -27,13 +25,11 @@ function ToastLogic() {
         if (notify === 'banned') toast.error('บัญชีของคุณถูกระงับการใช้งาน', { style: { background: '#ef4444', color: '#fff' }, duration: 5000 });
         if (notify === 'login_failed') toast.error('อีเมลหรือรหัสผ่านไม่ถูกต้อง');
 
-        // ล้าง URL (แบบเงียบๆ ไม่ refresh หน้า)
-        const newParams = new URLSearchParams(searchParams.toString());
-        newParams.delete('notify');
-        router.replace(`${pathname}?${newParams.toString()}`, { scroll: false });
-      }, 100); // หน่วง 0.1 วิ
+        // Notification cleanup is URL-only: do not start a competing navigation.
+        currentUrl.searchParams.delete('notify');
+        window.history.replaceState(null, '', `${currentUrl.pathname}${currentUrl.search}${currentUrl.hash}`);
     }
-  }, [searchParams, router, pathname]);
+  }, [searchParams, pathname]);
 
   return null; // ตัว Logic ไม่ต้องแสดงผลอะไร
 }

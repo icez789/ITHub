@@ -6,7 +6,15 @@ import Link from 'next/link';
 import { notificationChannelName } from '../lib/pusherChannels';
 // 1. ✅ Import Server Action ที่เราเพิ่งสร้าง
 import { markNotificationsAsRead } from '../lib/actions'; 
-import { Bell, BellOff } from 'lucide-react';
+import { AlertTriangle, BadgeCheck, Bell, BellOff, Heart, MessageCircle, Rss } from 'lucide-react';
+
+const typeIcons = {
+  comment: MessageCircle,
+  like: Heart,
+  report: AlertTriangle,
+  solution: BadgeCheck,
+  follow_topic: Rss,
+};
 
 export default function NotificationBell({ count: initialCount, notifications: initialNotifications, currentUserId }) {
   const [unreadCount, setUnreadCount] = useState(initialCount);
@@ -78,12 +86,18 @@ export default function NotificationBell({ count: initialCount, notifications: i
               </div>
               <div className="max-h-80 overflow-y-auto">
                  {notifications.length > 0 ? (
-                    notifications.map((n, i) => (
-                       <Link key={n.id || `${n.created_at}-${i}`} href={n.link || (n.topic_id ? `/topic/${n.topic_id}` : '/notifications')} onClick={() => setIsOpen(false)} className="block border-b border-[var(--app-border)] p-4 transition-colors last:border-0 hover:bg-[var(--app-surface-subtle)]">
-                          <p className="line-clamp-2 text-sm font-medium text-[var(--app-text)]">{n.message}</p>
-                          <span className="mt-1 block text-xs text-[var(--app-text-muted)]">{new Date(n.created_at).toLocaleTimeString('th-TH', {hour: '2-digit', minute:'2-digit'})}</span>
-                       </Link>
-                    ))
+                    notifications.map((n, i) => {
+                      const Icon = typeIcons[n.type] || Bell;
+                      return (
+                        <Link key={n.id || `${n.created_at}-${i}`} href={n.link || (n.topic_id ? `/topic/${n.topic_id}` : '/notifications')} onClick={() => setIsOpen(false)} className="flex gap-3 border-b border-[var(--app-border)] p-4 transition-colors last:border-0 hover:bg-[var(--app-surface-subtle)]">
+                          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[var(--app-primary-soft)] text-[var(--app-accent-text)]"><Icon aria-hidden="true" size={16} /></span>
+                          <span className="min-w-0 flex-1">
+                            <span className="line-clamp-2 text-sm font-medium text-[var(--app-text)]">{n.message}</span>
+                            <span className="mt-1 block text-xs text-[var(--app-text-muted)]">{new Date(n.created_at).toLocaleTimeString('th-TH', {hour: '2-digit', minute:'2-digit'})}</span>
+                          </span>
+                        </Link>
+                      );
+                    })
                  ) : (
                     <div className="flex flex-col items-center gap-2 p-8 text-center text-sm text-[var(--app-text-muted)]">
                         <BellOff aria-hidden="true" size={20} />

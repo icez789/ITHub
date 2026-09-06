@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import Image from 'next/image';
-import { Eye, Heart, Lock, MessageCircle, Pin, UserRound } from 'lucide-react';
+import { Eye, Heart, Lock, MessageCircle, Pin, Sparkles, UserRound } from 'lucide-react';
 
 export default function TopicCard({
   id,
@@ -16,6 +16,7 @@ export default function TopicCard({
   index = 0,
   isPinned = false,
   isLocked = false,
+  recommendationReason = null,
 }) {
   const formattedDate = new Date(createdAt).toLocaleDateString('th-TH', {
     day: 'numeric',
@@ -37,6 +38,7 @@ export default function TopicCard({
             </span>
             {isPinned ? <span className="inline-flex items-center gap-1 rounded-lg bg-amber-50 px-2 py-0.5 text-[11px] font-bold text-amber-800 dark:bg-amber-950/35 dark:text-amber-300"><Pin aria-hidden="true" size={11} /> ปักหมุด</span> : null}
             {isLocked ? <span className="inline-flex items-center gap-1 rounded-lg bg-zinc-100 px-2 py-0.5 text-[11px] font-bold text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300"><Lock aria-hidden="true" size={11} /> ล็อกแล้ว</span> : null}
+            {recommendationReason ? <span className="inline-flex items-center gap-1 rounded-lg border border-[var(--app-border)] bg-[var(--app-surface-subtle)] px-2 py-0.5 text-[11px] font-semibold text-[var(--app-text-muted)]"><Sparkles aria-hidden="true" size={11} /> {recommendationReason}</span> : null}
             <span className="text-xs text-[var(--app-text-muted)]">{formattedDate}</span>
           </div>
 

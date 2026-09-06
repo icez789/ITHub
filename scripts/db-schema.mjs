@@ -82,6 +82,43 @@ export const migration003ForeignKeys = [
   ['moderation_audit_logs', 'fk_moderation_audit_actor', 'actor_id->users.id:SET NULL'],
 ];
 
+export const migration004Tables = [
+  'user_category_follows',
+  'user_author_follows',
+  'notification_preferences',
+];
+
+export const migration004Columns = [
+  'user_category_follows.user_id',
+  'user_category_follows.category',
+  'user_category_follows.created_at',
+  'user_author_follows.follower_id',
+  'user_author_follows.author_id',
+  'user_author_follows.created_at',
+  'notification_preferences.user_id',
+  'notification_preferences.comments_enabled',
+  'notification_preferences.likes_enabled',
+  'notification_preferences.solutions_enabled',
+  'notification_preferences.followed_categories_enabled',
+  'notification_preferences.followed_authors_enabled',
+  'notification_preferences.updated_at',
+];
+
+export const migration004Indexes = [
+  ['user_category_follows', 'PRIMARY', 'U:user_id,category'],
+  ['user_category_follows', 'idx_category_follows_category', 'N:category,user_id'],
+  ['user_author_follows', 'PRIMARY', 'U:follower_id,author_id'],
+  ['user_author_follows', 'idx_author_follows_author', 'N:author_id,follower_id'],
+  ['notification_preferences', 'PRIMARY', 'U:user_id'],
+];
+
+export const migration004ForeignKeys = [
+  ['user_category_follows', 'fk_category_follows_user', 'user_id->users.id:CASCADE'],
+  ['user_author_follows', 'fk_author_follows_follower', 'follower_id->users.id:CASCADE'],
+  ['user_author_follows', 'fk_author_follows_author', 'author_id->users.id:CASCADE'],
+  ['notification_preferences', 'fk_notification_preferences_user', 'user_id->users.id:CASCADE'],
+];
+
 function value(row, upper, lower) {
   return row[upper] ?? row[lower];
 }
@@ -193,6 +230,28 @@ export async function inspectSchema(db) {
     ? 'absent'
     : found003.length === expected003Count ? 'complete' : 'partial';
 
+  const found004 = [
+    ...migration004Tables.filter((table) => tables.has(table)),
+    ...migration004Columns.filter((column) => columns.has(column)),
+    ...migration004Indexes.filter(([table, name, signature]) => {
+      const index = indexes.get(`${table}.${name}`);
+      const actual = index ? `${index.unique ? 'U' : 'N'}:${index.columns.join(',')}` : '';
+      return actual === signature;
+    }).map(([, name]) => name),
+    ...migration004ForeignKeys.filter(([table, name, signature]) => {
+      const foreignKey = foreignKeys.get(`${table}.${name}`);
+      const actual = foreignKey
+        ? `${foreignKey.columns.join(',')}->${foreignKey.referencedTable}.${foreignKey.referencedColumns.join(',')}:${foreignKey.deleteRule}`
+        : '';
+      return actual === signature;
+    }).map(([, name]) => name),
+  ];
+  const expected004Count = migration004Tables.length + migration004Columns.length
+    + migration004Indexes.length + migration004ForeignKeys.length;
+  const migration004State = found004.length === 0
+    ? 'absent'
+    : found004.length === expected004Count ? 'complete' : 'partial';
+
   return {
     tables,
     columns,
@@ -207,6 +266,9 @@ export async function inspectSchema(db) {
     migration003State,
     found003,
     expected003Count,
+    migration004State,
+    found004,
+    expected004Count,
   };
 }
 
@@ -233,6 +295,14 @@ export function assertMigration003Complete(state) {
   }
 }
 
+export function assertMigration004Complete(state) {
+  if (state.migration004State !== 'complete') {
+    throw new Error(
+      `migration 004 schema is ${state.migration004State} (${state.found004.length}/${state.expected004Count} expected objects)`,
+    );
+  }
+}
+
 export const integrityChecks = {
   duplicate_usernames: 'SELECT COUNT(*) AS count FROM (SELECT username FROM users GROUP BY username HAVING COUNT(*) > 1) duplicates',
   invalid_user_roles: "SELECT COUNT(*) AS count FROM users WHERE role NOT IN ('user', 'teacher', 'admin', 'super_admin') OR role IS NULL",
@@ -244,6 +314,15 @@ export const integrityChecks = {
        OR (is_locked = 0 AND (locked_by IS NOT NULL OR locked_at IS NOT NULL))
        OR (is_locked = 1 AND (locked_by IS NULL OR locked_at IS NULL))`,
   invalid_media_cleanup_status: "SELECT COUNT(*) AS count FROM media_cleanup_queue WHERE status NOT IN ('pending', 'processing', 'failed', 'completed')",
+  invalid_follow_categories: "SELECT COUNT(*) AS count FROM user_category_follows WHERE category NOT IN ('Hardware', 'Software', 'Network', 'AI & Data', 'General')",
+  invalid_self_follows: 'SELECT COUNT(*) AS count FROM user_author_follows WHERE follower_id = author_id',
+  invalid_notification_preferences: `SELECT COUNT(*) AS count FROM notification_preferences
+    WHERE comments_enabled NOT IN (0, 1) OR likes_enabled NOT IN (0, 1)
+       OR solutions_enabled NOT IN (0, 1) OR followed_categories_enabled NOT IN (0, 1)
+       OR followed_authors_enabled NOT IN (0, 1)`,
+  orphan_category_follows: 'SELECT COUNT(*) AS count FROM user_category_follows f LEFT JOIN users u ON u.id = f.user_id WHERE u.id IS NULL',
+  orphan_author_follows: 'SELECT COUNT(*) AS count FROM user_author_follows f LEFT JOIN users follower ON follower.id = f.follower_id LEFT JOIN users author ON author.id = f.author_id WHERE follower.id IS NULL OR author.id IS NULL',
+  orphan_notification_preferences: 'SELECT COUNT(*) AS count FROM notification_preferences p LEFT JOIN users u ON u.id = p.user_id WHERE u.id IS NULL',
   orphan_topics: 'SELECT COUNT(*) AS count FROM topics t LEFT JOIN users u ON u.id = t.user_id WHERE t.user_id IS NOT NULL AND u.id IS NULL',
   orphan_comments: 'SELECT COUNT(*) AS count FROM comments c LEFT JOIN topics t ON t.id = c.topic_id LEFT JOIN users u ON u.id = c.user_id LEFT JOIN comments p ON p.id = c.parent_id WHERE t.id IS NULL OR (c.user_id IS NOT NULL AND u.id IS NULL) OR (c.parent_id IS NOT NULL AND p.id IS NULL)',
   orphan_likes: 'SELECT COUNT(*) AS count FROM likes l LEFT JOIN users u ON u.id = l.user_id LEFT JOIN topics t ON t.id = l.topic_id WHERE u.id IS NULL OR t.id IS NULL',
@@ -260,10 +339,20 @@ const migration003IntegrityChecks = new Set([
   'invalid_media_cleanup_status',
 ]);
 
-export async function runIntegrityChecks(db, { includeMigration003 = true } = {}) {
+const migration004IntegrityChecks = new Set([
+  'invalid_follow_categories',
+  'invalid_self_follows',
+  'invalid_notification_preferences',
+  'orphan_category_follows',
+  'orphan_author_follows',
+  'orphan_notification_preferences',
+]);
+
+export async function runIntegrityChecks(db, { includeMigration003 = true, includeMigration004 = true } = {}) {
   const failures = [];
   for (const [name, sql] of Object.entries(integrityChecks)) {
     if (!includeMigration003 && migration003IntegrityChecks.has(name)) continue;
+    if (!includeMigration004 && migration004IntegrityChecks.has(name)) continue;
     const [rows] = await db.query(sql);
     const count = Number(rows[0].count);
     console.log(`${name}: ${count}`);

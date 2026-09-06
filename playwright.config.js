@@ -15,6 +15,8 @@ assertE2eSafety();
  */
 export default defineConfig({
   testDir: './tests',
+  // Node's unit-test runner owns these files; Playwright must not import them.
+  testIgnore: ['**/unit/**'],
   /* Run tests in files in parallel */
   fullyParallel: false,
   /* Fail the build on CI if you accidentally left test.only in the source code. */

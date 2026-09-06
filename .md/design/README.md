@@ -12,16 +12,18 @@
 
 ## แผนที่กำลังใช้งาน
 
-- **ชื่อ:** ITHub UX/UI and Theme Roadmap — Phase 1
-- **สถานะ:** Phase 1 released to Production — migration 003 และ production smoke ผ่านแล้ว
-- **ทิศทาง:** Clean Technical Community with user-selectable atmosphere
-- **อัปเดตล่าสุด:** 2026-09-03
-- **ไฟล์:** [`ITHUB_UX_THEME_ROADMAP.md`](./ITHUB_UX_THEME_ROADMAP.md)
+- **ชื่อ:** ITHub Personalized Discovery — Phase 2
+- **สถานะ:** Implementation และ full regression ผ่าน — Phase 2.1 Preview READY และ smoke ผ่าน; Production รอยืนยัน database target
+- **ทิศทาง:** Private, explicit และ explainable personalization
+- **อัปเดตล่าสุด:** 2026-09-06
+- **ไฟล์:** [`ITHUB_DISCOVERY_PHASE2_PLAN.md`](./ITHUB_DISCOVERY_PHASE2_PLAN.md)
 
-อ่าน [`ITHUB_REDESIGN_PLAN.md`](./ITHUB_REDESIGN_PLAN.md) ต่อด้วยเพื่อดูข้อกำหนดพื้นฐานและ implementation history เดิม
+อ่าน [`ITHUB_UX_THEME_ROADMAP.md`](./ITHUB_UX_THEME_ROADMAP.md) และ [`ITHUB_REDESIGN_PLAN.md`](./ITHUB_REDESIGN_PLAN.md) ต่อด้วยเพื่อดู theme contract และข้อกำหนดพื้นฐานเดิม
 
 ## สรุปรอบล่าสุด
 
+- [`ITHUB_DISCOVERY_PHASE2_PLAN.md`](./ITHUB_DISCOVERY_PHASE2_PLAN.md) — Phase 2 สำหรับ Follow, Following feed, notification preferences และ For You แบบอธิบายได้
+- **Phase 2.1 Preview:** [เปิด Preview](https://it-epupdu523-thiraphat-s-projects.vercel.app) — ใช้ `test_e2e` แยกจาก Production; Follow/Following/Preferences ผ่าน smoke; For You ยังปิด
 - **Production:** [`https://ithub-puce.vercel.app`](https://ithub-puce.vercel.app) — Phase 1 theme release พร้อม 5 palettes × Light/Dark; Home, Topic, Help และ Theme Picker smoke test ผ่าน
 - [`ITHUB_UX_THEME_ROADMAP.md`](./ITHUB_UX_THEME_ROADMAP.md) — Phase 1 สำหรับ Light mode hierarchy, 5 palettes และ checklist การตรวจรับ
 - [`2026-09-02_ITHUB_94_RELEASE.md`](./2026-09-02_ITHUB_94_RELEASE.md) — moderation states/audit, notification center, mutation feedback และ visual/accessibility evidence
