@@ -2,7 +2,7 @@
 
 | รายการ | ค่า |
 | --- | --- |
-| สถานะ | Phase 2.2 For You Preview READY และ smoke ผ่าน — Production ยังใช้ Phase 2.1 |
+| สถานะ | Phase 2 Personalized Discovery ขึ้น Production และ smoke ผ่านครบ 2.1/2.2 |
 | วันที่เริ่ม | 2026-09-03 |
 | ผู้ดำเนินการ | Codex |
 | Release 2.1 | Follow, Following feed และ Notification preferences |
@@ -106,8 +106,8 @@
 - [x] บันทึก source commit, migration result และ Preview/Production URLs ของ Phase 2.1
 - [x] เริ่ม Phase 2.2 หลัง Phase 2.1 ผ่าน Production smoke
 - [x] Deploy/Smoke/Log check Phase 2.2 บน Preview
-- [ ] Deploy/Smoke/Log check Phase 2.2 บน Production
-- [ ] บันทึก commit SHA, migration result และ URLs
+- [x] Deploy/Smoke/Log check Phase 2.2 บน Production
+- [x] บันทึก source commit, migration result และ Preview/Production URLs ของ Phase 2.2
 
 ## Interface contract
 
@@ -144,7 +144,7 @@ Engagement        +0..10 จาก likes, comments และ views
 | Release | Commit | Preview | Production | สถานะ |
 | --- | --- | --- | --- | --- |
 | Phase 2.1 | feature `aad419a0816346fd15d04296f0388c5b5323faea`; deployed source `7f2b24e` | [READY](https://it-epupdu523-thiraphat-s-projects.vercel.app) — isolated `test_e2e` | [LIVE](https://ithub-puce.vercel.app) / [deployment](https://it-gafqtmtmw-thiraphat-s-projects.vercel.app) | Preview และ Production smoke ผ่าน; migration 004 complete |
-| Phase 2.2 | release tooling รอ commit | [READY](https://it-czg2d3ge4-thiraphat-s-projects.vercel.app) — isolated `test_e2e` | ยังไม่ deploy | Preview smoke ผ่าน; Production ยังปิด release switch |
+| Phase 2.2 | `f772e7dac47cbcbc95305c54e3b1c2912ccdfd84` | [READY](https://it-czg2d3ge4-thiraphat-s-projects.vercel.app) — isolated `test_e2e` | [LIVE](https://ithub-puce.vercel.app) / [deployment](https://it-k6zvitd8p-thiraphat-s-projects.vercel.app) | Preview และ Production smoke ผ่าน; For You เปิดใช้งาน |
 
 ## Implementation log
 
@@ -253,7 +253,28 @@ Engagement        +0..10 จาก likes, comments และ views
 - `vercel logs <preview> --level error --level warning --since 20m --limit 50` ไม่พบรายการในช่วงที่ตรวจ; ยังไม่อ้าง live Pusher/Gemini/Cloudinary เพราะ Preview ตั้งเป็น disabled
 - Production ยังเป็น Phase 2.1 และ `ITHUB_DISCOVERY_FOR_YOU_ENABLED=false`; ไม่ promote Preview ที่ผูก `test_e2e`
 
-ขั้นต่อไป: commit release tooling/docs ที่ผ่าน Preview แล้ว deploy Production ใหม่ด้วยค่า Production เดิมและเปิด For You เฉพาะ deployment จากนั้น guarded smoke/log check; ห้าม promote Preview ที่ผูก `_e2e`
+### 2026-09-07 — Phase 2.2 Production release — Codex
+
+- ก่อน deploy รัน `node --env-file=.env scripts/db-preflight.mjs` ผ่าน: migrations 002/003/004 complete และ integrity counters ทั้งหมด 0; Phase 2.2 ไม่มี migration ใหม่ ใช้ schema 004 เดิม
+- Commit source ที่ deploy คือ `f772e7dac47cbcbc95305c54e3b1c2912ccdfd84`; Production deployment ใหม่ใช้ Production secrets เดิมบน Vercel ไม่ promote `_e2e` Preview
+- Deployment command กำหนด runtime/build overrides: `ITHUB_DISCOVERY_FOR_YOU_ENABLED=true`, `ITHUB_E2E_ALLOW_WRITES=false`, `ITHUB_E2E_ENVIRONMENT=production`, `ITHUB_ENVIRONMENT=production`; metadata `ithubDiscoveryPhase=2.2`, `ithubSource=f772e7d`
+- Deployment `dpl_CZ2ig9Ueqm4h8hB2tiUGwWKrPWCo`, URL `https://it-k6zvitd8p-thiraphat-s-projects.vercel.app`, aliases `https://ithub-puce.vercel.app` และ `https://ithub-thiraphat-s-projects.vercel.app`, สถานะ READY; Next.js 16.3.4 remote build ผ่านในประมาณ 35 วินาที
+- `node --env-file=.env scripts/discovery-production-smoke.mjs --confirmed-production-test 2.2` ผ่าน 1/1: Guest For You/Login CTA, register/login และ secure cookie, category/author follow, Following dedup, private management, For You result/reason/no-sort และ notification preference persistence ผ่าน
+- Production visual smoke 16 screenshots: Following/management/notifications/For You × 390×844 และ 1440×1000 × Light/Dark; overflow assertions ผ่าน ตรวจภาพ For You mobile-light/desktop-dark และ Following mobile-dark ด้วยตาแล้ว หลักฐาน `.vercel/release-evidence/production-2.2-50f30efee72445f8/`; result แสดง `passed=true`, `cleanup=true`
+- บัญชี QA ที่สร้างเฉพาะรอบถูกลบพร้อม private follow/preferences ผ่าน cascade; ไม่สร้างกระทู้หรือแก้บัญชีเดิม การเปิด Topic อาจเพิ่ม view counter ตามพฤติกรรมเดิม
+- Agent-browser guest check หลัง deploy ยืนยันแท็บ “สำหรับคุณ”, heading “คัดสรรสำหรับคุณ” และ Login CTA บน domain หลัก แล้วปิด browser session
+- `vercel logs <production-2.2> --level error --level warning --since 20m --limit 50` ไม่พบรายการในช่วงที่ตรวจ; post-smoke Production preflight ผ่าน 004 complete/integrity 0 ไม่ได้ตั้ง monitoring หรือ drains ใหม่
+- Phase 2.1 และ 2.2 release ครบตามลำดับแล้ว; baseline Notifications ก่อน implementation ไม่สามารถสร้างย้อนหลังได้ จึงคง checkbox เปิดไว้เป็นข้อจำกัดของหลักฐาน ไม่ใช่ blocker ของ runtime release
+
+### 2026-09-07 — Git-triggered Preview isolation — Codex
+
+- ก่อน push พบว่า project-level Preview variables ครอบคลุม Production/Preview ร่วมกัน จึงไม่ push จนกว่าจะมี branch override ที่ชัดเจน
+- เพิ่ม `scripts/configure-discovery-preview-branch.mjs` แบบไม่มี Production target: บังคับ project/team ID, branch allowlist `codex/ithub-94-milestone`, phase allowlist และ `previewDatabaseIdentity()` ที่ต้องเป็น `_e2e` พร้อม write opt-in เฉพาะการตั้งค่า
+- ตั้ง branch-scoped Preview variables 19 รายการสำเร็จ: `DB_*` ชี้ isolated `test_e2e`, session/action keys แยก, For You เปิดสำหรับ 2.2, runtime E2E bypass ปิด และ Pusher/Gemini/Cloudinary ใช้ค่า preview-disabled
+- ตรวจด้วย `vercel env ls preview codex/ithub-94-milestone --json`: ทั้ง 19 รายการมี target `preview` และ `gitBranch=codex/ithub-94-milestone`; secrets เป็น sensitive และไม่มีการแก้ Production environment
+- ไม่บันทึก environment values, database fingerprint หรือ generated keys ลง Git; manifest อยู่ใต้ `.vercel/release-evidence/` ที่ถูก ignore
+
+ขั้นต่อไป: commit release record/config helper แล้ว push branch; ตรวจ Git-triggered Preview ว่า READY และยังจับคู่กับ isolated `test_e2e` ก่อนปิด handoff
 
 ## ไม่รวม
 

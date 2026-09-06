@@ -13,7 +13,7 @@
 ## แผนที่กำลังใช้งาน
 
 - **ชื่อ:** ITHub Personalized Discovery — Phase 2
-- **สถานะ:** Phase 2.2 For You Preview READY และ smoke ผ่าน — Production ยังใช้ Phase 2.1
+- **สถานะ:** Phase 2 Personalized Discovery ขึ้น Production และ smoke ผ่านครบ 2.1/2.2
 - **ทิศทาง:** Private, explicit และ explainable personalization
 - **อัปเดตล่าสุด:** 2026-09-07
 - **ไฟล์:** [`ITHUB_DISCOVERY_PHASE2_PLAN.md`](./ITHUB_DISCOVERY_PHASE2_PLAN.md)
@@ -24,8 +24,8 @@
 
 - [`ITHUB_DISCOVERY_PHASE2_PLAN.md`](./ITHUB_DISCOVERY_PHASE2_PLAN.md) — Phase 2 สำหรับ Follow, Following feed, notification preferences และ For You แบบอธิบายได้
 - **Phase 2.1 Preview:** [เปิด Preview](https://it-epupdu523-thiraphat-s-projects.vercel.app) — ใช้ `test_e2e` แยกจาก Production; Follow/Following/Preferences ผ่าน smoke; For You ยังปิด
-- **Phase 2.2 Preview:** [เปิด Preview](https://it-czg2d3ge4-thiraphat-s-projects.vercel.app) — ใช้ `test_e2e`; For You/recommendation reason/ไม่มี sort ผ่าน smoke; Production ยังไม่เปิด For You
-- **Production:** [`https://ithub-puce.vercel.app`](https://ithub-puce.vercel.app) — Phase 2.1 Follow/Following/Notification preferences พร้อม migration 004; Production smoke ผ่านและยังคง 5 palettes × Light/Dark; For You ยังปิด
+- **Phase 2.2 Preview:** [เปิด Preview](https://it-czg2d3ge4-thiraphat-s-projects.vercel.app) — ใช้ `test_e2e`; For You/recommendation reason/ไม่มี sort ผ่าน smokeก่อนเปิด Production
+- **Production:** [`https://ithub-puce.vercel.app`](https://ithub-puce.vercel.app) — Phase 2.1 Follow/Following/Notification preferences และ Phase 2.2 For You เปิดใช้งานแล้ว; Production smoke ผ่านและยังคง 5 palettes × Light/Dark
 - [`ITHUB_UX_THEME_ROADMAP.md`](./ITHUB_UX_THEME_ROADMAP.md) — Phase 1 สำหรับ Light mode hierarchy, 5 palettes และ checklist การตรวจรับ
 - [`2026-09-02_ITHUB_94_RELEASE.md`](./2026-09-02_ITHUB_94_RELEASE.md) — moderation states/audit, notification center, mutation feedback และ visual/accessibility evidence
 - [`2026-09-01_TEACHER_DELETE_UX_RELEASE.md`](./2026-09-01_TEACHER_DELETE_UX_RELEASE.md) — Teacher role, modal ยืนยันการลบ และผลวัด cascade deletion
