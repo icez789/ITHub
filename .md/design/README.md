@@ -25,6 +25,7 @@
 - [`ITHUB_DISCOVERY_PHASE2_PLAN.md`](./ITHUB_DISCOVERY_PHASE2_PLAN.md) — Phase 2 สำหรับ Follow, Following feed, notification preferences และ For You แบบอธิบายได้
 - **Phase 2.1 Preview:** [เปิด Preview](https://it-epupdu523-thiraphat-s-projects.vercel.app) — ใช้ `test_e2e` แยกจาก Production; Follow/Following/Preferences ผ่าน smoke; For You ยังปิด
 - **Phase 2.2 Preview:** [เปิด Preview](https://it-czg2d3ge4-thiraphat-s-projects.vercel.app) — ใช้ `test_e2e`; For You/recommendation reason/ไม่มี sort ผ่าน smokeก่อนเปิด Production
+- **Git Preview ที่ตรวจรับ:** [เปิด branch Preview](https://ithub-git-codex-ithub-94-milestone-thiraphat-s-projects.vercel.app) — build จาก `f770648`; ตรวจแล้วว่าใช้ข้อมูล `test_e2e`, เปิด For You และไม่มี build/runtime error
 - **Production:** [`https://ithub-puce.vercel.app`](https://ithub-puce.vercel.app) — Phase 2.1 Follow/Following/Notification preferences และ Phase 2.2 For You เปิดใช้งานแล้ว; Production smoke ผ่านและยังคง 5 palettes × Light/Dark
 - [`ITHUB_UX_THEME_ROADMAP.md`](./ITHUB_UX_THEME_ROADMAP.md) — Phase 1 สำหรับ Light mode hierarchy, 5 palettes และ checklist การตรวจรับ
 - [`2026-09-02_ITHUB_94_RELEASE.md`](./2026-09-02_ITHUB_94_RELEASE.md) — moderation states/audit, notification center, mutation feedback และ visual/accessibility evidence

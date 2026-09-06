@@ -274,7 +274,13 @@ Engagement        +0..10 จาก likes, comments และ views
 - ตรวจด้วย `vercel env ls preview codex/ithub-94-milestone --json`: ทั้ง 19 รายการมี target `preview` และ `gitBranch=codex/ithub-94-milestone`; secrets เป็น sensitive และไม่มีการแก้ Production environment
 - ไม่บันทึก environment values, database fingerprint หรือ generated keys ลง Git; manifest อยู่ใต้ `.vercel/release-evidence/` ที่ถูก ignore
 
-ขั้นต่อไป: commit release record/config helper แล้ว push branch; ตรวจ Git-triggered Preview ว่า READY และยังจับคู่กับ isolated `test_e2e` ก่อนปิด handoff
+### 2026-09-07 — Git push และ Preview verification — Codex
+
+- Commit release handoff `f77064823142e9766fefa53971467b9e6ef59cfd` ถูก push ไปที่ `origin/codex/ithub-94-milestone` สำเร็จ โดยไม่รวม presentation/artifacts ที่อยู่นอกขอบเขตงาน
+- Git สร้าง Preview `dpl_8m1Pj6XA9yA2D13Tirz5qgex7b9P` จาก commit เดียวกัน; deployment URL `https://it-3ydofk6yn-thiraphat-s-projects.vercel.app` และ branch alias `https://ithub-git-codex-ithub-94-milestone-thiraphat-s-projects.vercel.app` อยู่ในสถานะ READY
+- Browser verification ยืนยันหน้า Home แสดง `ITHub E2E Baseline Topic` จาก isolated `test_e2e` ไม่ใช่ข้อมูล Production, มีแท็บ “สำหรับคุณ” และ guest fallback แสดง Login CTA โดยไม่มี sort control
+- Build error scan มีผลว่างและ runtime error/warning scan ในช่วง 30 นาทีไม่พบรายการ; ปิด browser session หลังตรวจ
+- Handoff Phase 2 ปิดครบทั้ง 2.1 และ 2.2 แล้ว เหลือเพียง baseline Notifications ก่อน implementation ที่ไม่สามารถสร้างย้อนหลังได้และบันทึกเป็นข้อจำกัดของหลักฐานโดยไม่กีดขวาง release
 
 ## ไม่รวม
 
