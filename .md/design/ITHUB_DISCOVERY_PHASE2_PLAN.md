@@ -209,6 +209,14 @@ Engagement        +0..10 จาก likes, comments และ views
 - Post-smoke `npm run db:check:e2e` ผ่าน: required tables 11/11, integrity counters ทั้งหมด 0; staged secret-value scan และ `git diff --cached --check` ผ่าน
 - Feature commit `aad419a0816346fd15d04296f0388c5b5323faea` บน `codex/ithub-94-milestone` รวม 36 ไฟล์ Phase 2 เท่านั้น; Preview สร้างจาก workspace ก่อน commit โดย feature source ตรงกัน (หลัง deploy แก้เฉพาะ smoke diagnostics/docs); ยังไม่ได้ push
 
+### 2026-09-06 — Production target recheck หลังผู้ใช้ให้ทำต่อ — Codex
+
+- ตรวจ Vercel project/team และ domain `ithub-puce.vercel.app` ถูกต้อง; Preview ล่าสุดยังเป็น `it-epupdu523-thiraphat-s-projects.vercel.app` และ READY
+- `vercel env ls production --scope team_DzUs49ePhJqJD0veBMIPnY11` ยืนยันว่ามี `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, `DB_NAME` ใน Production แต่ทุกค่าเป็นชนิด Secret/Hidden จึงเปรียบเทียบ connection กับ `.env` ไม่ได้ ไม่พยายามเปิดเผยหรือข้ามการปกปิด secrets
+- `node --env-file=.env scripts/db-preflight.mjs` ผ่านแบบอ่านอย่างเดียว: application tables 11/11, migrations 002/003 complete, 004 absent และ integrity counters ทั้งหมด 0; ผลนี้ยืนยันความพร้อมของฐานที่ตั้งใน `.env` เท่านั้น ไม่ยืนยันว่าเป็น Production
+- ต้องการคำยืนยันจากเจ้าของระบบว่า connection ใน `C:\client\.env` ซึ่งใช้ `DB_NAME=test` เป็นฐานของ Production `ithub-puce.vercel.app` หรือให้ระบุไฟล์ connection ที่ถูกต้องในเครื่อง โดยไม่ส่งรหัสผ่านในแชต
+- ยังไม่รัน migration 004, ไม่สร้าง Production QA account, ไม่เปลี่ยน env บน Vercel และไม่ deploy/push; ข้อจำกัดนี้เป็นการยืนยัน database target ไม่ใช่การขออนุญาต Preview ซ้ำ
+
 #### Release blockers ที่ยังไม่ผ่าน
 
 1. **Production smoke:** automatic approval ปฏิเสธการสร้าง QA account บนเว็บจริง เพราะยังยืนยันไม่ได้ว่า `.env` ที่ใช้ database ชื่อ `test` เป็นฐานเดียวกับ Production สำหรับ cleanup; topic IDs ที่ตรงกันไม่เพียงพอ จึงยังไม่สร้างบัญชี ไม่รัน migration 004 และไม่ deploy Production
