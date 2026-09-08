@@ -119,6 +119,135 @@ export const migration004ForeignKeys = [
   ['notification_preferences', 'fk_notification_preferences_user', 'user_id->users.id:CASCADE'],
 ];
 
+export const migration005Tables = [
+  'evaluation_campaigns',
+  'analytics_consents',
+  'analytics_events',
+  'evaluation_responses',
+  'feedback_submissions',
+];
+
+export const migration005Columns = [
+  'evaluation_campaigns.id',
+  'evaluation_campaigns.slug',
+  'evaluation_campaigns.name',
+  'evaluation_campaigns.status',
+  'evaluation_campaigns.data_scope',
+  'evaluation_campaigns.questionnaire_version',
+  'evaluation_campaigns.consent_notice_version',
+  'evaluation_campaigns.eligible_member_count',
+  'evaluation_campaigns.starts_at',
+  'evaluation_campaigns.ends_at',
+  'evaluation_campaigns.retention_until',
+  'evaluation_campaigns.opened_at',
+  'evaluation_campaigns.closed_at',
+  'evaluation_campaigns.locked_at',
+  'evaluation_campaigns.created_by',
+  'evaluation_campaigns.updated_by',
+  'evaluation_campaigns.created_at',
+  'evaluation_campaigns.updated_at',
+  'analytics_consents.user_id',
+  'analytics_consents.subject_key',
+  'analytics_consents.key_version',
+  'analytics_consents.notice_version',
+  'analytics_consents.status',
+  'analytics_consents.consented_at',
+  'analytics_consents.withdrawn_at',
+  'analytics_consents.created_at',
+  'analytics_consents.updated_at',
+  'analytics_events.id',
+  'analytics_events.event_id',
+  'analytics_events.subject_key',
+  'analytics_events.session_key',
+  'analytics_events.campaign_id',
+  'analytics_events.data_scope',
+  'analytics_events.event_name',
+  'analytics_events.event_version',
+  'analytics_events.outcome',
+  'analytics_events.failure_code',
+  'analytics_events.route_path',
+  'analytics_events.properties',
+  'analytics_events.occurred_at',
+  'analytics_events.received_at',
+  'evaluation_responses.id',
+  'evaluation_responses.campaign_id',
+  'evaluation_responses.user_id',
+  'evaluation_responses.client_submission_id',
+  'evaluation_responses.response_status',
+  'evaluation_responses.respondent_type',
+  'evaluation_responses.experience_level',
+  'evaluation_responses.primary_device',
+  'evaluation_responses.sus_answers',
+  'evaluation_responses.sus_score',
+  'evaluation_responses.task_results',
+  'evaluation_responses.open_feedback',
+  'evaluation_responses.submitted_at',
+  'evaluation_responses.withdrawn_at',
+  'evaluation_responses.updated_at',
+  'feedback_submissions.id',
+  'feedback_submissions.user_id',
+  'feedback_submissions.campaign_id',
+  'feedback_submissions.client_submission_id',
+  'feedback_submissions.data_scope',
+  'feedback_submissions.category',
+  'feedback_submissions.rating',
+  'feedback_submissions.details',
+  'feedback_submissions.route_path',
+  'feedback_submissions.status',
+  'feedback_submissions.priority',
+  'feedback_submissions.issue_theme',
+  'feedback_submissions.internal_note',
+  'feedback_submissions.updated_by',
+  'feedback_submissions.resolved_at',
+  'feedback_submissions.retention_until',
+  'feedback_submissions.created_at',
+  'feedback_submissions.updated_at',
+];
+
+export const migration005Indexes = [
+  ['evaluation_campaigns', 'PRIMARY', 'U:id'],
+  ['evaluation_campaigns', 'uq_evaluation_campaigns_slug', 'U:slug'],
+  ['evaluation_campaigns', 'idx_evaluation_campaigns_status_scope', 'N:status,data_scope,starts_at,ends_at'],
+  ['evaluation_campaigns', 'idx_evaluation_campaigns_retention', 'N:retention_until'],
+  ['evaluation_campaigns', 'idx_evaluation_campaigns_created_by', 'N:created_by'],
+  ['evaluation_campaigns', 'idx_evaluation_campaigns_updated_by', 'N:updated_by'],
+  ['analytics_consents', 'PRIMARY', 'U:user_id'],
+  ['analytics_consents', 'uq_analytics_consents_subject', 'U:subject_key'],
+  ['analytics_consents', 'idx_analytics_consents_status_updated', 'N:status,updated_at'],
+  ['analytics_events', 'PRIMARY', 'U:id'],
+  ['analytics_events', 'uq_analytics_events_subject_event', 'U:subject_key,event_id'],
+  ['analytics_events', 'idx_analytics_events_campaign_name_time', 'N:campaign_id,event_name,occurred_at'],
+  ['analytics_events', 'idx_analytics_events_name_time', 'N:event_name,occurred_at'],
+  ['analytics_events', 'idx_analytics_events_subject_session_time', 'N:subject_key,session_key,occurred_at'],
+  ['analytics_events', 'idx_analytics_events_retention', 'N:received_at'],
+  ['evaluation_responses', 'PRIMARY', 'U:id'],
+  ['evaluation_responses', 'uq_evaluation_responses_campaign_user', 'U:campaign_id,user_id'],
+  ['evaluation_responses', 'uq_evaluation_responses_user_submission', 'U:user_id,client_submission_id'],
+  ['evaluation_responses', 'idx_evaluation_responses_campaign_status_time', 'N:campaign_id,response_status,submitted_at'],
+  ['evaluation_responses', 'idx_evaluation_responses_campaign_demographics', 'N:campaign_id,respondent_type,experience_level,primary_device'],
+  ['evaluation_responses', 'idx_evaluation_responses_user_time', 'N:user_id,submitted_at'],
+  ['feedback_submissions', 'PRIMARY', 'U:id'],
+  ['feedback_submissions', 'uq_feedback_submissions_user_submission', 'U:user_id,client_submission_id'],
+  ['feedback_submissions', 'idx_feedback_submissions_user_time', 'N:user_id,created_at'],
+  ['feedback_submissions', 'idx_feedback_submissions_campaign_status_priority', 'N:campaign_id,status,priority,created_at'],
+  ['feedback_submissions', 'idx_feedback_submissions_theme_time', 'N:issue_theme,created_at'],
+  ['feedback_submissions', 'idx_feedback_submissions_retention', 'N:retention_until'],
+  ['feedback_submissions', 'idx_feedback_submissions_updated_by', 'N:updated_by'],
+];
+
+export const migration005ForeignKeys = [
+  ['evaluation_campaigns', 'fk_evaluation_campaigns_created_by', 'created_by->users.id:SET NULL'],
+  ['evaluation_campaigns', 'fk_evaluation_campaigns_updated_by', 'updated_by->users.id:SET NULL'],
+  ['analytics_consents', 'fk_analytics_consents_user', 'user_id->users.id:CASCADE'],
+  ['analytics_events', 'fk_analytics_events_subject', 'subject_key->analytics_consents.subject_key:CASCADE'],
+  ['analytics_events', 'fk_analytics_events_campaign', 'campaign_id->evaluation_campaigns.id:CASCADE'],
+  ['evaluation_responses', 'fk_evaluation_responses_campaign', 'campaign_id->evaluation_campaigns.id:CASCADE'],
+  ['evaluation_responses', 'fk_evaluation_responses_user', 'user_id->users.id:CASCADE'],
+  ['feedback_submissions', 'fk_feedback_submissions_user', 'user_id->users.id:CASCADE'],
+  ['feedback_submissions', 'fk_feedback_submissions_campaign', 'campaign_id->evaluation_campaigns.id:CASCADE'],
+  ['feedback_submissions', 'fk_feedback_submissions_updated_by', 'updated_by->users.id:SET NULL'],
+];
+
 function value(row, upper, lower) {
   return row[upper] ?? row[lower];
 }
@@ -252,6 +381,28 @@ export async function inspectSchema(db) {
     ? 'absent'
     : found004.length === expected004Count ? 'complete' : 'partial';
 
+  const found005 = [
+    ...migration005Tables.filter((table) => tables.has(table)),
+    ...migration005Columns.filter((column) => columns.has(column)),
+    ...migration005Indexes.filter(([table, name, signature]) => {
+      const index = indexes.get(`${table}.${name}`);
+      const actual = index ? `${index.unique ? 'U' : 'N'}:${index.columns.join(',')}` : '';
+      return actual === signature;
+    }).map(([, name]) => name),
+    ...migration005ForeignKeys.filter(([table, name, signature]) => {
+      const foreignKey = foreignKeys.get(`${table}.${name}`);
+      const actual = foreignKey
+        ? `${foreignKey.columns.join(',')}->${foreignKey.referencedTable}.${foreignKey.referencedColumns.join(',')}:${foreignKey.deleteRule}`
+        : '';
+      return actual === signature;
+    }).map(([, name]) => name),
+  ];
+  const expected005Count = migration005Tables.length + migration005Columns.length
+    + migration005Indexes.length + migration005ForeignKeys.length;
+  const migration005State = found005.length === 0
+    ? 'absent'
+    : found005.length === expected005Count ? 'complete' : 'partial';
+
   return {
     tables,
     columns,
@@ -269,6 +420,9 @@ export async function inspectSchema(db) {
     migration004State,
     found004,
     expected004Count,
+    migration005State,
+    found005,
+    expected005Count,
   };
 }
 
@@ -303,6 +457,14 @@ export function assertMigration004Complete(state) {
   }
 }
 
+export function assertMigration005Complete(state) {
+  if (state.migration005State !== 'complete') {
+    throw new Error(
+      `migration 005 schema is ${state.migration005State} (${state.found005.length}/${state.expected005Count} expected objects)`,
+    );
+  }
+}
+
 export const integrityChecks = {
   duplicate_usernames: 'SELECT COUNT(*) AS count FROM (SELECT username FROM users GROUP BY username HAVING COUNT(*) > 1) duplicates',
   invalid_user_roles: "SELECT COUNT(*) AS count FROM users WHERE role NOT IN ('user', 'teacher', 'admin', 'super_admin') OR role IS NULL",
@@ -331,6 +493,85 @@ export const integrityChecks = {
   orphan_polls: 'SELECT COUNT(*) AS count FROM polls p LEFT JOIN topics t ON t.id = p.topic_id WHERE t.id IS NULL',
   orphan_poll_options: 'SELECT COUNT(*) AS count FROM poll_options o LEFT JOIN polls p ON p.id = o.poll_id LEFT JOIN topics t ON t.id = p.topic_id WHERE p.id IS NULL OR t.id IS NULL',
   orphan_poll_votes: 'SELECT COUNT(*) AS count FROM poll_votes v LEFT JOIN polls p ON p.id = v.poll_id LEFT JOIN topics t ON t.id = p.topic_id LEFT JOIN users u ON u.id = v.user_id LEFT JOIN poll_options o ON o.id = v.option_id WHERE p.id IS NULL OR t.id IS NULL OR u.id IS NULL OR o.id IS NULL OR o.poll_id <> v.poll_id',
+  invalid_evaluation_campaigns: `SELECT COUNT(*) AS count FROM evaluation_campaigns
+    WHERE status NOT IN ('draft', 'open', 'closed', 'locked')
+       OR data_scope NOT IN ('pilot', 'production')
+       OR eligible_member_count < 0
+       OR (starts_at IS NOT NULL AND ends_at IS NOT NULL AND ends_at < starts_at)
+       OR (retention_until IS NOT NULL AND ends_at IS NOT NULL AND retention_until < ends_at)`,
+  invalid_analytics_consents: `SELECT COUNT(*) AS count FROM analytics_consents
+    WHERE status NOT IN ('active', 'withdrawn') OR key_version < 1 OR key_version > 65535
+       OR CHAR_LENGTH(subject_key) <> 64
+       OR (status = 'active' AND withdrawn_at IS NOT NULL)
+       OR (status = 'withdrawn' AND withdrawn_at IS NULL)`,
+  invalid_analytics_events: `SELECT COUNT(*) AS count FROM analytics_events
+    WHERE data_scope NOT IN ('pilot', 'production') OR event_version <> 1
+       OR event_name NOT IN ('page_viewed', 'search_performed', 'search_result_opened',
+         'topic_created', 'comment_created', 'like_changed', 'bookmark_changed',
+         'category_follow_changed', 'author_follow_changed', 'feed_viewed',
+         'onboarding_completed', 'evaluation_started', 'evaluation_submitted', 'feedback_submitted')
+       OR (outcome IS NOT NULL AND outcome NOT IN ('attempt', 'success', 'failure'))
+       OR (failure_code IS NOT NULL AND failure_code NOT IN ('validation', 'rate_limited', 'network', 'server_error'))
+       OR (outcome = 'failure' AND failure_code IS NULL)
+       OR (COALESCE(outcome, '') <> 'failure' AND failure_code IS NOT NULL)
+       OR CHAR_LENGTH(subject_key) <> 64 OR CHAR_LENGTH(session_key) <> 64
+       OR route_path LIKE '%?%' OR route_path LIKE '%#%'`,
+  invalid_analytics_campaign_scope: `SELECT COUNT(*) AS count FROM analytics_events e
+    INNER JOIN evaluation_campaigns c ON c.id = e.campaign_id
+    WHERE e.data_scope <> c.data_scope`,
+  inactive_consent_events: `SELECT COUNT(*) AS count FROM analytics_events e
+    LEFT JOIN analytics_consents c ON c.subject_key = e.subject_key
+    WHERE c.user_id IS NULL OR c.status <> 'active'`,
+  invalid_evaluation_responses: `SELECT COUNT(*) AS count FROM evaluation_responses
+    WHERE response_status NOT IN ('submitted', 'withdrawn')
+       OR (sus_score IS NOT NULL AND (sus_score < 0 OR sus_score > 100))
+       OR (response_status = 'submitted' AND (
+         respondent_type IS NULL OR experience_level IS NULL OR primary_device IS NULL
+         OR sus_answers IS NULL OR sus_score IS NULL OR task_results IS NULL OR withdrawn_at IS NOT NULL
+       ))
+       OR (response_status = 'withdrawn' AND (
+         withdrawn_at IS NULL OR respondent_type IS NOT NULL OR experience_level IS NOT NULL
+         OR primary_device IS NOT NULL OR sus_answers IS NOT NULL OR sus_score IS NOT NULL
+         OR task_results IS NOT NULL OR open_feedback IS NOT NULL
+       ))`,
+  invalid_feedback_submissions: `SELECT COUNT(*) AS count FROM feedback_submissions
+    WHERE data_scope NOT IN ('pilot', 'production')
+       OR category NOT IN ('bug', 'ux_ui', 'feature', 'content', 'other')
+       OR (rating IS NOT NULL AND (rating < 1 OR rating > 5))
+       OR CHAR_LENGTH(details) < 10 OR CHAR_LENGTH(details) > 2000
+       OR status NOT IN ('new', 'reviewing', 'planned', 'resolved', 'declined')
+       OR priority NOT IN ('low', 'normal', 'high', 'urgent')
+       OR (status IN ('resolved', 'declined') AND resolved_at IS NULL)
+       OR (status NOT IN ('resolved', 'declined') AND resolved_at IS NOT NULL)`,
+  invalid_feedback_campaign_scope: `SELECT COUNT(*) AS count FROM feedback_submissions f
+    INNER JOIN evaluation_campaigns c ON c.id = f.campaign_id
+    WHERE f.data_scope <> c.data_scope`,
+  orphan_evaluation_campaigns: `SELECT COUNT(*) AS count FROM evaluation_campaigns c
+    LEFT JOIN users creator ON creator.id = c.created_by
+    LEFT JOIN users updater ON updater.id = c.updated_by
+    WHERE (c.created_by IS NOT NULL AND creator.id IS NULL)
+       OR (c.updated_by IS NOT NULL AND updater.id IS NULL)`,
+  orphan_analytics_consents: 'SELECT COUNT(*) AS count FROM analytics_consents c LEFT JOIN users u ON u.id = c.user_id WHERE u.id IS NULL',
+  orphan_analytics_events: `SELECT COUNT(*) AS count FROM analytics_events e
+    LEFT JOIN analytics_consents c ON c.subject_key = e.subject_key
+    LEFT JOIN evaluation_campaigns campaign ON campaign.id = e.campaign_id
+    WHERE c.user_id IS NULL OR (e.campaign_id IS NOT NULL AND campaign.id IS NULL)`,
+  orphan_evaluation_responses: `SELECT COUNT(*) AS count FROM evaluation_responses r
+    LEFT JOIN evaluation_campaigns c ON c.id = r.campaign_id
+    LEFT JOIN users u ON u.id = r.user_id
+    WHERE c.id IS NULL OR u.id IS NULL`,
+  orphan_feedback_submissions: `SELECT COUNT(*) AS count FROM feedback_submissions f
+    LEFT JOIN users u ON u.id = f.user_id
+    LEFT JOIN evaluation_campaigns c ON c.id = f.campaign_id
+    LEFT JOIN users updater ON updater.id = f.updated_by
+    WHERE u.id IS NULL OR (f.campaign_id IS NOT NULL AND c.id IS NULL)
+       OR (f.updated_by IS NOT NULL AND updater.id IS NULL)`,
+  expired_raw_analytics_events: 'SELECT COUNT(*) AS count FROM analytics_events WHERE received_at < DATE_SUB(UTC_TIMESTAMP(), INTERVAL 180 DAY)',
+  expired_research_records: `SELECT
+      (SELECT COUNT(*) FROM evaluation_responses r INNER JOIN evaluation_campaigns c ON c.id = r.campaign_id
+       WHERE c.retention_until IS NOT NULL AND c.retention_until <= UTC_TIMESTAMP())
+      + (SELECT COUNT(*) FROM feedback_submissions
+         WHERE retention_until IS NOT NULL AND retention_until <= UTC_TIMESTAMP()) AS count`,
 };
 
 const migration003IntegrityChecks = new Set([
@@ -348,11 +589,33 @@ const migration004IntegrityChecks = new Set([
   'orphan_notification_preferences',
 ]);
 
-export async function runIntegrityChecks(db, { includeMigration003 = true, includeMigration004 = true } = {}) {
+const migration005IntegrityChecks = new Set([
+  'invalid_evaluation_campaigns',
+  'invalid_analytics_consents',
+  'invalid_analytics_events',
+  'invalid_analytics_campaign_scope',
+  'inactive_consent_events',
+  'invalid_evaluation_responses',
+  'invalid_feedback_submissions',
+  'invalid_feedback_campaign_scope',
+  'orphan_evaluation_campaigns',
+  'orphan_analytics_consents',
+  'orphan_analytics_events',
+  'orphan_evaluation_responses',
+  'orphan_feedback_submissions',
+  'expired_raw_analytics_events',
+  'expired_research_records',
+]);
+
+export async function runIntegrityChecks(
+  db,
+  { includeMigration003 = true, includeMigration004 = true, includeMigration005 = true } = {},
+) {
   const failures = [];
   for (const [name, sql] of Object.entries(integrityChecks)) {
     if (!includeMigration003 && migration003IntegrityChecks.has(name)) continue;
     if (!includeMigration004 && migration004IntegrityChecks.has(name)) continue;
+    if (!includeMigration005 && migration005IntegrityChecks.has(name)) continue;
     const [rows] = await db.query(sql);
     const count = Number(rows[0].count);
     console.log(`${name}: ${count}`);

@@ -24,6 +24,11 @@
     "db:reconcile:e2e": "node --env-file-if-exists=.env.e2e.local scripts/db-reconcile.mjs --e2e",
     "media:cleanup": "node --env-file-if-exists=.env scripts/media-cleanup.mjs",
     "test:unit": "node --test \"tests/unit/*.test.mjs\"",
+    "test:research:consent:e2e": "node --env-file-if-exists=.env.e2e.local scripts/research-consent-smoke.mjs --e2e",
+    "test:research:migrations:e2e": "node --env-file-if-exists=.env.e2e.local scripts/research-migration-smoke.mjs --e2e",
+    "research:retention": "node --env-file-if-exists=.env scripts/research-retention.mjs --dry-run",
+    "research:retention:e2e": "node --env-file-if-exists=.env.e2e.local scripts/research-retention.mjs --e2e --dry-run",
+    "test:research:retention:e2e": "node --env-file-if-exists=.env.e2e.local scripts/research-retention-smoke.mjs --e2e",
     "check": "npm run lint && npm run build"
   },
   "dependencies": {

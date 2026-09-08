@@ -23,6 +23,9 @@ async function main() {
   if (state.migration004State === 'partial') {
     failures.push(`migration 004 is partial (${state.found004.length}/${state.expected004Count} expected objects)`);
   }
+  if (state.migration005State === 'partial') {
+    failures.push(`migration 005 is partial (${state.found005.length}/${state.expected005Count} expected objects)`);
+  }
 
   const integrityTables = ['users', 'topics', 'comments', 'likes', 'bookmarks', 'notifications', 'polls', 'poll_options', 'poll_votes'];
   const canCheckIntegrity = integrityTables.every((table) => state.tables.has(table)) && state.missingColumns.length === 0;
@@ -30,6 +33,7 @@ async function main() {
     ? await runIntegrityChecks(db, {
       includeMigration003: state.migration003State === 'complete',
       includeMigration004: state.migration004State === 'complete',
+      includeMigration005: state.migration005State === 'complete',
     })
     : [];
   failures.push(...integrityFailures);
@@ -38,6 +42,7 @@ async function main() {
   console.log(`Migration 002 state: ${state.migration002State}`);
   console.log(`Migration 003 state: ${state.migration003State}`);
   console.log(`Migration 004 state: ${state.migration004State}`);
+  console.log(`Migration 005 state: ${state.migration005State}`);
   if (state.missingTables.length) {
     console.log(`Baseline will create missing tables: ${state.missingTables.join(', ')}`);
   }

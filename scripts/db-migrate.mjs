@@ -1,12 +1,13 @@
 import { readdir, readFile } from 'node:fs/promises';
-import { createHash } from 'node:crypto';
 import path from 'node:path';
 import db from '../lib/db.js';
+import { migrationChecksum } from './db-migration-utils.mjs';
 import {
   assertBaselineShape,
   assertMigration002Complete,
   assertMigration003Complete,
   assertMigration004Complete,
+  assertMigration005Complete,
   inspectSchema,
 } from './db-schema.mjs';
 import { assertE2eFlag } from './e2e-safety.mjs';
@@ -46,7 +47,7 @@ async function main() {
 
   for (const name of files) {
     const sql = await readFile(path.join(migrationsDirectory, name), 'utf8');
-    const checksum = createHash('sha256').update(sql).digest('hex');
+    const checksum = migrationChecksum(sql);
 
     if (applied.has(name)) {
       const recordedChecksum = applied.get(name);
@@ -61,6 +62,7 @@ async function main() {
       if (name.startsWith('002_')) assertMigration002Complete(await inspectSchema(db));
       if (name.startsWith('003_')) assertMigration003Complete(await inspectSchema(db));
       if (name.startsWith('004_')) assertMigration004Complete(await inspectSchema(db));
+      if (name.startsWith('005_')) assertMigration005Complete(await inspectSchema(db));
       if (!recordedChecksum) {
         await db.query('UPDATE schema_migrations SET checksum = ? WHERE name = ?', [checksum, name]);
         console.log(`adopt checksum ${name}`);
@@ -119,6 +121,21 @@ async function main() {
         for (const statement of splitStatements(sql)) await db.query(statement);
       }
       assertMigration004Complete(await inspectSchema(db));
+    } else if (name.startsWith('005_')) {
+      const before = await inspectSchema(db);
+      assertMigration004Complete(before);
+      if (before.migration005State === 'partial') {
+        throw new Error(
+          `${name} cannot continue from a partial schema (${before.found005.length}/${before.expected005Count} expected objects)`,
+        );
+      }
+      if (before.migration005State === 'complete') {
+        console.log(`adopt ${name}; expected feedback and research analytics objects already exist`);
+      } else {
+        console.log(`apply ${name}`);
+        for (const statement of splitStatements(sql)) await db.query(statement);
+      }
+      assertMigration005Complete(await inspectSchema(db));
     } else {
       console.log(`apply ${name}`);
       for (const statement of splitStatements(sql)) await db.query(statement);

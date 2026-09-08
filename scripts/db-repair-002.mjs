@@ -1,7 +1,7 @@
-import { createHash } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import db from '../lib/db.js';
+import { migrationChecksum } from './db-migration-utils.mjs';
 import {
   assertMigration002Complete,
   inspectSchema,
@@ -132,11 +132,15 @@ async function main() {
   for (const statement of remainingStatements) await db.query(statement);
   const after = await inspectSchema(db);
   assertMigration002Complete(after);
-  const integrityFailures = await runIntegrityChecks(db);
+  const integrityFailures = await runIntegrityChecks(db, {
+    includeMigration003: after.migration003State === 'complete',
+    includeMigration004: after.migration004State === 'complete',
+    includeMigration005: after.migration005State === 'complete',
+  });
   if (integrityFailures.length) throw new Error(integrityFailures.join('; '));
 
   const migrationPath = path.join(process.cwd(), 'database', 'migrations', '002_harden_legacy_schema.sql');
-  const checksum = createHash('sha256').update(await readFile(migrationPath, 'utf8')).digest('hex');
+  const checksum = migrationChecksum(await readFile(migrationPath, 'utf8'));
   await db.query(
     'INSERT INTO schema_migrations (name, checksum) VALUES (?, ?)',
     ['002_harden_legacy_schema.sql', checksum],
