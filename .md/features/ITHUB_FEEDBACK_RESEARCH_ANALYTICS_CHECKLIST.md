@@ -148,49 +148,49 @@
 - [x] ยืนยันด้วย test ว่าไม่มี network event ก่อน consent, หลัง withdrawal หรือเมื่อ consent lookup ล้มเหลว
 - [x] แยก event `attempt / success / failure` และใช้ pseudonymous session/time สำหรับ correlation โดยไม่เก็บเนื้อหา
 - [x] แยก pilot campaign/data scope ออกจากข้อมูลจริงอย่างตรวจสอบได้
-- [ ] เพิ่ม PII canary tests ทั้ง payload, database row, logs และ export
+- [x] เพิ่ม PII canary tests ทั้ง payload, database row, logs และ export
 
 ## 7. Phase 4 — Dashboard, metrics และ export
 
 ### Metrics
 
-- [ ] สร้าง metric functions ที่มี contract เดียวระหว่าง Dashboard, CSV และ tests
-- [ ] แสดง numerator/denominator และช่วงเวลาในทุก rate
-- [ ] คำนวณ consent count, response count และ response rate จาก campaign snapshot ที่ตกลงแล้ว
-- [ ] คำนวณ sessions และกิจกรรมสำคัญตาม session contract
-- [ ] คำนวณ search-to-open ภายใน 5 นาทีใน subject/session เดียวกันโดยไม่ต้องเก็บคำค้น
-- [ ] คำนวณ create topic/comment success rate จาก attempt events ที่ valid
-- [ ] สรุป Like, Bookmark, Follow และ Community/Following/For You usage
-- [ ] คำนวณ SUS count, mean, median, standard deviation ตาม metric contract, min, max และ distribution
-- [ ] เทียบ self-reported tasks กับ observed events โดยแสดง missing/unobservable แยก ไม่ตีความเป็น failure อัตโนมัติ
-- [ ] สรุป Feedback ตาม category, priority, status และ controlled issue themes
-- [ ] บังคับ subgroup suppression เมื่อ `n < 5` ทั้งหน้า Dashboard และไฟล์ export
-- [ ] ป้องกัน filter combination หรือ row ที่เปิดเผยบุคคลโดยตรง
+- [x] สร้าง metric functions ที่มี contract เดียวระหว่าง Dashboard, CSV และ tests
+- [x] แสดง numerator/denominator และช่วงเวลาในทุก rate
+- [x] คำนวณ consent count, response count และ response rate จาก campaign snapshot ที่ตกลงแล้ว
+- [x] คำนวณ sessions และกิจกรรมสำคัญตาม session contract
+- [x] คำนวณ search-to-open ภายใน 5 นาทีใน subject/session เดียวกันโดยไม่ต้องเก็บคำค้น
+- [x] คำนวณ create topic/comment success rate จาก attempt events ที่ valid
+- [x] สรุป Like, Bookmark, Follow และ Community/Following/For You usage
+- [x] คำนวณ SUS count, mean, median, standard deviation ตาม metric contract, min, max และ distribution
+- [x] เทียบ self-reported tasks กับ observed eventsโดยแสดง `observed`, `not_observed`, `unavailable` แยก และไม่ตีความ consent/event ที่ขาดเป็น failure
+- [x] สรุป Feedback ตาม category, priority, status และ controlled issue themes
+- [x] บังคับ subgroup suppression เมื่อ `n < 5` ทั้งหน้า Dashboard และไฟล์ export
+- [x] ป้องกัน filter combination หรือ row ที่เปิดเผยบุคคลโดยตรง โดย suppress ทั้ง breakdown เมื่ออาจอนุมานกลุ่มเล็กด้วยการลบ
 
 ### Admin UI
 
-- [ ] ทำ `/admin/analytics` พร้อม filter campaign/date/respondent type/experience/device
-- [ ] ใช้ `requireAdmin()` ทั้ง page reads, metric DAL และ export endpoint; `teacher` ต้องได้ forbidden/redirect ตาม contract
-- [ ] เพิ่ม loading, empty, invalid-filter, partial-data และ query-error states
-- [ ] แสดง “ข้อมูลยังไม่พอ (n < 5)” แทนค่าที่ถูก suppress
-- [ ] แสดง methodology/denominator ใกล้กราฟหรือตาราง ไม่ซ่อนไว้เฉพาะ tooltip
-- [ ] ตรวจ query ด้วย fixture อย่างน้อย 100,000 events และ `EXPLAIN`; query หลักต้องไม่เกิน 2 วินาทีในสภาพแวดล้อมที่บันทึกไว้
+- [x] ทำ `/admin/analytics` พร้อม filter campaign/date/respondent type/experience/device
+- [x] ใช้ `requireAdmin()` ทั้ง page reads, metric DAL และ export endpoint; `teacher` ได้ redirect/403 ตาม contract
+- [x] เพิ่ม loading, empty, invalid-filter, partial-data และ query-error states
+- [x] แสดง “ข้อมูลยังไม่พอ (n < 5)” แทนค่าที่ถูก suppress
+- [x] แสดง methodology/denominator ใกล้กราฟหรือตาราง ไม่ซ่อนไว้เฉพาะ tooltip
+- [x] ตรวจ query ด้วย fixture 100,000 events และ `EXPLAIN` บน `test_e2e`: event aggregate 268.35 ms, search-to-open 479.99 ms; พบ campaign และ subject/session indexes
 
 ### Chapter 4–5 export
 
-- [ ] ทำ endpoint ดาวน์โหลด ZIP ที่ตรวจ Admin/Super Admin ซ้ำฝั่ง server
-- [ ] สร้าง `chapter4_summary.csv`
-- [ ] สร้าง `sus_results.csv`
-- [ ] สร้าง `task_results.csv`
-- [ ] สร้าง `analytics_funnels.csv`
-- [ ] สร้าง `feedback_themes.csv`
-- [ ] สร้าง `methodology.md`
-- [ ] สร้าง `data_dictionary.md`
-- [ ] ใส่ UTF-8 BOM ในทุก CSV และ quote field ตาม RFC 4180
-- [ ] ป้องกัน CSV formula injection สำหรับค่าที่ขึ้นต้นด้วย `=`, `+`, `-`, `@`, tab หรือ carriage return
-- [ ] ไม่ export name, email, username, user ID, pseudonym, raw event ID, secrets, internal notes หรือ raw open text ที่อาจมี PII
-- [ ] ใส่ campaign, generated-at, filters, denominator, suppression rule และข้อจำกัดของข้อมูลใน methodology
-- [ ] ทดสอบ ZIP entries, encoding, CSV parser round-trip, deterministic headers และ memory/time budget
+- [x] ทำ endpoint ดาวน์โหลด ZIP ที่ตรวจ Admin/Super Admin ซ้ำฝั่ง server
+- [x] สร้าง `chapter4_summary.csv`
+- [x] สร้าง `sus_results.csv`
+- [x] สร้าง `task_results.csv`
+- [x] สร้าง `analytics_funnels.csv`
+- [x] สร้าง `feedback_themes.csv`
+- [x] สร้าง `methodology.md`
+- [x] สร้าง `data_dictionary.md`
+- [x] ใส่ UTF-8 BOM ในทุก CSV และ quote field ตาม RFC 4180
+- [x] ป้องกัน CSV formula injection สำหรับค่าที่ขึ้นต้นด้วย `=`, `+`, `-`, `@`, tab หรือ carriage return
+- [x] ไม่ export name, email, username, user ID, pseudonym, raw event ID, secrets, internal notes หรือ raw open text ที่อาจมี PII
+- [x] ใส่ campaign, generated-at, filters, denominator, suppression rule และข้อจำกัดของข้อมูลใน methodology
+- [x] ทดสอบ ZIP entries, encoding, CSV parser round-trip, deterministic headers และ memory/time budget
 
 ## 8. Phase 5 — UX, accessibility และ documentation
 
@@ -208,16 +208,16 @@
 
 ## 9. Phase 6 — Verification, pilot และ rollout
 
-- [ ] Unit: SUS, statistics, HMAC, consent, allowlist, route normalization, denominator, suppression, retention, CSV และ ZIP
+- [x] Unit: SUS, statistics, HMAC, consent, allowlist, route normalization, denominator, suppression, retention, CSV และ ZIP
 - [ ] Integration: campaign transitions, duplicate/concurrent response, withdrawal, consent deletion, retention และ role matrix
-- [ ] E2E: Evaluation, Feedback, Admin triage, Dashboard และ Export บน Chromium/Firefox/WebKit
+- [x] E2E: Evaluation, Feedback, Admin triage, Dashboard และ Export บน Chromium/Firefox/WebKit
 - [x] E2E ยืนยัน guest/user/teacher เข้า admin page และ replay admin Server Action โดยตรงไม่ได้; Analytics endpoint ปฏิเสธ guest, no-consent และ cross-origin แล้ว
-- [ ] E2E ยืนยันไม่มี event ก่อน consent และไม่มี PII ใน event/export
+- [x] E2E ยืนยันไม่มี event ก่อน consent และไม่มี PII ใน event/export
 - [x] รัน `npm.cmd run lint`
 - [x] รัน `npm.cmd run test:unit`
 - [x] รัน `npm.cmd run build`
 - [x] รัน migration/preflight/check บน isolated `_e2e`
-- [x] รัน Playwright Phase 2 แบบ serial ด้วย isolated `_e2e` ผ่าน 12/12 และ Phase 3 Analytics ผ่าน 9/9 บน Chromium/Firefox/WebKit พร้อม cleanup fixture; ยังไม่เปิด parallel จนกว่าจะมี per-worker isolation
+- [x] รัน Playwright Phase 2 แบบ serial ด้วย isolated `_e2e` ผ่าน 12/12, Phase 3 Analytics ผ่าน 9/9 และ Phase 4 Dashboard/Export ผ่าน 6/6 บน Chromium/Firefox/WebKit พร้อม cleanup fixture; ยังไม่เปิด parallel จนกว่าจะมี per-worker isolation
 - [ ] ทำ pilot 5–10 คน แยก campaign/data จากรอบจริง และบันทึกข้อแก้ไขคำถาม
 - [ ] ล็อก questionnaire/campaign หลังผ่าน pilot ก่อนเก็บข้อมูลจริง
 - [ ] สร้าง Preview branch-scoped variables สำหรับ `codex/feedback-research-analytics` โดยใช้ `test_e2e`, secret แยก และ external services เท่าที่จำเป็น
@@ -305,3 +305,16 @@
 - Unit tests ผ่าน 59/59; production build/lint ผ่าน; Analytics Playwright ผ่าน 9/9 และ regression Phase 2+3 รอบสุดท้ายผ่านรวม 21/21 แบบ serial บน Chromium, Firefox และ WebKit
 - E2E ยืนยัน no network ก่อน consent/หลัง withdrawal, PII/authority field rejection, route normalization, HMAC session key, duplicate retry และ raw-event deletion
 - ยังไม่เริ่ม Dashboard metrics, ZIP export, Preview, Production, deployment หรือ push
+
+### 9 กันยายน 2569 — Checkpoint 05 Dashboard, metrics และ Chapter 4–5 export — Codex
+
+- เพิ่ม metric core และ read-snapshot DAL สำหรับ campaign/date/demographic filters โดย Dashboard/CSV/tests ใช้ DTO และนิยามเดียวกัน
+- แสดง numerator, denominator, ช่วง UTC และ deduplication ใกล้ทุก rate; subgroup response rate แสดง unavailable เมื่อไม่มี denominator snapshot รายกลุ่ม
+- เพิ่ม search-to-open 5 นาที, create success, sessions, engagement/feed, SUS sample SD/distribution, self-reported เทียบ observed และ Feedback aggregate
+- บังคับ `n < 5` suppression หลัง filter และ suppress ทั้ง breakdown เมื่อการแสดงแถวอื่นอาจใช้อนุมานกลุ่มเล็ก
+- เพิ่มหน้า Dashboard, loading/empty/invalid/partial/query-error states และ ZIP 7 entries ที่เป็น aggregate-only พร้อม UTF-8 BOM, RFC 4180 และ formula-injection guard
+- Unit tests รวมผ่าน 73/73; production build/lint ผ่าน; Dashboard/Export Playwright ผ่าน 6/6 บน Chromium, Firefox และ WebKit
+- Regression รวม Phase 2–4 ผ่าน 27/27 ใน 4.4 นาทีบน Chromium, Firefox และ WebKit; post-run fixture user/campaign เหลือ 0
+- Performance fixture 100,000 events บน `test_e2e`: complete metric read 2,735.48 ms, event aggregate 268.35 ms, search-to-open 479.99 ms; `EXPLAIN` พบ indexes ที่ตั้งใจและ primary queries ต่ำกว่า 2 วินาที
+- ตรวจภาพ 375×812 Light และ 1280×800 Dark จาก Chromium ด้วยตา และทุก engine ผ่าน overflow/no-error assertions; fixture performance/E2E ถูก cleanup เหลือ campaign/user 0 และ `db:check:e2e` ผ่าน integrity ทุกค่าเป็น 0
+- ยังไม่ตรวจ 5 palettes, Screen Reader แบบเต็ม, Preview, pilot หรือ Production และยังไม่มี push/deploy

@@ -1,6 +1,6 @@
 # ITHub Feedback & Research Analytics
 
-> สถานะ: กำลังพัฒนา — Phase 3 consent-gated Analytics ingestion ผ่าน local E2E แล้ว; Phase 4 Dashboard/Export ยังไม่เริ่ม
+> สถานะ: กำลังพัฒนา — Phase 4 Dashboard/Export ผ่าน local E2E และ performance gate แล้ว; Phase 5–6/Preview/Pilot ยังไม่ครบ
 >
 > เป้าหมาย: สร้างข้อมูลที่ตรวจสอบได้สำหรับโครงงานบทที่ 4–5
 >
@@ -10,7 +10,7 @@
 >
 > Data/privacy contract: [`ITHUB_FEEDBACK_RESEARCH_ANALYTICS_DATA_CONTRACT.md`](./ITHUB_FEEDBACK_RESEARCH_ANALYTICS_DATA_CONTRACT.md)
 >
-> Checkpoint ล่าสุด: [`ITHUB_FEEDBACK_RESEARCH_ANALYTICS_CHECKPOINT_04.md`](./ITHUB_FEEDBACK_RESEARCH_ANALYTICS_CHECKPOINT_04.md)
+> Checkpoint ล่าสุด: [`ITHUB_FEEDBACK_RESEARCH_ANALYTICS_CHECKPOINT_05.md`](./ITHUB_FEEDBACK_RESEARCH_ANALYTICS_CHECKPOINT_05.md)
 
 ## 1. เป้าหมาย
 

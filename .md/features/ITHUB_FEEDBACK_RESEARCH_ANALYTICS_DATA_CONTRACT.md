@@ -1,10 +1,10 @@
 # ITHub Feedback & Research Analytics — Data and Privacy Contract
 
-> สถานะ: Implementation contract สำหรับ migration 005, privacy foundation และ Phase 2 Evaluation/Feedback
+> สถานะ: Implementation contract สำหรับ migration 005, consented Analytics, Dashboard metrics และ Chapter 4–5 export
 >
 > แผนต้นทาง: [`ITHUB_FEEDBACK_RESEARCH_ANALYTICS_PLAN.md`](./ITHUB_FEEDBACK_RESEARCH_ANALYTICS_PLAN.md)
 >
-> อัปเดตล่าสุด: 8 กันยายน 2569
+> อัปเดตล่าสุด: 9 กันยายน 2569
 
 ## 1. ขอบเขตและหลักการ
 
@@ -165,6 +165,15 @@ Failure code v1: `validation`, `rate_limited`, `network`, `server_error`
 - Observed task result: แสดง `observed`, `not_observed`, `unavailable`; ห้ามตีความ consent ขาดหรือ event หายเป็น failure
 - SUS: count, mean, median, sample SD, min, max และ distribution จาก response สถานะ submitted
 - Subgroup: ถ้า filtered group มีน้อยกว่า 5 responses ให้ suppress ทั้ง Dashboard และ export
+
+Implementation Phase 4 ใช้ช่วงเวลาแบบ half-open `[start, endExclusive)` ใน UTC โดยตัดช่วงให้อยู่ภายใน campaign และไม่เกินเวลาสร้างผลลัพธ์ ข้อกำหนดเพิ่มเติมมีดังนี้:
+
+- จำนวน consent คือ consent สถานะ `active` ที่ grant ก่อนปลายช่วง; เมื่อใช้ demographic filter จะนับเฉพาะ active consent ที่เชื่อมกับ submitted response ใน campaign เดียวกัน
+- Behavioral events ที่ไม่มี `campaign_id` ถูกผูกกับ campaign เพื่อการวิเคราะห์ด้วย data scope และช่วง UTC ที่เลือก จึงต้องระวัง campaign ที่มีช่วงเวลาทับกันและระบุข้อจำกัดนี้ใน `methodology.md`
+- Demographic filter ใช้ cohort จาก submitted response แล้ว join ไปยัง consent/event ฝั่ง server; Dashboard/Export ไม่คืน identifier ที่ใช้ join
+- Response rate หลังกรอง demographic เป็น `unavailable` เพราะ `eligible_member_count` เป็น snapshot ทั้ง campaign ไม่ใช่ denominator รายกลุ่ม
+- ถ้า breakdown มีแถวใด `0 < n < 5` ให้ suppress ทุกแถวใน breakdown เดียวกันเพื่อป้องกันการอนุมานด้วยผลต่าง
+- Read path ใช้ transaction เดียวต่อผลลัพธ์ และ export ใช้ metric DTO เดียวกับ Dashboard ก่อนสร้าง aggregate-only ZIP
 
 ## 7. Retention operation contract
 

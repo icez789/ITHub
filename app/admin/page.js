@@ -190,7 +190,7 @@ export default async function AdminDashboard() {
             )}
             {!isTeacher ? <nav aria-label="เครื่องมือผู้ดูแล" className="mt-4 flex flex-wrap justify-end gap-2 md:ml-auto md:mt-0">
                 <Link href="/admin/feedback" className="inline-flex items-center gap-2 rounded-xl border border-[var(--app-border)] px-4 py-2 text-sm font-semibold transition-colors hover:bg-[var(--app-surface-subtle)]"><MessageSquareWarning aria-hidden="true" size={16} /> Feedback</Link>
-                <Link href="/admin/analytics" className="inline-flex items-center gap-2 rounded-xl border border-[var(--app-border)] px-4 py-2 text-sm font-semibold transition-colors hover:bg-[var(--app-surface-subtle)]"><BarChart3 aria-hidden="true" size={16} /> รอบประเมิน</Link>
+                <Link href="/admin/analytics" className="inline-flex items-center gap-2 rounded-xl border border-[var(--app-border)] px-4 py-2 text-sm font-semibold transition-colors hover:bg-[var(--app-surface-subtle)]"><BarChart3 aria-hidden="true" size={16} /> ข้อมูลวิจัย</Link>
                 <Link href="/admin/audit" className="inline-flex items-center gap-2 rounded-xl border border-[var(--app-border)] px-4 py-2 text-sm font-semibold transition-colors hover:bg-[var(--app-surface-subtle)]"><ClipboardList aria-hidden="true" size={16} /> ประวัติการดูแลระบบ</Link>
             </nav> : null}
         </div>

@@ -6,8 +6,12 @@ import {
   ResearchCampaignForm,
   ResearchCampaignTransitionForm,
 } from '../../../components/ResearchAdminForms';
+import ResearchAnalyticsDashboard from '../../../components/ResearchAnalyticsDashboard';
 import { getCurrentUser } from '../../../lib/auth';
-import { getResearchCampaignsForAdmin } from '../../../lib/research';
+import {
+  getResearchAnalyticsForAdmin,
+  getResearchCampaignsForAdmin,
+} from '../../../lib/research';
 import { CAMPAIGN_STATUS_LABELS } from '../../../lib/researchQuestionnaire';
 import { isAdminRole, isSuperAdminRole } from '../../../lib/roles';
 
@@ -41,12 +45,25 @@ function transitionFor(status) {
   return null;
 }
 
-export default async function ResearchCampaignPage() {
+export default async function ResearchCampaignPage({ searchParams }) {
   const currentUser = await getCurrentUser();
   if (!currentUser) redirect('/login?next=%2Fadmin%2Fanalytics');
   if (!isAdminRole(currentUser.role)) redirect('/');
 
-  const campaigns = await getResearchCampaignsForAdmin();
+  const params = await searchParams;
+  let dashboard;
+  let queryError = false;
+  try {
+    dashboard = await getResearchAnalyticsForAdmin(params);
+  } catch {
+    queryError = true;
+    dashboard = {
+      campaigns: await getResearchCampaignsForAdmin().catch(() => []),
+      metrics: null,
+      filterError: null,
+    };
+  }
+  const { campaigns, metrics, filterError } = dashboard;
   const canManage = isSuperAdminRole(currentUser.role);
 
   return (
@@ -60,14 +77,21 @@ export default async function ResearchCampaignPage() {
           <div>
             <p className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--app-accent-text)]">Research administration</p>
             <h1 className="mt-1 text-3xl font-bold tracking-tight">รอบประเมิน</h1>
-            <p className="mt-2 max-w-2xl text-sm leading-6 text-[var(--app-text-muted)]">สร้างแบบร่างและควบคุมลำดับ draft → open → closed → locked ส่วน Dashboard ตัวชี้วัดและ Export อยู่ใน Phase 4</p>
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-[var(--app-text-muted)]">ตรวจตัวชี้วัดแบบไม่เปิดเผยตัวตน ส่งออกชุดข้อมูลบทที่ 4–5 และควบคุมลำดับ draft → open → closed → locked</p>
           </div>
         </div>
         <span className="inline-flex w-fit items-center gap-2 rounded-full border border-[var(--app-border)] bg-[var(--app-surface)] px-3 py-1.5 text-xs font-semibold text-[var(--app-text-muted)]">
           {canManage ? <LockKeyhole aria-hidden="true" size={15} /> : <FlaskConical aria-hidden="true" size={15} />}
-          {canManage ? 'Super Admin จัดการได้' : 'Admin ดูข้อมูลเท่านั้น'}
+          {canManage ? 'Super Admin จัดการได้' : 'Admin ดูและส่งออกได้'}
         </span>
       </header>
+
+      <ResearchAnalyticsDashboard
+        campaigns={campaigns}
+        metrics={metrics}
+        filterError={filterError}
+        queryError={queryError}
+      />
 
       {canManage ? (
         <section className="mb-8 rounded-2xl border border-[var(--app-border)] bg-[var(--app-surface)] p-5 shadow-sm sm:p-6" aria-labelledby="create-campaign-heading">
