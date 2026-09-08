@@ -138,6 +138,14 @@ Envelope รับเฉพาะ `eventId`, `sessionId`, `eventName`, `eventVer
 
 Ingestion contract จำกัด JSON request body 32 KiB, ไม่เกิน 20 events ต่อ batch และ `properties` ไม่เกิน 1,024 bytes ต่อ event โดยนับ UTF-8 bytes ฝั่ง server
 
+- รับเฉพาะสมาชิกที่ session ยังใช้ได้และ consent เป็น `active`; ingestion lock consent row ก่อนตรวจ campaign และ insert เพื่อ serialize กับ withdrawal
+- Request ต้องเป็น same-origin JSON: ตรวจ `Origin` แบบ exact เมื่อมี หรือใช้ same-origin `Referer` fallback สำหรับ browser ที่ไม่ส่ง `Origin`; ปฏิเสธ `Sec-Fetch-Site` ที่ไม่ใช่ `same-origin`
+- Client สร้าง UUID หลัง consent เท่านั้นและเริ่ม session ใหม่เมื่อไม่มี activity 30 นาที; การถอนหรือ bootstrap ที่ล้มเหลวทำให้ปิด gate และล้าง session ฝั่ง browser ค่านี้ยังเป็น pilot default ที่ต้องรับรองในระเบียบวิธี
+- Server ใช้ subject/key version จาก consent ที่ผูกกับ authenticated user และคำนวณ `session_key` ด้วย HMAC; client ไม่ส่ง authority field ใด ๆ
+- Event ที่ไม่ส่ง `occurredAt` ใช้เวลารับของ server; เวลาจาก client ต้องไม่เก่ากว่า 24 ชั่วโมงและไม่ล้ำหน้า server เกิน 5 นาที
+- `evaluation_started` และ `evaluation_submitted` ต้องมี `campaignId`; campaign ที่อ้างถึงทุก event ต้องเป็น `open`, `pilot` และอยู่ในช่วงเวลา โดย lock row ก่อน insert
+- Route ตอบเฉพาะ status/code/count แบบคงที่ ไม่คืน identifier และไม่ log raw body หรือ arbitrary error; duplicate `(subject_key, event_id)` นับเป็น retry โดยไม่ insert ซ้ำ
+
 Failure code v1: `validation`, `rate_limited`, `network`, `server_error`
 
 ## 5. Route and export contract
@@ -174,12 +182,12 @@ Failure code v1: `validation`, `rate_limited`, `network`, `server_error`
 
 | ความเสี่ยง | Control ที่บังคับใช้ | สถานะ |
 | --- | --- | --- |
-| Consent bypass | Grant ตรวจ acknowledgement และเลือก notice version ฝั่ง server; ingestion ต้องล็อก consent row และตรวจ `active` ใน transaction เดียวกับ insert | Grant bypass negative E2E และ consent transaction ผ่าน; ingestion ยังไม่เริ่ม |
-| Withdrawal/ingestion race | Withdrawal เปลี่ยน status ก่อนลบ events ภายใต้ row lock; ingestion ต้องใช้ lock เดียวกัน | Withdrawal ผ่าน unit/E2E; ingestion test รอ Phase 3 |
-| Forged user/role/subject | ยึด session ฝั่ง server และคำนวณ subject key เอง; ไม่รับ authority fields จาก client | Phase 2 Server Actions ตรวจ session/role ซ้ำและผ่าน replay negative test; ingestion endpoint รอ Phase 3 |
+| Consent bypass | Grant ตรวจ acknowledgement และเลือก notice version ฝั่ง server; ingestion ล็อก consent row และตรวจ `active` ใน transaction เดียวกับ insert | ผ่าน no-consent E2E และ unit rollback; client ไม่ส่ง network ก่อน consent |
+| Withdrawal/ingestion race | Withdrawal เปลี่ยน status ก่อนลบ events ภายใต้ row lock; ingestion ใช้ lock เดียวกัน | ผ่าน transaction-order unit และ E2E ลบ raw events/ปฏิเสธการเขียนหลังถอน |
+| Forged user/role/subject | ยึด session ฝั่ง server และคำนวณ subject/session key เอง; ไม่รับ authority fields จาก client | ผ่าน guest/authority-field negative E2E และตรวจ DB ไม่มี raw session/user identifier |
 | IDOR | Member query ต้องผูก `user_id` จาก session; Admin/Super Admin actions ต้องตรวจ role ภายใน action/handler ทุกครั้ง | Phase 2 DTO/action boundary และ guest/user/teacher negative tests ผ่าน |
-| CSRF/cross-origin event | Server Actions ใช้ origin protection ของ framework; Route Handler ต้องรับ same-origin JSON เท่านั้น | Server Actions ใช้ framework path แล้ว; Route Handler test รอ Phase 3 |
-| PII ใน payload/log | Event/property allowlist, route family normalization, byte limits, ห้าม log raw body และมี PII canary tests | Utilities พร้อม; log/canary integration รอ Phase 3 |
+| CSRF/cross-origin event | Server Actions ใช้ origin protection ของ framework; Route Handler รับ same-origin JSON เท่านั้น | ผ่าน cross-origin, wrong content type และ browser-origin E2E ครบสาม engines |
+| PII ใน payload/log | Client/server event allowlist, route family normalization, byte limits และห้าม log raw body | PII canary ถูกปฏิเสธและไม่ปรากฏใน response/DB/runtime output; export test รอ Phase 4 |
 | CSV formula injection | Sanitize formula prefix ก่อน RFC 4180 escaping และไม่ export raw identifiers/text | Utility unit test ผ่าน; ZIP round-trip รอ Phase 4 |
 | Subgroup inference | Suppress หลังใช้ filter ทุกชุดเมื่อ `n < 5`; ห้าม raw-row export และห้ามเปิด pseudonym | Contract พร้อม; metric tests รอ Phase 4 |
 | Retention overrun | Cleanup ต้อง idempotent, dry-run ได้, รายงานเฉพาะ row counts และใช้ UTC cutoff | Unit/E2E ผ่าน; ยังไม่ตั้ง schedule จนกว่าจะยืนยัน owner/deadline |

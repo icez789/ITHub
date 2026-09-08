@@ -2,7 +2,8 @@
 
 import Link from 'next/link';
 import { Bookmark, Heart, LoaderCircle, LogIn } from 'lucide-react';
-import { useActionState } from 'react';
+import { useActionState, useEffect, useRef } from 'react';
+import { trackResearchEvent } from './ResearchAnalyticsProvider';
 
 function ActionMessage({ state }) {
   if (!state?.message) return null;
@@ -16,6 +17,20 @@ function ActionMessage({ state }) {
 export default function TopicEngagementActions({ topicId, isAuthenticated, isLiked, isBookmarked, likeCount, likeAction, bookmarkAction }) {
   const [likeState, submitLike, likePending] = useActionState(likeAction, null);
   const [bookmarkState, submitBookmark, bookmarkPending] = useActionState(bookmarkAction, null);
+  const trackedLikeStateRef = useRef(null);
+  const trackedBookmarkStateRef = useRef(null);
+
+  useEffect(() => {
+    if (!likeState?.success || trackedLikeStateRef.current === likeState) return;
+    trackedLikeStateRef.current = likeState;
+    trackResearchEvent({ eventName: 'like_changed', properties: { active: Boolean(likeState.active) } });
+  }, [likeState]);
+
+  useEffect(() => {
+    if (!bookmarkState?.success || trackedBookmarkStateRef.current === bookmarkState) return;
+    trackedBookmarkStateRef.current = bookmarkState;
+    trackResearchEvent({ eventName: 'bookmark_changed', properties: { active: Boolean(bookmarkState.active) } });
+  }, [bookmarkState]);
 
   if (!isAuthenticated) {
     return (

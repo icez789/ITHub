@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { LoaderCircle, LogIn, UserCheck, UserPlus } from 'lucide-react';
 import { useRef, useState, useTransition } from 'react';
 import { setAuthorFollow, setCategoryFollow } from '../lib/discoveryActions';
+import { trackResearchEvent } from './ResearchAnalyticsProvider';
 
 export default function FollowButton({
   kind,
@@ -51,7 +52,13 @@ export default function FollowButton({
         const result = kind === 'category'
           ? await setCategoryFollow(target, next)
           : await setAuthorFollow(target, next);
-        if (result?.success) setFollowing(Boolean(result.following));
+        if (result?.success) {
+          const active = Boolean(result.following);
+          setFollowing(active);
+          trackResearchEvent(kind === 'category'
+            ? { eventName: 'category_follow_changed', properties: { active, category: target } }
+            : { eventName: 'author_follow_changed', properties: { active } });
+        }
         setIsError(!result?.success);
         setMessage(result?.message || 'ดำเนินการไม่สำเร็จ กรุณาลองใหม่');
       } catch {

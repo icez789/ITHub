@@ -6,6 +6,7 @@ import { createTopicWithPoll } from '../../lib/actions'; // เดี๋ยว�
 import Editor from '../../components/Editor'; 
 import { toast } from 'react-hot-toast';
 import { BarChart3, LoaderCircle, Plus, Send, Trash2 } from 'lucide-react';
+import { trackResearchEvent } from '../../components/ResearchAnalyticsProvider';
 
 export default function CreateTopicPage() {
   const router = useRouter();
@@ -36,9 +37,11 @@ export default function CreateTopicPage() {
 
   // ฟังก์ชัน Submit Form
   const handleSubmit = async (formData) => {
+    trackResearchEvent({ eventName: 'topic_created', outcome: 'attempt' });
     const content = String(formData.get('content') || '');
     const plainContent = new DOMParser().parseFromString(content, 'text/html').body.textContent?.trim() || '';
     if (plainContent.length < 5) {
+      trackResearchEvent({ eventName: 'topic_created', outcome: 'failure', failureCode: 'validation' });
       toast.error('กรุณาใส่รายละเอียดอย่างน้อย 5 ตัวอักษร');
       return;
     }
@@ -46,12 +49,14 @@ export default function CreateTopicPage() {
     // เพิ่มข้อมูลโพลเข้าไปใน formData (ถ้ามี)
     if (hasPoll) {
         if (!pollQuestion.trim()) {
+            trackResearchEvent({ eventName: 'topic_created', outcome: 'failure', failureCode: 'validation' });
             toast.error('กรุณากรอกคำถามโพล');
             return;
         }
         // กรองตัวเลือกที่ว่างออก
         const validOptions = pollOptions.filter(opt => opt.trim() !== '');
         if (validOptions.length < 2) {
+            trackResearchEvent({ eventName: 'topic_created', outcome: 'failure', failureCode: 'validation' });
             toast.error('ต้องมีตัวเลือกโพลอย่างน้อย 2 ข้อ');
             return;
         }
@@ -67,15 +72,18 @@ export default function CreateTopicPage() {
       result = await createTopicWithPoll(formData);
     } catch {
       setIsSubmitting(false);
+      trackResearchEvent({ eventName: 'topic_created', outcome: 'failure', failureCode: 'network' });
       toast.error('ส่งกระทู้ไม่สำเร็จ การเชื่อมต่อขัดข้อง กรุณาลองใหม่อีกครั้ง');
       return;
     }
 
     if (result.success) {
+        trackResearchEvent({ eventName: 'topic_created', outcome: 'success' });
         toast.success('ตั้งกระทู้สำเร็จ (+10 XP)');
         router.push(`/topic/${result.topicId}`);
     } else {
         setIsSubmitting(false);
+        trackResearchEvent({ eventName: 'topic_created', outcome: 'failure', failureCode: 'server_error' });
         toast.error(result.message || 'ตั้งกระทู้ไม่สำเร็จ');
     }
   };

@@ -2,11 +2,11 @@
 
 > แผนต้นทาง: [`ITHUB_FEEDBACK_RESEARCH_ANALYTICS_PLAN.md`](./ITHUB_FEEDBACK_RESEARCH_ANALYTICS_PLAN.md)
 >
-> Checkpoint ล่าสุด: [`ITHUB_FEEDBACK_RESEARCH_ANALYTICS_CHECKPOINT_03.md`](./ITHUB_FEEDBACK_RESEARCH_ANALYTICS_CHECKPOINT_03.md)
+> Checkpoint ล่าสุด: [`ITHUB_FEEDBACK_RESEARCH_ANALYTICS_CHECKPOINT_04.md`](./ITHUB_FEEDBACK_RESEARCH_ANALYTICS_CHECKPOINT_04.md)
 >
-> สถานะ: Phase 2 Evaluation/Feedback ผ่าน local verification แล้ว; พร้อมเริ่ม Phase 3 โดยยังยึด decision gates ที่เปิดอยู่เป็น pilot-only defaults
+> สถานะ: Phase 3 consent-gated Analytics ingestion ผ่าน local verification แล้ว; พร้อมเริ่ม Phase 4 metrics/Dashboard/export โดยยังยึด decision gates ที่เปิดอยู่เป็น pilot-only defaults
 >
-> อัปเดตล่าสุด: 7 กันยายน 2569
+> อัปเดตล่าสุด: 9 กันยายน 2569
 >
 > หลักการ: ติ๊ก `[x]` เฉพาะเมื่อมีโค้ด ผลทดสอบ หรือหลักฐานตรวจรับรองรับ
 
@@ -108,7 +108,7 @@
 - [x] ตรวจ session/role ภายในทุก Server Action ที่เพิ่มใน Phase 2 ไม่พึ่ง page-level gating; Route Handler ของ Phase 3 ยังไม่เริ่ม
 - [x] ใช้ `requireUser()` สำหรับสมาชิก, `requireAdmin()` สำหรับ campaign read/Feedback admin และ `requireSuperAdmin()` สำหรับ campaign mutations/transitions
 - [x] เพิ่ม negative tests ยืนยันว่า guest, user และ teacher เข้า admin pages หรือ replay admin Server Action โดยตรงไม่ได้
-- [ ] เพิ่ม shared database rate limit สำหรับ evaluation, feedback, consent และ analytics ingestion
+- [x] เพิ่ม shared database rate limit สำหรับ evaluation, feedback, consent และ analytics ingestion
 
 ### Campaign และ Evaluation
 
@@ -136,18 +136,18 @@
 
 ## 6. Phase 3 — Analytics ingestion
 
-- [ ] เพิ่ม `POST /api/analytics/events` เป็น Route Handler แบบ dynamic และไม่ cache
-- [ ] บังคับ authentication, active consent, JSON content type, body/batch limit, rate limit และ origin policy
-- [ ] Server เป็นผู้คำนวณ pseudonym จาก session; ไม่เชื่อ subject/user/role ที่ client ส่งมา
-- [ ] ใช้ event-name allowlist และ property schema แยกต่อ event; ปฏิเสธ unknown key และ oversized value
-- [ ] เก็บ failure code ได้เฉพาะ `validation`, `rate_limited`, `network`, `server_error`
-- [ ] ไม่รับ search query, topic/comment/AI text, email, username, IP หรือ full User-Agent
-- [ ] normalize route เป็น route family ที่อนุญาต และหลีกเลี่ยง identifier ที่ไม่จำเป็น
-- [ ] รองรับ idempotent retry โดยไม่เพิ่ม event ซ้ำ
-- [ ] Instrument page/search/open/create/comment/like/bookmark/follow/feed/onboarding/evaluation/feedback ตาม allowlist เท่านั้น
-- [ ] ยืนยันด้วย test ว่าไม่มี network event ก่อน consent, หลัง withdrawal หรือเมื่อ consent lookup ล้มเหลว
-- [ ] แยก event `attempt / success / failure` และ correlation ที่จำเป็นโดยไม่เก็บเนื้อหา
-- [ ] แยก pilot campaign/data scope ออกจากข้อมูลจริงอย่างตรวจสอบได้
+- [x] เพิ่ม `POST /api/analytics/events` เป็น Route Handler แบบ dynamic และไม่ cache
+- [x] บังคับ authentication, active consent, JSON content type, body/batch limit, rate limit และ origin policy
+- [x] Server เป็นผู้คำนวณ pseudonym จาก session; ไม่เชื่อ subject/user/role ที่ client ส่งมา
+- [x] ใช้ event-name allowlist และ property schema แยกต่อ event; ปฏิเสธ unknown key และ oversized value
+- [x] เก็บ failure code ได้เฉพาะ `validation`, `rate_limited`, `network`, `server_error`
+- [x] ไม่รับ search query, topic/comment/AI text, email, username, IP หรือ full User-Agent
+- [x] normalize route เป็น route family ที่อนุญาต และหลีกเลี่ยง identifier ที่ไม่จำเป็น
+- [x] รองรับ idempotent retry โดยไม่เพิ่ม event ซ้ำ
+- [x] Instrument page/search/open/create/comment/like/bookmark/follow/feed/onboarding/evaluation/feedback ตาม allowlist เท่านั้น
+- [x] ยืนยันด้วย test ว่าไม่มี network event ก่อน consent, หลัง withdrawal หรือเมื่อ consent lookup ล้มเหลว
+- [x] แยก event `attempt / success / failure` และใช้ pseudonymous session/time สำหรับ correlation โดยไม่เก็บเนื้อหา
+- [x] แยก pilot campaign/data scope ออกจากข้อมูลจริงอย่างตรวจสอบได้
 - [ ] เพิ่ม PII canary tests ทั้ง payload, database row, logs และ export
 
 ## 7. Phase 4 — Dashboard, metrics และ export
@@ -211,13 +211,13 @@
 - [ ] Unit: SUS, statistics, HMAC, consent, allowlist, route normalization, denominator, suppression, retention, CSV และ ZIP
 - [ ] Integration: campaign transitions, duplicate/concurrent response, withdrawal, consent deletion, retention และ role matrix
 - [ ] E2E: Evaluation, Feedback, Admin triage, Dashboard และ Export บน Chromium/Firefox/WebKit
-- [x] E2E ยืนยัน guest/user/teacher เข้า admin page และ replay admin Server Action โดยตรงไม่ได้; analytics endpoint รอ Phase 3
+- [x] E2E ยืนยัน guest/user/teacher เข้า admin page และ replay admin Server Action โดยตรงไม่ได้; Analytics endpoint ปฏิเสธ guest, no-consent และ cross-origin แล้ว
 - [ ] E2E ยืนยันไม่มี event ก่อน consent และไม่มี PII ใน event/export
 - [x] รัน `npm.cmd run lint`
 - [x] รัน `npm.cmd run test:unit`
 - [x] รัน `npm.cmd run build`
 - [x] รัน migration/preflight/check บน isolated `_e2e`
-- [x] รัน Playwright แบบ serial ด้วย isolated `_e2e` ผ่าน 12/12 บน Chromium/Firefox/WebKit และ cleanup fixture เหลือ 0; ยังไม่เปิด parallel จนกว่าจะมี per-worker isolation
+- [x] รัน Playwright Phase 2 แบบ serial ด้วย isolated `_e2e` ผ่าน 12/12 และ Phase 3 Analytics ผ่าน 9/9 บน Chromium/Firefox/WebKit พร้อม cleanup fixture; ยังไม่เปิด parallel จนกว่าจะมี per-worker isolation
 - [ ] ทำ pilot 5–10 คน แยก campaign/data จากรอบจริง และบันทึกข้อแก้ไขคำถาม
 - [ ] ล็อก questionnaire/campaign หลังผ่าน pilot ก่อนเก็บข้อมูลจริง
 - [ ] สร้าง Preview branch-scoped variables สำหรับ `codex/feedback-research-analytics` โดยใช้ `test_e2e`, secret แยก และ external services เท่าที่จำเป็น
@@ -232,9 +232,10 @@
 
 1. `feat: add feedback analytics database and privacy core`
 2. `feat: add evaluation and feedback workflows`
-3. `feat: add consented analytics dashboard and export`
-4. `test: verify feedback research analytics rollout`
-5. `docs: document feedback research analytics release`
+3. `feat: add consent-gated research analytics ingestion`
+4. `feat: add consented analytics dashboard and export`
+5. `test: verify feedback research analytics rollout`
+6. `docs: document feedback research analytics release`
 
 ทุก commit ให้ stage เฉพาะไฟล์ใน scope และมี scoped tests ที่เกี่ยวข้อง ห้ามรวม presentation artifacts, `output/`, `tmp/`, `.codex-artifacts/` หรือเอกสาร Phase 2 ที่ยังไม่ได้ตัดสินใจ
 
@@ -292,3 +293,15 @@
 - Unit tests ผ่าน 49/49; workflow database smoke ผ่าน; Playwright แบบ serial ผ่าน 12/12 บน Chromium, Firefox และ WebKit
 - ตรวจภาพ 375×812 Light และ 1280×800 Dark ครบสาม browser engines ไม่พบ horizontal overflow หรือ error overlay; fixture E2E ถูก cleanup เหลือ 0
 - ยังไม่เริ่ม analytics ingestion, Dashboard metrics, ZIP export, Preview, Production, deployment หรือ push
+
+### 9 กันยายน 2569 — Checkpoint 04 consent-gated Analytics ingestion — Codex
+
+- เพิ่ม `POST /api/analytics/events` แบบ dynamic/no-store พร้อม same-origin JSON policy, streaming 32 KiB cap, 20-event batch cap และ generic error response
+- ตรวจ session และ shared database rate limit ใน `server-only` DAL จากนั้น lock active consent และ campaign ภายใน transaction เดียวกับ event insert
+- ใช้ subject key จาก consent ที่สร้างฝั่ง server และ HMAC browser-session UUID ก่อนบันทึก; ไม่รับ user/role/subject/IP/User-Agent หรือข้อความจาก client
+- เพิ่ม client gate แบบ fail-closed: ไม่สร้าง session หรือส่ง request ก่อน consent, ล้าง session เมื่อถอน และตรวจ allowlist ฝั่ง client ซ้ำก่อน network
+- Instrument event v1 ครบ page/search/open/create/comment/like/bookmark/follow/feed/onboarding/evaluation/feedback; create/comment แยก attempt/success/failure
+- จำกัด `occurredAt` ไม่เก่ากว่า 24 ชั่วโมงและไม่เกินเวลา server มากกว่า 5 นาที; evaluation event ต้องผูก open pilot campaign ที่อยู่ในช่วงเวลา
+- Unit tests ผ่าน 59/59; production build/lint ผ่าน; Analytics Playwright ผ่าน 9/9 และ regression Phase 2+3 รอบสุดท้ายผ่านรวม 21/21 แบบ serial บน Chromium, Firefox และ WebKit
+- E2E ยืนยัน no network ก่อน consent/หลัง withdrawal, PII/authority field rejection, route normalization, HMAC session key, duplicate retry และ raw-event deletion
+- ยังไม่เริ่ม Dashboard metrics, ZIP export, Preview, Production, deployment หรือ push

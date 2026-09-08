@@ -321,7 +321,7 @@ export default async function TopicDetailPage({ params }) {
 
     revalidatePath(`/topic/${topicId}`);
     revalidatePath('/');
-    return { success: true, message: added ? 'ถูกใจกระทู้แล้ว' : 'ยกเลิกถูกใจแล้ว' };
+    return { success: true, active: added, message: added ? 'ถูกใจกระทู้แล้ว' : 'ยกเลิกถูกใจแล้ว' };
   }
 
   async function toggleBookmark() {
@@ -364,7 +364,7 @@ export default async function TopicDetailPage({ params }) {
 
     revalidatePath(`/topic/${topicId}`);
     revalidatePath('/profile/saved');
-    return { success: true, message: added ? 'บันทึกกระทู้แล้ว' : 'นำออกจากรายการบันทึกแล้ว' };
+    return { success: true, active: added, message: added ? 'บันทึกกระทู้แล้ว' : 'นำออกจากรายการบันทึกแล้ว' };
   }
   async function deleteComment(formData) {
     'use server';

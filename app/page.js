@@ -276,6 +276,9 @@ export default async function HomePage({ searchParams }) {
                 isLocked={Boolean(topic.is_locked)}
                 recommendationReason={feed === 'for-you' ? topic.recommendation_reason : null}
                 index={index}
+                searchResultPosition={search && ((page - 1) * pageSize) + index + 1 <= 100
+                  ? ((page - 1) * pageSize) + index + 1
+                  : null}
               />
             )) : feed !== 'community' && followCounts.total === 0 ? (
               <div className="ithub-card px-5 py-8 sm:px-7">

@@ -1,6 +1,6 @@
 'use client';
 
-import { useActionState, useState } from 'react';
+import { useActionState, useEffect, useRef, useState } from 'react';
 import {
   BarChart3,
   CheckCircle2,
@@ -29,6 +29,10 @@ import {
   SUS_SCALE,
   TASK_RESULT_OPTIONS,
 } from '../lib/researchQuestionnaire';
+import {
+  setResearchAnalyticsEnabled,
+  trackResearchEvent,
+} from './ResearchAnalyticsProvider';
 
 const inputClass = 'min-h-11 w-full rounded-xl border border-[var(--app-border)] bg-[var(--app-surface)] px-3 py-2 text-sm text-[var(--app-text)] outline-none transition-colors focus:border-[var(--app-primary)] focus:ring-2 focus:ring-[var(--app-focus-ring)]/25 disabled:cursor-not-allowed disabled:opacity-50';
 const secondaryButtonClass = 'inline-flex min-h-10 items-center justify-center gap-2 rounded-xl border border-[var(--app-border)] bg-[var(--app-surface)] px-4 py-2 text-sm font-semibold text-[var(--app-text)] transition-colors hover:bg-[var(--app-surface-subtle)] disabled:cursor-wait disabled:opacity-60';
@@ -63,9 +67,35 @@ function SelectField({ id, name, label, options, required = true, defaultValue =
 export function ResearchEvaluationForm({ campaign, clientSubmissionId }) {
   const [state, action, pending] = useActionState(submitResearchEvaluationAction, null);
   const [taskResults, setTaskResults] = useState(() => RESEARCH_TASKS.map(() => ''));
+  const startedRef = useRef(false);
+  const trackedSubmissionRef = useRef(null);
+
+  useEffect(() => {
+    if (
+      !state?.success
+      || state.result?.status !== 'submitted'
+      || state.result?.idempotent
+      || trackedSubmissionRef.current === state.result.evaluationId
+    ) return;
+    trackedSubmissionRef.current = state.result.evaluationId;
+    trackResearchEvent({
+      eventName: 'evaluation_submitted',
+      outcome: 'success',
+      campaignId: campaign.campaignId,
+    });
+  }, [campaign.campaignId, state]);
+
+  const trackStart = () => {
+    if (startedRef.current) return;
+    startedRef.current = true;
+    trackResearchEvent({
+      eventName: 'evaluation_started',
+      campaignId: campaign.campaignId,
+    });
+  };
 
   return (
-    <form action={action} className="space-y-8" aria-labelledby={`evaluation-${campaign.campaignId}-heading`}>
+    <form action={action} onFocusCapture={trackStart} className="space-y-8" aria-labelledby={`evaluation-${campaign.campaignId}-heading`}>
       <input type="hidden" name="campaignId" value={campaign.campaignId} />
       <input type="hidden" name="clientSubmissionId" value={clientSubmissionId} />
 
@@ -182,8 +212,30 @@ export function ResearchEvaluationForm({ campaign, clientSubmissionId }) {
 
 export function ResearchFeedbackForm({ campaigns, clientSubmissionId, routePath }) {
   const [state, action, pending] = useActionState(submitResearchFeedbackAction, null);
+  const formRef = useRef(null);
+  const trackedSubmissionRef = useRef(null);
+
+  useEffect(() => {
+    if (
+      !state?.success
+      || state.result?.status !== 'submitted'
+      || state.result?.idempotent
+      || trackedSubmissionRef.current === state.result.feedbackId
+    ) return;
+    const formData = formRef.current ? new FormData(formRef.current) : null;
+    const category = String(formData?.get('category') || '');
+    const rawCampaignId = String(formData?.get('campaignId') || '');
+    trackedSubmissionRef.current = state.result.feedbackId;
+    trackResearchEvent({
+      eventName: 'feedback_submitted',
+      outcome: 'success',
+      campaignId: rawCampaignId ? Number(rawCampaignId) : undefined,
+      properties: { category },
+    });
+  }, [state]);
+
   return (
-    <form action={action} className="space-y-5">
+    <form ref={formRef} action={action} className="space-y-5">
       <input type="hidden" name="clientSubmissionId" value={clientSubmissionId} readOnly />
       <input type="hidden" name="route" value={routePath} readOnly />
       <div className="grid gap-4 sm:grid-cols-2">
@@ -225,6 +277,9 @@ export function ResearchFeedbackForm({ campaigns, clientSubmissionId, routePath 
 
 function GrantConsentForm() {
   const [state, action, pending] = useActionState(grantResearchAnalyticsConsentAction, null);
+  useEffect(() => {
+    if (state?.success) setResearchAnalyticsEnabled(true);
+  }, [state]);
   return (
     <form action={action} className="mt-5">
       <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-[var(--app-border)] bg-[var(--app-surface-subtle)] p-4">
@@ -246,6 +301,9 @@ function GrantConsentForm() {
 
 function WithdrawConsentForm() {
   const [state, action, pending] = useActionState(withdrawResearchAnalyticsConsentAction, null);
+  useEffect(() => {
+    if (state?.success) setResearchAnalyticsEnabled(false);
+  }, [state]);
   return (
     <form action={action} className="mt-5">
       <div className="flex flex-wrap items-center gap-3">

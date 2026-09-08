@@ -3,6 +3,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { Search } from 'lucide-react';
+import { trackResearchEvent } from './ResearchAnalyticsProvider';
 
 export default function SearchInput({ className = 'hidden md:block flex-1 max-w-xl' }) {
   const pathname = usePathname();
@@ -49,6 +50,9 @@ function SearchInputForRoute({ pathname, queryString, initialSearch, className }
       params.delete('page');
 
       const query = params.toString();
+      if (nextText.trim() && nextText !== initialSearch) {
+        trackResearchEvent({ eventName: 'search_performed' });
+      }
       router.replace(query ? `/?${query}` : '/', { scroll: false });
     }, 500);
   };

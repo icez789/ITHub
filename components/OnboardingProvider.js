@@ -5,6 +5,7 @@ import { Bot, Check, ChevronLeft, ChevronRight, Compass, Heart, MousePointer2, P
 import { useRouter } from 'next/navigation';
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import { createPortal } from 'react-dom';
+import { trackResearchEvent } from './ResearchAnalyticsProvider';
 
 export const ONBOARDING_STORAGE_KEY = 'ithub_onboarding_v2';
 
@@ -308,6 +309,7 @@ export default function OnboardingProvider({ children }) {
     if (closingRef.current) return;
     closingRef.current = true;
     saveStatus(status);
+    if (status === 'completed') trackResearchEvent({ eventName: 'onboarding_completed' });
     setIsOpen(false);
     setPendingStep(null);
     setTargetRect(null);

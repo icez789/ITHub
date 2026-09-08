@@ -14,6 +14,7 @@ import 'highlight.js/styles/atom-one-dark.css';
 import { Analytics } from '@vercel/analytics/react';
 import Script from 'next/script';
 import { themeInitializationScript } from '../lib/theme';
+import ResearchAnalyticsBoundary from '../components/ResearchAnalyticsBoundary';
 
 const ithubFont = IBM_Plex_Sans_Thai({
   weight: ['400', '500', '600', '700'],
@@ -67,6 +68,7 @@ export default function RootLayout({ children }) {
 
            <Suspense fallback={null}><BottomNav /></Suspense>
            <FloatingChat />
+           <Suspense fallback={null}><ResearchAnalyticsBoundary /></Suspense>
           </OnboardingProvider>
         </ThemeProvider>
         <Analytics />

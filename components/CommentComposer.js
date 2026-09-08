@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { LoaderCircle, Send } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import Editor from './Editor';
+import { trackResearchEvent } from './ResearchAnalyticsProvider';
 
 export default function CommentComposer({ action, parentId = null, compact = false, onSuccess }) {
   const router = useRouter();
@@ -16,17 +17,22 @@ export default function CommentComposer({ action, parentId = null, compact = fal
     if (pending) return;
     setPending(true);
     setError('');
+    const properties = { reply: parentId != null };
+    trackResearchEvent({ eventName: 'comment_created', outcome: 'attempt', properties });
     try {
       const result = await action(new FormData(event.currentTarget));
       if (!result?.success) {
+        trackResearchEvent({ eventName: 'comment_created', outcome: 'failure', failureCode: 'server_error', properties });
         setError(result?.message || 'ส่งความคิดเห็นไม่สำเร็จ กรุณาลองใหม่');
         return;
       }
+      trackResearchEvent({ eventName: 'comment_created', outcome: 'success', properties });
       setEditorKey((key) => key + 1);
       onSuccess?.();
       router.refresh();
     } catch (submitError) {
       console.error('Comment submission failed:', submitError);
+      trackResearchEvent({ eventName: 'comment_created', outcome: 'failure', failureCode: 'network', properties });
       setError('ส่งความคิดเห็นไม่สำเร็จ กรุณาลองใหม่');
     } finally {
       setPending(false);
