@@ -1,4 +1,5 @@
 import { spawn } from 'node:child_process';
+import { randomBytes } from 'node:crypto';
 import { assertE2eSafety } from './e2e-safety.mjs';
 
 assertE2eSafety();
@@ -10,6 +11,11 @@ if (!process.env.SESSION_SECRET && process.env.AUTH_SECRET) {
 if (!process.env.SESSION_SECRET || process.env.SESSION_SECRET.length < 32) {
   throw new Error('SESSION_SECRET must contain at least 32 characters for the production E2E server');
 }
+// Research pseudonyms need a real non-placeholder key, but isolated E2E rows are
+// deleted after each test. Generate a process-scoped key instead of persisting a
+// test secret or falling back to an unrelated credential.
+process.env.ITHUB_ANALYTICS_SECRET ||= randomBytes(32).toString('hex');
+process.env.ITHUB_ANALYTICS_KEY_VERSION ||= '1';
 
 function run(commandArgs) {
   return new Promise((resolve, reject) => {

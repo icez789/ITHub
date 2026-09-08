@@ -6,7 +6,7 @@ import ProfileAvatar from '../../components/ProfileAvatar';
 import UserBadge from '../../components/UserBadge'; // ✅ 1. เพิ่ม UserBadge
 import { getCurrentUser } from '../../lib/auth';
 import { updateAvatar } from '../../lib/actions';
-import { Eye, FileText, Inbox, Plus, Rss, Trophy } from 'lucide-react';
+import { Eye, FileText, Inbox, MessageSquareHeart, Plus, Rss, Trophy } from 'lucide-react';
 
 export default async function ProfilePage() {
   const userSession = await getCurrentUser();
@@ -65,9 +65,14 @@ export default async function ProfilePage() {
                 </h1>
                 <p className="mt-2 text-[var(--app-text-muted)]">จัดการข้อมูลส่วนตัวและดูสถิติของคุณ</p>
             </div>
-            <Link href="/profile/following" className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-[var(--app-border)] bg-[var(--app-surface)] px-4 py-2 text-sm font-semibold text-[var(--app-text)] transition-colors hover:border-[var(--app-primary)] hover:text-[var(--app-accent-text)]">
-              <Rss aria-hidden="true" size={17} /> จัดการสิ่งที่ติดตาม
-            </Link>
+            <div className="flex flex-wrap gap-2">
+              <Link href="/feedback" className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-[var(--app-border)] bg-[var(--app-surface)] px-4 py-2 text-sm font-semibold text-[var(--app-text)] transition-colors hover:border-[var(--app-primary)] hover:text-[var(--app-accent-text)]">
+                <MessageSquareHeart aria-hidden="true" size={17} /> แบบประเมินและ Feedback
+              </Link>
+              <Link href="/profile/following" className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-[var(--app-border)] bg-[var(--app-surface)] px-4 py-2 text-sm font-semibold text-[var(--app-text)] transition-colors hover:border-[var(--app-primary)] hover:text-[var(--app-accent-text)]">
+                <Rss aria-hidden="true" size={17} /> จัดการสิ่งที่ติดตาม
+              </Link>
+            </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">

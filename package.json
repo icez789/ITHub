@@ -29,6 +29,7 @@
     "research:retention": "node --env-file-if-exists=.env scripts/research-retention.mjs --dry-run",
     "research:retention:e2e": "node --env-file-if-exists=.env.e2e.local scripts/research-retention.mjs --e2e --dry-run",
     "test:research:retention:e2e": "node --env-file-if-exists=.env.e2e.local scripts/research-retention-smoke.mjs --e2e",
+    "test:research:workflows:e2e": "node --env-file-if-exists=.env.e2e.local scripts/research-workflows-smoke.mjs --e2e",
     "check": "npm run lint && npm run build"
   },
   "dependencies": {

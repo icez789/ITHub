@@ -2,9 +2,9 @@
 
 > แผนต้นทาง: [`ITHUB_FEEDBACK_RESEARCH_ANALYTICS_PLAN.md`](./ITHUB_FEEDBACK_RESEARCH_ANALYTICS_PLAN.md)
 >
-> Checkpoint ล่าสุด: [`ITHUB_FEEDBACK_RESEARCH_ANALYTICS_CHECKPOINT_02.md`](./ITHUB_FEEDBACK_RESEARCH_ANALYTICS_CHECKPOINT_02.md)
+> Checkpoint ล่าสุด: [`ITHUB_FEEDBACK_RESEARCH_ANALYTICS_CHECKPOINT_03.md`](./ITHUB_FEEDBACK_RESEARCH_ANALYTICS_CHECKPOINT_03.md)
 >
-> สถานะ: Phase 1 database/privacy foundation ผ่านแล้ว; พร้อมเริ่ม Phase 2 หลังยึด decision gates ที่ยังเปิดเป็น pilot-only defaults
+> สถานะ: Phase 2 Evaluation/Feedback ผ่าน local verification แล้ว; พร้อมเริ่ม Phase 3 โดยยังยึด decision gates ที่เปิดอยู่เป็น pilot-only defaults
 >
 > อัปเดตล่าสุด: 7 กันยายน 2569
 >
@@ -104,34 +104,35 @@
 
 ### Data layer และ authorization
 
-- [ ] สร้าง DAL แบบ `server-only` และคืนเฉพาะ DTO ที่แต่ละหน้าต้องใช้
-- [ ] ตรวจ session/role ภายในทุก Server Action และ Route Handler ไม่พึ่ง page-level gating
-- [ ] ใช้ `requireUser()` สำหรับสมาชิก, `requireAdmin()` สำหรับ Dashboard/Feedback admin และ `requireSuperAdmin()` สำหรับ campaign transitions
-- [ ] เพิ่ม negative tests ยืนยันว่า guest, user และ teacher เรียก admin actions/API โดยตรงไม่ได้
+- [x] สร้าง DAL แบบ `server-only` และคืนเฉพาะ DTO ที่แต่ละหน้าต้องใช้
+- [x] ตรวจ session/role ภายในทุก Server Action ที่เพิ่มใน Phase 2 ไม่พึ่ง page-level gating; Route Handler ของ Phase 3 ยังไม่เริ่ม
+- [x] ใช้ `requireUser()` สำหรับสมาชิก, `requireAdmin()` สำหรับ campaign read/Feedback admin และ `requireSuperAdmin()` สำหรับ campaign mutations/transitions
+- [x] เพิ่ม negative tests ยืนยันว่า guest, user และ teacher เข้า admin pages หรือ replay admin Server Action โดยตรงไม่ได้
 - [ ] เพิ่ม shared database rate limit สำหรับ evaluation, feedback, consent และ analytics ingestion
 
 ### Campaign และ Evaluation
 
-- [ ] เพิ่ม Server Actions สำหรับสร้าง/แก้ draft, เปิด, ปิด และล็อก campaign ตาม transition allowlist
-- [ ] ป้องกันการแก้แบบสอบถาม/นิยามคะแนนหลัง campaign ถูกเปิดหรือล็อกตาม policy ที่กำหนด
-- [ ] เพิ่มแบบประเมิน SUS 10 ข้อ Likert 1–5 โดยเก็บลำดับและทิศทางเดิม
-- [ ] เพิ่มงานทดลอง 5 งาน พร้อมผล `success / partial / failed / not_attempted` และ difficulty 1–5
-- [ ] เก็บ respondent type, experience และ primary device ด้วย controlled vocabulary
+- [x] เพิ่ม Server Actions สำหรับสร้าง/แก้ draft, เปิด, ปิด และล็อก campaign ตาม transition allowlist
+- [x] ป้องกันการแก้แบบสอบถาม/นิยามคะแนนหลัง campaign ถูกเปิด และบังคับ questionnaire version ที่ UI รองรับก่อนเปิด
+- [x] เพิ่มแบบประเมิน SUS 10 ข้อ Likert 1–5 โดยเก็บลำดับและทิศทางเดิม พร้อมป้ายชัดเจนว่าเป็นฉบับนำร่อง
+- [x] เพิ่มงานทดลอง 5 งาน พร้อมผล `success / partial / failed / not_attempted` และ difficulty 1–5
+- [x] เก็บ respondent type, experience และ primary device ด้วย controlled vocabulary แบบ pilot
 - [ ] แยก self-reported result ออกจาก observed analytics อย่างชัดเจนใน schema, UI และ export
-- [ ] คำนวณ SUS ฝั่ง server จากคำตอบต้นทาง และทดสอบช่วงคะแนน 0–100
-- [ ] ป้องกัน double-submit/concurrent-submit ด้วย database constraint และ structured action state
-- [ ] รองรับการถอนคำตอบตาม decision gate โดยไม่ทำให้ denominator หรือ audit trail คลุมเครือ
+- [x] คำนวณ SUS ฝั่ง server จากคำตอบต้นทาง และทดสอบช่วงคะแนน 0–100
+- [x] ป้องกัน double-submit ด้วย database constraint, client submission UUID และ structured action state; ยังไม่อ้างว่าผ่าน stress test แบบ concurrent
+- [x] รองรับการถอนคำตอบตามค่าเริ่มต้นแบบ tombstone ล้างเนื้อหาและห้ามส่งใหม่ใน campaign เดิม
+- [x] ตรวจการยืนยัน consent ซ้ำฝั่ง server และใช้ notice version จากค่าคงที่ฝั่ง server แทนค่าที่ client แก้ได้
 
 ### Feedback ทั่วไป
 
-- [ ] ทำหน้า `/feedback` แยก “แบบประเมิน” กับ “แจ้งปัญหา/ข้อเสนอแนะ” ด้วย heading, description และ form ที่ไม่สับสน
-- [ ] จำกัด category ด้วย allowlist, rating 1–5 แบบ optional และรายละเอียด 10–2,000 ตัวอักษร
-- [ ] sanitize/normalize route ฝั่ง server: รับเฉพาะ same-site pathname, ตัด query/hash และไม่รับค่าจาก form อื่น
-- [ ] ให้สมาชิกดูเฉพาะรายการของตนและสถานะที่กำหนด
-- [ ] ทำ `/admin/feedback` สำหรับ priority, issue theme, status และ internal note โดย Admin/Super Admin เท่านั้น
+- [x] ทำหน้า `/feedback` แยก “แบบประเมิน” กับ “แจ้งปัญหา/ข้อเสนอแนะ” ด้วย heading, description และ form ที่ไม่สับสน
+- [x] จำกัด category ด้วย allowlist, rating 1–5 แบบ optional และรายละเอียด 10–2,000 ตัวอักษร
+- [x] sanitize/normalize route ฝั่ง server: รับเฉพาะ same-site pathname และตัด query/hash
+- [x] ให้สมาชิกดูเฉพาะรายการของตนและสถานะที่กำหนด
+- [x] ทำ `/admin/feedback` สำหรับ priority, issue theme, status และ internal note โดย Admin/Super Admin เท่านั้น
 - [ ] ไม่ใส่ internal note ใน member DTO, analytics event หรือ export
-- [ ] เพิ่ม transaction/audit log เมื่อผู้ดูแลเปลี่ยน status/priority/theme
-- [ ] ใช้ `useActionState`/pending/error/success state ที่ keyboard และ Screen Reader รับรู้ได้
+- [x] เพิ่ม transaction/audit log เมื่อผู้ดูแลเปลี่ยน status/priority/theme โดยไม่คัดลอก internal note ลง audit metadata
+- [x] ใช้ `useActionState`/pending/error/success state และปิดปุ่มระหว่างส่ง
 
 ## 6. Phase 3 — Analytics ingestion
 
@@ -193,30 +194,30 @@
 
 ## 8. Phase 5 — UX, accessibility และ documentation
 
-- [ ] กำหนดทางเข้า `/feedback` ที่ไม่เพิ่ม floating primary action ตัวที่สองและไม่ทำลาย Bottom Navigation contract
-- [ ] ใช้ภาษาไทยเป็นหลัก, Lucide icons, semantic design tokens และ status colors ตาม `.md/design/`
+- [x] กำหนดทางเข้า `/feedback` ที่ไม่เพิ่ม floating primary action ตัวที่สองและไม่ทำลาย Bottom Navigation contract
+- [x] ใช้ภาษาไทยเป็นหลัก, Lucide icons, semantic design tokens และ status colors ตาม `.md/design/`
 - [ ] ตรวจ 5 palettes × Light/Dark สำหรับ surfaces/statuses ที่เพิ่มใหม่
 - [ ] ตรวจ keyboard order, visible focus, labels, fieldset/legend, error association, live region และ focus restoration
 - [ ] ตรวจ Screen Reader flow ของ Evaluation, Feedback, filters, tables และ export
-- [ ] ตรวจ 375×812 และ 1280×800 รวม overflow, floating chat/nav collision และ sticky controls
+- [x] ตรวจ 375×812 และ 1280×800 ใน Light/Dark บน Chromium/Firefox/WebKit; ไม่พบ horizontal overflow หรือ error overlay
 - [ ] ตรวจ pending/error/retry/double-submit/offline-like failure โดยไม่ทำข้อมูลซ้ำ
 - [ ] อัปเดต Privacy Policy ด้วย consent purpose, event categories, retention, withdrawal, processors และ contact
 - [ ] อัปเดต Terms, root README, `.env.example` และเอกสาร setup โดยไม่ใส่ secret จริง
-- [ ] บันทึก implementation decisions, viewport/theme/browser และผลทดสอบไว้ใน `.md/features/`
-- [ ] หากเปลี่ยน visual/UX ให้บันทึก decision/evidence ที่ `.md/design/` ตาม design handoff ด้วย
+- [x] บันทึก implementation decisions, viewport/theme/browser และผลทดสอบไว้ใน `.md/features/`
+- [x] บันทึก decision/evidence ของ visual/UX ที่ `.md/design/` ตาม design handoff
 
 ## 9. Phase 6 — Verification, pilot และ rollout
 
 - [ ] Unit: SUS, statistics, HMAC, consent, allowlist, route normalization, denominator, suppression, retention, CSV และ ZIP
 - [ ] Integration: campaign transitions, duplicate/concurrent response, withdrawal, consent deletion, retention และ role matrix
 - [ ] E2E: Evaluation, Feedback, Admin triage, Dashboard และ Export บน Chromium/Firefox/WebKit
-- [ ] E2E ยืนยัน guest/user/teacher เข้า admin page และเรียก action/endpoint โดยตรงไม่ได้
+- [x] E2E ยืนยัน guest/user/teacher เข้า admin page และ replay admin Server Action โดยตรงไม่ได้; analytics endpoint รอ Phase 3
 - [ ] E2E ยืนยันไม่มี event ก่อน consent และไม่มี PII ใน event/export
 - [x] รัน `npm.cmd run lint`
 - [x] รัน `npm.cmd run test:unit`
 - [x] รัน `npm.cmd run build`
 - [x] รัน migration/preflight/check บน isolated `_e2e`
-- [ ] รัน Playwright แบบ serial ด้วย isolated `_e2e`; ยังไม่เปิด parallel จนกว่าจะมี per-worker isolation
+- [x] รัน Playwright แบบ serial ด้วย isolated `_e2e` ผ่าน 12/12 บน Chromium/Firefox/WebKit และ cleanup fixture เหลือ 0; ยังไม่เปิด parallel จนกว่าจะมี per-worker isolation
 - [ ] ทำ pilot 5–10 คน แยก campaign/data จากรอบจริง และบันทึกข้อแก้ไขคำถาม
 - [ ] ล็อก questionnaire/campaign หลังผ่าน pilot ก่อนเก็บข้อมูลจริง
 - [ ] สร้าง Preview branch-scoped variables สำหรับ `codex/feedback-research-analytics` โดยใช้ `test_e2e`, secret แยก และ external services เท่าที่จำเป็น
@@ -280,3 +281,14 @@
 - E2E ผ่าน dry-run, selective deletion, 179-day/future survivor, idempotent rerun และ fixture cleanup
 - Post-cleanup `db:check:e2e` ผ่านและ integrity counters ทุกค่าเป็น 0
 - ยังไม่ตั้ง schedule, แตะ Production, สร้าง Preview, deploy, commit หรือ push
+
+### 8 กันยายน 2569 — Checkpoint 03 Evaluation/Feedback workflows — Codex
+
+- เพิ่ม `server-only` DAL, Server Actions และ role boundary สำหรับ member, Admin และ Super Admin โดยตรวจสิทธิ์ซ้ำในทุก mutation
+- เพิ่มหน้า `/feedback`, `/admin/feedback` และ `/admin/analytics` สำหรับ campaign management; metrics/export ยังไม่เริ่ม
+- เพิ่ม SUS 10 ข้อและงานทดลอง 5 งานแบบ pilot, validation ฝั่ง server, SUS calculation, idempotency และ evaluation withdrawal แบบ tombstone
+- เพิ่ม Feedback submission/triage, member-safe/admin-safe DTO และ audit metadata ที่ไม่เก็บ internal note
+- ปิด consent bypass ของ UI โดยตรวจ acknowledgement ฝั่ง server และล็อก questionnaire/evaluation notice version ที่ UI รองรับก่อนเปิด campaign
+- Unit tests ผ่าน 49/49; workflow database smoke ผ่าน; Playwright แบบ serial ผ่าน 12/12 บน Chromium, Firefox และ WebKit
+- ตรวจภาพ 375×812 Light และ 1280×800 Dark ครบสาม browser engines ไม่พบ horizontal overflow หรือ error overlay; fixture E2E ถูก cleanup เหลือ 0
+- ยังไม่เริ่ม analytics ingestion, Dashboard metrics, ZIP export, Preview, Production, deployment หรือ push

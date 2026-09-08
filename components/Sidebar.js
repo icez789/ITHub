@@ -13,6 +13,7 @@ import {
   Cpu,
   Flame,
   Home,
+  MessageSquareHeart,
   MessageSquareText,
   Network,
   Trophy,
@@ -118,6 +119,7 @@ export default function Sidebar() {
     { label: 'โปรไฟล์', href: '/profile', icon: UserRound, active: isHydrated && pathname === '/profile' },
     { label: 'บันทึกไว้', href: '/profile/saved', icon: Bookmark, active: isHydrated && pathname === '/profile/saved' },
     { label: 'การแจ้งเตือน', href: '/notifications', icon: Bell, active: isHydrated && pathname === '/notifications' },
+    { label: 'แบบประเมินและ Feedback', href: '/feedback', icon: MessageSquareHeart, active: isHydrated && pathname === '/feedback' },
   ];
 
   const categoryMenus = [

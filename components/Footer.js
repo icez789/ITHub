@@ -35,6 +35,7 @@ export default function Footer() {
               <li><Link href="/leaderboard" className={footerLinkClass}>อันดับสมาชิก</Link></li>
               <li><Link href="/create" className={footerLinkClass}>สร้างกระทู้</Link></li>
               <li><Link href="/notifications" className={footerLinkClass}>การแจ้งเตือน</Link></li>
+              <li><Link href="/feedback" className={footerLinkClass}>แบบประเมินและ Feedback</Link></li>
             </ul>
           </nav>
 

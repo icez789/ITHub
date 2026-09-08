@@ -15,7 +15,7 @@ import { writeModerationAudit } from '../../lib/audit';
 import UserBanButton from '../../components/UserBanButton';
 import ResolveReportButton from '../../components/ResolveReportButton';
 import { isContentModeratorRole } from '../../lib/roles';
-import { Activity, AlertTriangle, CheckCircle2, ClipboardList, Eye, FileText, LockKeyhole, MessageCircle, Trash2, Users } from 'lucide-react';
+import { Activity, AlertTriangle, BarChart3, CheckCircle2, ClipboardList, Eye, FileText, LockKeyhole, MessageCircle, MessageSquareWarning, Trash2, Users } from 'lucide-react';
 
 export default async function AdminDashboard() {
   const currentUser = await getCurrentUser();
@@ -188,7 +188,11 @@ export default async function AdminDashboard() {
                    <LockKeyhole aria-hidden="true" size={15} /> สิทธิ์ผู้ดูแลสูงสุด
                 </div>
             )}
-            {!isTeacher ? <Link href="/admin/audit" className="mt-4 inline-flex items-center gap-2 rounded-xl border border-[var(--app-border)] px-4 py-2 text-sm font-semibold transition-colors hover:bg-[var(--app-surface-subtle)] md:ml-auto md:mt-0"><ClipboardList aria-hidden="true" size={16} /> ประวัติการดูแลระบบ</Link> : null}
+            {!isTeacher ? <nav aria-label="เครื่องมือผู้ดูแล" className="mt-4 flex flex-wrap justify-end gap-2 md:ml-auto md:mt-0">
+                <Link href="/admin/feedback" className="inline-flex items-center gap-2 rounded-xl border border-[var(--app-border)] px-4 py-2 text-sm font-semibold transition-colors hover:bg-[var(--app-surface-subtle)]"><MessageSquareWarning aria-hidden="true" size={16} /> Feedback</Link>
+                <Link href="/admin/analytics" className="inline-flex items-center gap-2 rounded-xl border border-[var(--app-border)] px-4 py-2 text-sm font-semibold transition-colors hover:bg-[var(--app-surface-subtle)]"><BarChart3 aria-hidden="true" size={16} /> รอบประเมิน</Link>
+                <Link href="/admin/audit" className="inline-flex items-center gap-2 rounded-xl border border-[var(--app-border)] px-4 py-2 text-sm font-semibold transition-colors hover:bg-[var(--app-surface-subtle)]"><ClipboardList aria-hidden="true" size={16} /> ประวัติการดูแลระบบ</Link>
+            </nav> : null}
         </div>
 
         {/* --- Stats Cards --- */}

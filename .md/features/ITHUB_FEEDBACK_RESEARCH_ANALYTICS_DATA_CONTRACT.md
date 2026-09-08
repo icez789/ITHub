@@ -1,6 +1,6 @@
 # ITHub Feedback & Research Analytics — Data and Privacy Contract
 
-> สถานะ: Implementation contract สำหรับ migration 005 และ privacy foundation
+> สถานะ: Implementation contract สำหรับ migration 005, privacy foundation และ Phase 2 Evaluation/Feedback
 >
 > แผนต้นทาง: [`ITHUB_FEEDBACK_RESEARCH_ANALYTICS_PLAN.md`](./ITHUB_FEEDBACK_RESEARCH_ANALYTICS_PLAN.md)
 >
@@ -9,6 +9,7 @@
 ## 1. ขอบเขตและหลักการ
 
 - Behavioral Analytics เก็บเฉพาะสมาชิกที่เข้าสู่ระบบและมี consent สถานะ `active`
+- การ grant consent ต้องมี acknowledgement ที่ตรวจซ้ำฝั่ง server และ server เป็นผู้กำหนด notice version; ห้ามเชื่อ version จาก hidden field/client payload
 - Server คำนวณ subject/session key เอง Client ห้ามส่ง user ID, subject key หรือ role มาเป็น authority
 - `analytics_events` ไม่มีชื่อ อีเมล username IP full User-Agent ข้อความค้นหา เนื้อหากระทู้/ความคิดเห็น หรือข้อความ AI
 - Evaluation และ Feedback อาจมี `user_id` ใน operational table เพื่อบังคับสิทธิ์ ความเป็นเจ้าของ และป้องกันคำตอบซ้ำ แต่ทุก Dashboard DTO และ export ต้องตัด identifier ออก
@@ -31,6 +32,9 @@
 | Session timeout | inactivity 30 นาที; ต้องยืนยันก่อนทำ metrics |
 | Evaluation uniqueness | หนึ่ง record ต่อ `(campaign_id, user_id)` และมี client submission UUID |
 | Evaluation withdrawal | เก็บ tombstone แต่ล้าง answers, demographics และ open text; ยังไม่อนุญาตตอบซ้ำจนกว่าจะยืนยัน policy |
+| Pilot questionnaire UI | `sus-th-pilot-v1`; เปิด campaign ได้เฉพาะ version นี้จนกว่าอาจารย์รับรอง version จริง |
+| Pilot evaluation notice | `research-notice-pilot-v1`; เปิด campaign ได้เฉพาะ version ที่ UI แสดงตรงกัน |
+| Pilot analytics notice | `research-analytics-pilot-v1`; server เป็นผู้เลือกและบันทึกเมื่อ acknowledgement ผ่าน |
 | Standard deviation | sample SD; ต้องระบุใน `methodology.md` และยืนยันก่อน pilot |
 | Subgroup privacy | ไม่แสดง/ส่งออกเมื่อ `n < 5` |
 | Time storage | UTC; แปลงเวลาเฉพาะ presentation/export |
@@ -170,11 +174,11 @@ Failure code v1: `validation`, `rate_limited`, `network`, `server_error`
 
 | ความเสี่ยง | Control ที่บังคับใช้ | สถานะ |
 | --- | --- | --- |
-| Consent bypass | Ingestion ต้องล็อก consent row และตรวจ `active` ใน transaction เดียวกับ insert; fail closed เมื่อ lookup ล้มเหลว | Consent transaction พร้อม; ingestion ยังไม่เริ่ม |
+| Consent bypass | Grant ตรวจ acknowledgement และเลือก notice version ฝั่ง server; ingestion ต้องล็อก consent row และตรวจ `active` ใน transaction เดียวกับ insert | Grant bypass negative E2E และ consent transaction ผ่าน; ingestion ยังไม่เริ่ม |
 | Withdrawal/ingestion race | Withdrawal เปลี่ยน status ก่อนลบ events ภายใต้ row lock; ingestion ต้องใช้ lock เดียวกัน | Withdrawal ผ่าน unit/E2E; ingestion test รอ Phase 3 |
-| Forged user/role/subject | ยึด session ฝั่ง server และคำนวณ subject key เอง; ไม่รับ authority fields จาก client | Payload allowlist พร้อม; auth boundary รอ endpoint |
-| IDOR | Member query ต้องผูก `user_id` จาก session; Admin/Super Admin actions ต้องตรวจ role ภายใน action/handler ทุกครั้ง | รอ Phase 2 negative tests |
-| CSRF/cross-origin event | Server Actions ใช้ origin protection ของ framework; Route Handler ต้องรับ same-origin JSON เท่านั้น | รอ Phase 2–3 implementation/test |
+| Forged user/role/subject | ยึด session ฝั่ง server และคำนวณ subject key เอง; ไม่รับ authority fields จาก client | Phase 2 Server Actions ตรวจ session/role ซ้ำและผ่าน replay negative test; ingestion endpoint รอ Phase 3 |
+| IDOR | Member query ต้องผูก `user_id` จาก session; Admin/Super Admin actions ต้องตรวจ role ภายใน action/handler ทุกครั้ง | Phase 2 DTO/action boundary และ guest/user/teacher negative tests ผ่าน |
+| CSRF/cross-origin event | Server Actions ใช้ origin protection ของ framework; Route Handler ต้องรับ same-origin JSON เท่านั้น | Server Actions ใช้ framework path แล้ว; Route Handler test รอ Phase 3 |
 | PII ใน payload/log | Event/property allowlist, route family normalization, byte limits, ห้าม log raw body และมี PII canary tests | Utilities พร้อม; log/canary integration รอ Phase 3 |
 | CSV formula injection | Sanitize formula prefix ก่อน RFC 4180 escaping และไม่ export raw identifiers/text | Utility unit test ผ่าน; ZIP round-trip รอ Phase 4 |
 | Subgroup inference | Suppress หลังใช้ filter ทุกชุดเมื่อ `n < 5`; ห้าม raw-row export และห้ามเปิด pseudonym | Contract พร้อม; metric tests รอ Phase 4 |
