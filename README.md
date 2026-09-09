@@ -152,6 +152,12 @@ node --env-file-if-exists=.env scripts/research-retention.mjs --execute
 
 บน Production ต้องตั้ง `ITHUB_RESEARCH_RETENTION_ALLOW_PRODUCTION=true` เพิ่มอีกชั้น ห้ามรัน migration 005, retention execute, push ที่สร้าง Preview หรือ deploy จนกว่าจะตรวจว่า Preview ของ branch นี้ใช้ฐาน `_e2e` และ secrets แยกจาก Production เรียบร้อย รายละเอียดอยู่ที่ `.md/features/ITHUB_FEEDBACK_RESEARCH_ANALYTICS_SETUP.md`
 
+ตรวจ Preview configuration guard แบบ local-only โดยไม่เขียนค่า Vercel:
+
+```bash
+npm run preview:research:validate
+```
+
 ตรวจ XP และจำนวนกระทู้ที่คลาดเคลื่อนโดยไม่แก้ข้อมูล:
 
 ```bash

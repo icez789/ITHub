@@ -4,7 +4,7 @@
 >
 > Branch: `codex/feedback-research-analytics`
 >
-> สถานะ: ฟีเจอร์และ local verification พร้อมแล้ว; ยังไม่ push, สร้าง Preview, migrate Production หรือ deploy
+> สถานะ: ฟีเจอร์, local verification และ Preview configuration guard พร้อมแล้ว; ยังไม่เขียนค่า Vercel, push, สร้าง Preview, migrate Production หรือ deploy
 
 ## 1. ขอบเขตข้อมูล
 
@@ -147,7 +147,23 @@ Production ต้องมี opt-in ชั้นที่สอง `ITHUB_RESEA
 - ปิด/จำกัด Pusher, Cloudinary และ Gemini หากไม่จำเป็นต่อ smoke
 - ตรวจ project/team/branch target ก่อนบันทึกค่า และอ่านค่ากลับโดยไม่แสดง secret
 
-Helper `scripts/configure-discovery-preview-branch.mjs` ถูกล็อกไว้สำหรับ branch Discovery เดิม จึงห้ามนำไปรันกับ branch นี้โดยไม่เพิ่ม allowlist และทดสอบ safety guard ก่อน
+ตรวจ guard แบบ local-only ก่อน คำสั่งนี้อ่าน project/ฐาน E2E, สร้างหลักฐานที่ไม่มีค่า secret และไม่เรียก Vercel:
+
+```powershell
+npm.cmd run preview:research:validate
+```
+
+ผลที่คาดหวังคือ branch `codex/feedback-research-analytics`, ฐานที่ลงท้าย `_e2e`, ตัวแปร allowlist 29 รายการ และสถานะ `validated-local-only`
+
+ก่อนเขียนค่าจริง ให้ตรวจรายการ branch-scoped variables ที่มีอยู่บน Vercel เมื่อได้รับอนุญาตให้เปลี่ยนค่าบน Vercel แล้วเท่านั้น ให้ส่ง path ของ Vercel CLI entrypoint พร้อม confirmation token เข้า helper:
+
+```powershell
+node --env-file-if-exists=.env.e2e.local scripts/configure-research-preview-branch.mjs <path-to-vercel-cli-entrypoint> --confirm-branch-preview-write
+```
+
+Helper นี้ล็อก project/team/branch, รับเฉพาะ target `preview`, ส่งค่าผ่าน stdin, สร้าง session/action/analytics secrets และ disabled E2E password ใหม่คนละค่า, ปิด E2E/retention writes, override legacy Pusher/E2E variables ที่อาจ inherit จาก project scope และไม่พิมพ์ค่า sensitive ลงหลักฐาน
+
+ก่อนเขียนค่า helper จะเรียก `env ls` แบบ metadata-only และปฏิเสธหาก branch มี override แม้แต่รายการเดียว จึงไม่มี `--force` และไม่หมุน Analytics secret โดยปริยาย หากรอบก่อนล้มกลางทาง ให้หยุด ตรวจ partial overrides และวางแผน recovery แยก; ห้ามลบ/ทับหรือเพิ่ม key version เอง ส่วน `scripts/configure-discovery-preview-branch.mjs` ยังคงล็อกไว้สำหรับ branch Discovery เดิมและห้ามใช้กับ release นี้
 
 หลัง Preview พร้อม ให้ตรวจ guest/member/teacher/admin/super-admin, consent/evaluation/feedback, Dashboard/export, 375×812 และ 1280×800, keyboard/assistive technology, runtime error logs และ `db:check:e2e` หลัง cleanup ห้าม promote Preview ที่ผูก E2E ไป Production
 
@@ -172,5 +188,5 @@ Helper `scripts/configure-discovery-preview-branch.mjs` ถูกล็อกไ
 - แผน: [`ITHUB_FEEDBACK_RESEARCH_ANALYTICS_PLAN.md`](./ITHUB_FEEDBACK_RESEARCH_ANALYTICS_PLAN.md)
 - เช็กลิสต์: [`ITHUB_FEEDBACK_RESEARCH_ANALYTICS_CHECKLIST.md`](./ITHUB_FEEDBACK_RESEARCH_ANALYTICS_CHECKLIST.md)
 - Data/privacy contract: [`ITHUB_FEEDBACK_RESEARCH_ANALYTICS_DATA_CONTRACT.md`](./ITHUB_FEEDBACK_RESEARCH_ANALYTICS_DATA_CONTRACT.md)
-- Checkpoint ล่าสุด: [`ITHUB_FEEDBACK_RESEARCH_ANALYTICS_CHECKPOINT_06.md`](./ITHUB_FEEDBACK_RESEARCH_ANALYTICS_CHECKPOINT_06.md)
+- Checkpoint ล่าสุด: [`ITHUB_FEEDBACK_RESEARCH_ANALYTICS_CHECKPOINT_07.md`](./ITHUB_FEEDBACK_RESEARCH_ANALYTICS_CHECKPOINT_07.md)
 - Visual decision: [`../design/2026-09-09_RESEARCH_ANALYTICS_DASHBOARD.md`](../design/2026-09-09_RESEARCH_ANALYTICS_DASHBOARD.md)

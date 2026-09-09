@@ -2,9 +2,9 @@
 
 > แผนต้นทาง: [`ITHUB_FEEDBACK_RESEARCH_ANALYTICS_PLAN.md`](./ITHUB_FEEDBACK_RESEARCH_ANALYTICS_PLAN.md)
 >
-> Checkpoint ล่าสุด: [`ITHUB_FEEDBACK_RESEARCH_ANALYTICS_CHECKPOINT_06.md`](./ITHUB_FEEDBACK_RESEARCH_ANALYTICS_CHECKPOINT_06.md)
+> Checkpoint ล่าสุด: [`ITHUB_FEEDBACK_RESEARCH_ANALYTICS_CHECKPOINT_07.md`](./ITHUB_FEEDBACK_RESEARCH_ANALYTICS_CHECKPOINT_07.md)
 >
-> สถานะ: Phase 1–5 และ local verification ผ่านแล้ว; พร้อมเริ่ม Phase 6 Preview/Pilot เมื่อปิด isolation และ academic decision gates
+> สถานะ: Phase 1–5, local verification และ Preview configuration guard ผ่านแล้ว; รออนุญาตเขียนค่า Vercel/Preview และปิด academic decision gates
 >
 > อัปเดตล่าสุด: 9 กันยายน 2569
 >
@@ -25,7 +25,7 @@
 - [x] รัน baseline `npm.cmd run db:check:e2e` ผ่าน: application tables 11/11 และ integrity counters ทุกค่าเป็น 0
 - [x] ระบุงานเอกสาร Phase 2 และ artifacts ที่ค้างอยู่เป็นรายการห้าม stage แล้วรักษาไว้ครบก่อนเปลี่ยน branch
 - [x] สร้าง branch `codex/feedback-research-analytics` จาก commit `5b18aba2762857856388c8dacd9c3331640607e5`
-- [ ] เพิ่ม Preview guard สำหรับ branch ใหม่ก่อน push ครั้งแรก; helper เดิมอนุญาตเฉพาะ `codex/ithub-94-milestone`
+- [x] เพิ่ม Preview guard สำหรับ `codex/feedback-research-analytics` แบบ project/team/branch allowlist, `_e2e` identity, Preview-only target และ local dry-run โดยไม่แก้ helper Discovery เดิม
 
 ### Workspace guard
 
@@ -214,9 +214,10 @@
 - [x] E2E ยืนยัน guest/user/teacher เข้า admin page และ replay admin Server Action โดยตรงไม่ได้; Analytics endpoint ปฏิเสธ guest, no-consent และ cross-origin แล้ว
 - [x] E2E ยืนยันไม่มี event ก่อน consent และไม่มี PII ใน event/export
 - [x] รัน `npm.cmd run lint`
-- [x] รัน `npm.cmd run test:unit`
+- [x] รัน `npm.cmd run test:unit` ผ่าน 77/77 หลังเพิ่ม Preview guard tests
 - [x] รัน `npm.cmd run build`
 - [x] รัน migration/preflight/check บน isolated `_e2e`
+- [x] รัน `npm.cmd run preview:research:validate` แบบ local-only ผ่าน: branch/project/ฐาน `_e2e` และตัวแปร allowlist 29 รายการ; ยังไม่เขียน Vercel
 - [x] รัน Playwright Phase 2 แบบ serial ด้วย isolated `_e2e` ผ่าน 12/12, Phase 3 Analytics ผ่าน 9/9 และ Phase 4 Dashboard/Export ผ่าน 6/6 บน Chromium/Firefox/WebKit พร้อม cleanup fixture; ยังไม่เปิด parallel จนกว่าจะมี per-worker isolation
 - [x] รัน Phase 5 focused clean reruns ผ่านรวม 22 tests และตั้งใจ skip palette matrix 2 ครั้งใน Firefox/WebKit; fixture users/campaigns หลังจบเหลือ 0
 - [ ] ทำ pilot 5–10 คน แยก campaign/data จากรอบจริง และบันทึกข้อแก้ไขคำถาม
@@ -237,6 +238,7 @@
 4. `feat: add consented analytics dashboard and export`
 5. `test: verify feedback research analytics rollout`
 6. `docs: document feedback research analytics release`
+7. `chore: prepare isolated research preview configuration`
 
 ทุก commit ให้ stage เฉพาะไฟล์ใน scope และมี scoped tests ที่เกี่ยวข้อง ห้ามรวม presentation artifacts, `output/`, `tmp/`, `.codex-artifacts/` หรือเอกสาร Phase 2 ที่ยังไม่ได้ตัดสินใจ
 
@@ -331,3 +333,16 @@
 - Lint, unit 73/73, production build และ `db:check:e2e` ผ่าน; fixture users/campaigns ของชุดวิจัยเหลือ 0
 - อัปเดต Privacy, Terms, README, `.env.example`, setup/release runbook, data contract และ visual decision record โดยไม่ใส่ secret จริง
 - Phase 5 อยู่ใน commit `234735a`; ยังไม่ push, deploy, migrate Production หรือ execute retention
+
+### 9 กันยายน 2569 — Checkpoint 07 isolated Preview configuration guard — Codex
+
+- เพิ่ม helper เฉพาะ branch `codex/feedback-research-analytics` โดยล็อก ITHub project/team และไม่มี Production target
+- บังคับ source database เป็น isolated `_e2e` ผ่าน safety guard เดิม และสร้าง database identity แบบ hash โดยไม่บันทึก credential
+- สร้าง Preview-only session, Server Action และ Analytics HMAC secrets ใหม่คนละค่า; ไม่ reuse ค่าจาก local/Production
+- ตั้ง runtime Preview ให้ E2E writes และ retention writes เป็น `false`; เปิด For You สำหรับตรวจ instrumented flow และปิด Pusher/Gemini/Cloudinary ด้วย placeholder
+- ส่งค่าตัวแปรผ่าน stdin ให้ Vercel CLI, mark sensitive fields และหลักฐาน local เก็บเฉพาะชื่อ 29 ตัวแปร/branch/database/hash/status
+- Read-only Vercel audit พบ branch นี้มี override 0 รายการ ขณะที่ project-level Preview มี 22 keys ที่ share scope กับ Production จึงยืนยันว่าต้องตั้ง branch overrides ก่อน push
+- Unit tests ครอบคลุม branch/project rejection, variable isolation, no Production CLI target, secret reuse และฐานที่ไม่ลงท้าย `_e2e`
+- Remote-write path ไม่มี `--force` และมี metadata preflight ที่ปฏิเสธ branch ซึ่งมี override อยู่แล้ว เพื่อไม่หมุน secrets/key version โดยปริยาย
+- `npm.cmd run preview:research:validate` ผ่านบน project link ปัจจุบันด้วยสถานะ `validated-local-only`; ยังไม่ได้เรียก Vercel API หรือเปลี่ยน environment ภายนอก
+- ยังไม่ push, deploy, migrate Production หรือ execute retention
