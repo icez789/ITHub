@@ -9,6 +9,7 @@ import {
   buildResearchPreviewCliArgs,
   buildResearchPreviewListArgs,
   buildResearchPreviewVariables,
+  classifyResearchPreviewCliFailure,
   parseResearchPreviewCommand,
   RESEARCH_PREVIEW_BRANCH,
 } from './research-preview-config-core.mjs';
@@ -57,7 +58,9 @@ if (!dryRun) {
       child.on('error', () => reject(new Error(`Unable to configure ${name}`)));
       child.on('exit', (code) => {
         if (code === 0) resolve(text);
-        else reject(new Error(`Unable to configure ${name}`));
+        else reject(new Error(
+          `Unable to configure ${name} (${classifyResearchPreviewCliFailure(text)})`,
+        ));
       });
       child.stdin.end(`${value}\n`);
     });

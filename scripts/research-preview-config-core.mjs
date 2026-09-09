@@ -47,6 +47,10 @@ export function buildResearchPreviewCliArgs(cli, name, sensitive) {
     'preview',
     '--git-branch',
     RESEARCH_PREVIEW_BRANCH,
+    // Vercel requires upsert when a branch override shadows a project-level
+    // variable with the same key. The caller verifies this branch has no
+    // existing overrides before any command built here is executed.
+    '--force',
     '--yes',
     '--scope',
     RESEARCH_PREVIEW_PROJECT.orgId,
@@ -85,6 +89,20 @@ export function assertResearchPreviewBranchIsEmpty(rawOutput) {
     throw new Error('Research Preview branch already has environment overrides; refusing implicit rotation');
   }
   return { existingOverrideCount: 0 };
+}
+
+export function classifyResearchPreviewCliFailure(rawOutput) {
+  const text = String(rawOutput ?? '');
+  const structuredReason = text.match(/"reason"\s*:\s*"([a-z0-9_-]+)"/i)?.[1];
+  if (structuredReason) return structuredReason.toLowerCase();
+  if (/branch/i.test(text) && /(not found|does not exist|invalid)/i.test(text)) {
+    return 'branch_not_found';
+  }
+  if (/already exists|conflict/i.test(text)) return 'environment_conflict';
+  if (/forbidden|permission/i.test(text)) return 'forbidden';
+  if (/unauthorized|not authenticated|log in/i.test(text)) return 'unauthorized';
+  if (/sensitive|secret policy/i.test(text)) return 'secret_policy';
+  return 'unknown_cli_error';
 }
 
 export function parseResearchPreviewCommand(args) {

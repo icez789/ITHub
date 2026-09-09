@@ -7,6 +7,7 @@ import {
   buildResearchPreviewCliArgs,
   buildResearchPreviewListArgs,
   buildResearchPreviewVariables,
+  classifyResearchPreviewCliFailure,
   parseResearchPreviewCommand,
   RESEARCH_PREVIEW_BRANCH,
   RESEARCH_PREVIEW_PROJECT,
@@ -109,7 +110,7 @@ test('research Preview CLI arguments cannot target Production or another branch'
   assert.equal(args[args.indexOf('--git-branch') + 1], RESEARCH_PREVIEW_BRANCH);
   assert.equal(args[args.indexOf('--scope') + 1], RESEARCH_PREVIEW_PROJECT.orgId);
   assert.equal(args.includes('--sensitive'), true);
-  assert.equal(args.includes('--force'), false);
+  assert.equal(args.includes('--force'), true);
   assert.equal(args.some((value) => String(value).toLowerCase() === 'production'), false);
   assert.equal(buildResearchPreviewCliArgs('vercel-cli.js', 'ITHUB_ENVIRONMENT', false).at(-1), '--no-sensitive');
   assert.throws(
@@ -133,6 +134,15 @@ test('research Preview CLI arguments cannot target Production or another branch'
     /refusing implicit rotation/,
   );
   assert.throws(() => assertResearchPreviewBranchIsEmpty('not json'), /did not return JSON/);
+});
+
+test('research Preview CLI failures expose only a safe classification', () => {
+  assert.equal(
+    classifyResearchPreviewCliFailure('{"status":"error","reason":"branch_not_found","message":"secret text"}'),
+    'branch_not_found',
+  );
+  assert.equal(classifyResearchPreviewCliFailure('Environment already exists'), 'environment_conflict');
+  assert.equal(classifyResearchPreviewCliFailure('unrecognized failure'), 'unknown_cli_error');
 });
 
 test('research Preview variable builder rejects unsafe database and secret reuse', () => {
