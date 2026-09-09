@@ -1,6 +1,6 @@
 'use client';
 
-import { useActionState, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   BarChart3,
   CheckCircle2,
@@ -33,22 +33,14 @@ import {
   setResearchAnalyticsEnabled,
   trackResearchEvent,
 } from './ResearchAnalyticsProvider';
+import {
+  ResearchActionMessage,
+  useResearchActionForm,
+} from './ResearchActionFeedback';
 
 const inputClass = 'min-h-11 w-full rounded-xl border border-[var(--app-border)] bg-[var(--app-surface)] px-3 py-2 text-sm text-[var(--app-text)] outline-none transition-colors focus:border-[var(--app-primary)] focus:ring-2 focus:ring-[var(--app-focus-ring)]/25 disabled:cursor-not-allowed disabled:opacity-50';
 const secondaryButtonClass = 'inline-flex min-h-10 items-center justify-center gap-2 rounded-xl border border-[var(--app-border)] bg-[var(--app-surface)] px-4 py-2 text-sm font-semibold text-[var(--app-text)] transition-colors hover:bg-[var(--app-surface-subtle)] disabled:cursor-wait disabled:opacity-60';
 const primaryButtonClass = 'inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-[var(--app-primary)] px-5 py-2.5 text-sm font-semibold text-[var(--app-primary-contrast)] transition-colors hover:bg-[var(--app-primary-hover)] disabled:cursor-wait disabled:opacity-60';
-
-function ActionMessage({ state }) {
-  if (!state?.message) return null;
-  return (
-    <p
-      role={state.success ? 'status' : 'alert'}
-      className={`text-sm font-medium ${state.success ? 'text-[var(--app-success)]' : 'text-[var(--app-danger)]'}`}
-    >
-      {state.message}
-    </p>
-  );
-}
 
 function SelectField({ id, name, label, options, required = true, defaultValue = '' }) {
   return (
@@ -65,7 +57,7 @@ function SelectField({ id, name, label, options, required = true, defaultValue =
 }
 
 export function ResearchEvaluationForm({ campaign, clientSubmissionId }) {
-  const [state, action, pending] = useActionState(submitResearchEvaluationAction, null);
+  const { state, action, pending, messageId, onSubmit } = useResearchActionForm(submitResearchEvaluationAction);
   const [taskResults, setTaskResults] = useState(() => RESEARCH_TASKS.map(() => ''));
   const startedRef = useRef(false);
   const trackedSubmissionRef = useRef(null);
@@ -95,7 +87,15 @@ export function ResearchEvaluationForm({ campaign, clientSubmissionId }) {
   };
 
   return (
-    <form action={action} onFocusCapture={trackStart} className="space-y-8" aria-labelledby={`evaluation-${campaign.campaignId}-heading`}>
+    <form
+      action={action}
+      onFocusCapture={trackStart}
+      onSubmit={onSubmit}
+      className="space-y-8"
+      aria-labelledby={`evaluation-${campaign.campaignId}-heading`}
+      aria-describedby={messageId}
+      aria-busy={pending}
+    >
       <input type="hidden" name="campaignId" value={campaign.campaignId} />
       <input type="hidden" name="clientSubmissionId" value={clientSubmissionId} />
 
@@ -204,14 +204,14 @@ export function ResearchEvaluationForm({ campaign, clientSubmissionId }) {
           {pending ? <LoaderCircle aria-hidden="true" className="animate-spin motion-reduce:animate-none" size={17} /> : <ClipboardCheck aria-hidden="true" size={17} />}
           {pending ? 'กำลังส่งแบบประเมิน' : 'ส่งแบบประเมินหนึ่งครั้ง'}
         </button>
-        <ActionMessage state={state} />
+        <ResearchActionMessage id={messageId} state={state} />
       </div>
     </form>
   );
 }
 
 export function ResearchFeedbackForm({ campaigns, clientSubmissionId, routePath }) {
-  const [state, action, pending] = useActionState(submitResearchFeedbackAction, null);
+  const { state, action, pending, messageId, onSubmit } = useResearchActionForm(submitResearchFeedbackAction);
   const formRef = useRef(null);
   const trackedSubmissionRef = useRef(null);
 
@@ -235,7 +235,15 @@ export function ResearchFeedbackForm({ campaigns, clientSubmissionId, routePath 
   }, [state]);
 
   return (
-    <form ref={formRef} action={action} className="space-y-5">
+    <form
+      ref={formRef}
+      action={action}
+      onSubmit={onSubmit}
+      className="space-y-5"
+      aria-labelledby="general-feedback-heading"
+      aria-describedby={messageId}
+      aria-busy={pending}
+    >
       <input type="hidden" name="clientSubmissionId" value={clientSubmissionId} readOnly />
       <input type="hidden" name="route" value={routePath} readOnly />
       <div className="grid gap-4 sm:grid-cols-2">
@@ -269,19 +277,19 @@ export function ResearchFeedbackForm({ campaigns, clientSubmissionId, routePath 
           {pending ? <LoaderCircle aria-hidden="true" className="animate-spin motion-reduce:animate-none" size={17} /> : <MessageSquarePlus aria-hidden="true" size={17} />}
           {pending ? 'กำลังส่ง Feedback' : 'ส่ง Feedback'}
         </button>
-        <ActionMessage state={state} />
+        <ResearchActionMessage id={messageId} state={state} />
       </div>
     </form>
   );
 }
 
 function GrantConsentForm() {
-  const [state, action, pending] = useActionState(grantResearchAnalyticsConsentAction, null);
+  const { state, action, pending, messageId, onSubmit } = useResearchActionForm(grantResearchAnalyticsConsentAction);
   useEffect(() => {
     if (state?.success) setResearchAnalyticsEnabled(true);
   }, [state]);
   return (
-    <form action={action} className="mt-5">
+    <form action={action} onSubmit={onSubmit} className="mt-5" aria-label="เปิด Research Analytics" aria-describedby={messageId} aria-busy={pending}>
       <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-[var(--app-border)] bg-[var(--app-surface-subtle)] p-4">
         <input type="checkbox" name="acknowledged" value="accepted" required className="mt-1 h-5 w-5 shrink-0 accent-[var(--app-primary)]" />
         <span className="text-sm leading-6 text-[var(--app-text)]">
@@ -293,25 +301,25 @@ function GrantConsentForm() {
           {pending ? <LoaderCircle aria-hidden="true" className="animate-spin motion-reduce:animate-none" size={17} /> : <ShieldCheck aria-hidden="true" size={17} />}
           {pending ? 'กำลังบันทึก' : 'ยินยอม Research Analytics'}
         </button>
-        <ActionMessage state={state} />
+        <ResearchActionMessage id={messageId} state={state} />
       </div>
     </form>
   );
 }
 
 function WithdrawConsentForm() {
-  const [state, action, pending] = useActionState(withdrawResearchAnalyticsConsentAction, null);
+  const { state, action, pending, messageId, onSubmit } = useResearchActionForm(withdrawResearchAnalyticsConsentAction);
   useEffect(() => {
     if (state?.success) setResearchAnalyticsEnabled(false);
   }, [state]);
   return (
-    <form action={action} className="mt-5">
+    <form action={action} onSubmit={onSubmit} className="mt-5" aria-label="ถอนความยินยอม Research Analytics" aria-describedby={messageId} aria-busy={pending}>
       <div className="flex flex-wrap items-center gap-3">
         <button type="submit" disabled={pending} className={secondaryButtonClass}>
           {pending ? <LoaderCircle aria-hidden="true" className="animate-spin motion-reduce:animate-none" size={17} /> : <Trash2 aria-hidden="true" size={17} />}
           {pending ? 'กำลังถอนความยินยอม' : 'ถอนความยินยอมและลบ Raw Analytics'}
         </button>
-        <ActionMessage state={state} />
+        <ResearchActionMessage id={messageId} state={state} />
       </div>
     </form>
   );
@@ -344,16 +352,16 @@ export function ResearchConsentCard({ consent }) {
 }
 
 export function EvaluationWithdrawalForm({ campaignId }) {
-  const [state, action, pending] = useActionState(withdrawResearchEvaluationAction, null);
+  const { state, action, pending, messageId, onSubmit } = useResearchActionForm(withdrawResearchEvaluationAction);
   return (
-    <form action={action} className="mt-3">
+    <form action={action} onSubmit={onSubmit} className="mt-3" aria-label="ถอนคำตอบแบบประเมิน" aria-describedby={messageId} aria-busy={pending}>
       <input type="hidden" name="campaignId" value={campaignId} />
       <div className="flex flex-wrap items-center gap-3">
         <button type="submit" disabled={pending} className={secondaryButtonClass}>
           {pending ? <LoaderCircle aria-hidden="true" className="animate-spin motion-reduce:animate-none" size={16} /> : <Trash2 aria-hidden="true" size={16} />}
           {pending ? 'กำลังถอนคำตอบ' : 'ถอนและล้างเนื้อหาคำตอบ'}
         </button>
-        <ActionMessage state={state} />
+        <ResearchActionMessage id={messageId} state={state} />
       </div>
     </form>
   );

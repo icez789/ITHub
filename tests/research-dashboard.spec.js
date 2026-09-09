@@ -155,6 +155,36 @@ async function createDashboardFixture(testInfo) {
   return { admin, campaignId, piiCanary };
 }
 
+async function themeContrastRatios(page) {
+  return page.evaluate(() => {
+    const styles = getComputedStyle(document.documentElement);
+    const luminance = (token) => {
+      const rawColor = styles.getPropertyValue(token).trim().replace('#', '');
+      const color = rawColor.length === 3
+        ? [...rawColor].map((digit) => digit + digit).join('')
+        : rawColor;
+      const rgb = [0, 2, 4].map((offset) => parseInt(color.slice(offset, offset + 2), 16) / 255)
+        .map((value) => value <= 0.04045 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4);
+      return rgb[0] * 0.2126 + rgb[1] * 0.7152 + rgb[2] * 0.0722;
+    };
+    return [
+      ['--app-text', '--app-surface'],
+      ['--app-text-muted', '--app-surface'],
+      ['--app-accent-text', '--app-primary-soft'],
+      ['--app-primary-contrast', '--app-primary'],
+      ['--app-success', '--app-surface'],
+      ['--app-warning', '--app-surface'],
+      ['--app-danger', '--app-surface'],
+      ['--app-info', '--app-surface'],
+    ].map(([foreground, background]) => ({
+      foreground,
+      background,
+      ratio: (Math.max(luminance(foreground), luminance(background)) + 0.05)
+        / (Math.min(luminance(foreground), luminance(background)) + 0.05),
+    }));
+  });
+}
+
 test.describe('Research analytics dashboard and export', () => {
   test.describe.configure({ mode: 'serial', timeout: 180_000 });
 
@@ -162,8 +192,8 @@ test.describe('Research analytics dashboard and export', () => {
     await cleanupFixtures();
     await page.addInitScript(() => {
       window.localStorage.setItem('ithub_onboarding_v2', 'completed');
-      window.localStorage.setItem('theme', 'light');
-      window.localStorage.setItem('ithub_palette_v1', 'classic');
+      if (!window.localStorage.getItem('theme')) window.localStorage.setItem('theme', 'light');
+      if (!window.localStorage.getItem('ithub_palette_v1')) window.localStorage.setItem('ithub_palette_v1', 'classic');
     });
   });
 
@@ -186,7 +216,10 @@ test.describe('Research analytics dashboard and export', () => {
     await page.context().clearCookies();
     await login(page, teacher);
     await page.goto('/admin/analytics?respondent=private-free-text');
-    await expect(page.getByText('ตัวกรองไม่ถูกต้อง กรุณาเลือกข้อมูลใหม่', { exact: true })).toBeVisible();
+    const filterError = page.getByText('ตัวกรองไม่ถูกต้อง กรุณาเลือกข้อมูลใหม่', { exact: true });
+    await expect(filterError).toBeVisible();
+    await expect(filterError).toHaveAttribute('aria-live', 'assertive');
+    await expect(page.getByRole('form', { name: 'ตัวกรองข้อมูล' })).toHaveAttribute('aria-describedby', 'research-filter-error');
     const invalidResponse = await page.request.get('/api/admin/research/export?respondent=private-free-text');
     expect(invalidResponse.status()).toBe(400);
     expect(await invalidResponse.json()).toEqual({ status: 'error', code: 'invalid_filter' });
@@ -205,8 +238,16 @@ test.describe('Research analytics dashboard and export', () => {
     await expect(page.getByTestId('metric-topic_create_success')).toHaveText('100%');
     await expect(page.getByTestId('metric-comment_create_success')).toHaveText('100%');
     await expect(page.getByText(fixture.piiCanary)).toHaveCount(0);
+    await expect(page.getByRole('form', { name: 'ตัวกรองข้อมูล' })).toBeVisible();
+    await expect(page.getByRole('table', { name: 'ผลภารกิจจากแบบประเมินเทียบพฤติกรรมที่สังเกตได้' })).toBeVisible();
+    await expect(page.getByRole('table', { name: 'ประเภทผู้ตอบ' })).toBeVisible();
+    const taskRegion = page.getByRole('region', { name: 'ผลภารกิจ — ตารางเลื่อนแนวนอนได้' });
+    await taskRegion.focus();
+    await expect(taskRegion).toBeFocused();
+    expect(await taskRegion.evaluate((element) => parseFloat(getComputedStyle(element).outlineWidth))).toBeGreaterThanOrEqual(2);
 
     const exportLink = page.getByRole('link', { name: 'สร้างชุดข้อมูลบทที่ 4–5' });
+    await expect(exportLink).toHaveAttribute('aria-describedby', 'research-export-description');
     const href = await exportLink.getAttribute('href');
     const response = await page.request.get(href);
     expect(response.status()).toBe(200);
@@ -235,5 +276,40 @@ test.describe('Research analytics dashboard and export', () => {
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)).toBe(true);
     await page.screenshot({ path: testInfo.outputPath('research-dashboard-desktop-dark.png'), fullPage: false });
     await expect(page.locator('[data-nextjs-dialog]')).toHaveCount(0);
+  });
+
+  test('keeps research surfaces readable in five palettes across light and dark modes', async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name !== 'chromium', 'The full palette matrix runs once; functional checks run in every browser.');
+    test.setTimeout(300_000);
+    const fixture = await createDashboardFixture(testInfo);
+    await login(page, fixture.admin);
+    await page.setViewportSize({ width: 1280, height: 800 });
+
+    for (const mode of ['light', 'dark']) {
+      for (const palette of ['classic', 'ocean', 'forest', 'violet', 'amber']) {
+        await page.evaluate(([nextMode, nextPalette]) => {
+          localStorage.setItem('theme', nextMode);
+          localStorage.setItem('ithub_palette_v1', nextPalette);
+        }, [mode, palette]);
+        await page.goto(`/admin/analytics?campaign=${fixture.campaignId}`);
+        await expect(page.locator('html')).toHaveAttribute('data-mode', mode);
+        await expect(page.locator('html')).toHaveAttribute('data-palette', palette);
+        await expect(page.getByRole('heading', { level: 2, name: 'Dashboard ข้อมูลวิจัย' })).toBeVisible();
+        await expect(page.getByText(/Campaign ยังไม่สิ้นสุด/)).toBeVisible();
+        for (const result of await themeContrastRatios(page)) {
+          expect(result.ratio, `${palette} ${mode} ${result.foreground}/${result.background}`).toBeGreaterThanOrEqual(4.5);
+        }
+        expect(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)).toBe(true);
+        await page.screenshot({ path: testInfo.outputPath(`research-dashboard-${palette}-${mode}.png`), fullPage: false, animations: 'disabled' });
+
+        await page.goto('/feedback');
+        await expect(page.locator('html')).toHaveAttribute('data-mode', mode);
+        await expect(page.locator('html')).toHaveAttribute('data-palette', palette);
+        await expect(page.getByRole('heading', { level: 1, name: 'แบบประเมินและ Feedback' })).toBeVisible();
+        await expect(page.getByText('เปิดรับคำตอบ', { exact: true })).toBeVisible();
+        expect(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)).toBe(true);
+        await page.screenshot({ path: testInfo.outputPath(`research-feedback-${palette}-${mode}.png`), fullPage: false, animations: 'disabled' });
+      }
+    }
   });
 });

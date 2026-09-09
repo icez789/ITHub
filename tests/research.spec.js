@@ -125,7 +125,18 @@ test.describe('Feedback and research Phase 2', () => {
 
     await expect(page.getByRole('heading', { level: 1, name: 'แบบประเมินและ Feedback' })).toBeVisible();
     await expect(page.getByRole('heading', { level: 3, name: 'Research UI E2E Pilot' })).toBeVisible();
+    const evaluationForm = page.getByRole('form', { name: 'Research UI E2E Pilot' });
+    const feedbackForm = page.getByRole('form', { name: '2. แจ้งปัญหาหรือข้อเสนอแนะ' });
+    await expect(evaluationForm).toHaveAttribute('aria-busy', 'false');
+    await expect(feedbackForm).toHaveAttribute('aria-busy', 'false');
+    await expect(page.getByRole('group', { name: 'ข้อมูลกลุ่มตัวอย่าง' })).toBeVisible();
+    await expect(page.getByRole('group', { name: 'System Usability Scale — 10 ข้อ' })).toBeVisible();
+    await expect(page.getByRole('group', { name: 'ผลจากงานทดลอง 5 งาน' })).toBeVisible();
     await page.getByLabel('ประเภทผู้ตอบ').selectOption('student');
+    await page.getByLabel('ประเภทผู้ตอบ').focus();
+    await page.keyboard.press('Tab');
+    await expect(page.getByLabel('ประสบการณ์ใช้งาน')).toBeFocused();
+    expect(await page.getByLabel('ประสบการณ์ใช้งาน').evaluate((element) => parseFloat(getComputedStyle(element).outlineWidth))).toBeGreaterThanOrEqual(2);
     await page.getByLabel('ประสบการณ์ใช้งาน').selectOption('intermediate');
     await page.getByLabel('อุปกรณ์หลัก').selectOption('desktop');
     for (let index = 1; index <= 10; index += 1) {
@@ -169,7 +180,13 @@ test.describe('Feedback and research Phase 2', () => {
       checkbox.removeAttribute('required');
     });
     await page.getByRole('button', { name: 'ยินยอม Research Analytics' }).click();
-    await expect(page.getByText('กรุณายืนยันความยินยอมก่อนเปิด Research Analytics')).toBeVisible();
+    const consentError = page.getByText('กรุณายืนยันความยินยอมก่อนเปิด Research Analytics', { exact: true });
+    await expect(consentError).toBeVisible();
+    await expect(consentError).toHaveAttribute('role', 'alert');
+    await expect(consentError).toHaveAttribute('aria-atomic', 'true');
+    await expect(consentError).toBeFocused();
+    const consentForm = page.getByRole('form', { name: 'เปิด Research Analytics' });
+    await expect(consentForm).toHaveAttribute('aria-describedby', await consentError.getAttribute('id'));
     await expect.poll(async () => Number((await db.query(
       'SELECT COUNT(*) AS count FROM analytics_consents WHERE user_id = ?',
       [member.id],
@@ -193,6 +210,53 @@ test.describe('Feedback and research Phase 2', () => {
       [campaign.id, member.id],
     );
     expect(Object.values(withdrawn).every((value) => value == null)).toBe(true);
+  });
+
+  test('keeps an offline feedback draft local and deduplicates a repeated retry', async ({ page, context }, testInfo) => {
+    const member = await createAccount('user', testInfo, 'offline-retry');
+    const details = `Research offline retry ${randomUUID()}`;
+    await login(page, member);
+    await page.goto('/feedback');
+
+    const feedbackForm = page.getByRole('form', { name: '2. แจ้งปัญหาหรือข้อเสนอแนะ' });
+    const submitButton = page.getByRole('button', { name: 'ส่ง Feedback', exact: true });
+    await page.getByLabel('ประเภท Feedback').selectOption('bug');
+    await page.getByLabel('รายละเอียด').fill(details);
+
+    await context.setOffline(true);
+    await submitButton.click();
+    const offlineAlert = page.getByText('อุปกรณ์ออฟไลน์อยู่ ข้อมูลยังไม่ถูกส่ง โปรดเชื่อมต่ออินเทอร์เน็ตแล้วกดปุ่มเดิมอีกครั้ง', { exact: true });
+    await expect(offlineAlert).toBeVisible();
+    await expect(offlineAlert).toBeFocused();
+    await expect(feedbackForm).toHaveAttribute('aria-busy', 'false');
+    expect(Number((await db.query(
+      'SELECT COUNT(*) AS count FROM feedback_submissions WHERE user_id = ? AND details = ?',
+      [member.id, details],
+    ))[0][0].count)).toBe(0);
+
+    await context.setOffline(false);
+    let actionRequestCount = 0;
+    await page.route('**/feedback', async (route) => {
+      const request = route.request();
+      if (request.method() === 'POST' && request.headers()['next-action']) {
+        actionRequestCount += 1;
+        await new Promise((resolve) => setTimeout(resolve, 350));
+      }
+      await route.continue();
+    });
+
+    await submitButton.click();
+    await expect(page.getByRole('button', { name: 'กำลังส่ง Feedback' })).toBeDisabled();
+    await feedbackForm.evaluate((form) => form.requestSubmit());
+    await expect.poll(async () => Number((await db.query(
+      'SELECT COUNT(*) AS count FROM feedback_submissions WHERE user_id = ? AND details = ?',
+      [member.id, details],
+    ))[0][0].count)).toBe(1);
+    await expect.poll(() => actionRequestCount).toBeGreaterThanOrEqual(1);
+    await expect.poll(async () => Number((await db.query(
+      'SELECT COUNT(*) AS count FROM feedback_submissions WHERE user_id = ?',
+      [member.id],
+    ))[0][0].count)).toBe(1);
   });
 
   test('lets Admin triage feedback without exposing member identity in the DTO', async ({ page }, testInfo) => {

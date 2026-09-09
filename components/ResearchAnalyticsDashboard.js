@@ -114,7 +114,7 @@ function OverviewCard({ icon: Icon, label, metric, testId }) {
 
 function BreakdownTable({ caption, rows, labels = {} }) {
   return (
-    <div className="overflow-x-auto rounded-xl border border-[var(--app-border)]">
+    <div role="region" aria-label={`${caption} — ตารางเลื่อนแนวนอนได้`} tabIndex={0} className="overflow-x-auto rounded-xl border border-[var(--app-border)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--app-focus-ring)]">
       <table className="min-w-full text-left text-sm">
         <caption className="border-b border-[var(--app-border)] bg-[var(--app-surface-subtle)] px-4 py-3 text-left font-bold">{caption}</caption>
         <thead className="text-xs text-[var(--app-text-muted)]"><tr><th scope="col" className="px-4 py-2">กลุ่ม</th><th scope="col" className="px-4 py-2 text-right">จำนวน</th></tr></thead>
@@ -140,13 +140,20 @@ export default function ResearchAnalyticsDashboard({ campaigns, metrics, filterE
           <p className="mt-2 max-w-3xl text-sm leading-6 text-[var(--app-text-muted)]">ตัวเลขทุกอัตราแสดง denominator และวิธีนับใกล้ผลลัพธ์ กลุ่มที่มีข้อมูลต่ำกว่า 5 คนจะถูกปกปิดทั้งหน้าและไฟล์ส่งออก</p>
         </div>
         {metrics ? (
-          <a href={exportHref(metrics)} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-[var(--app-primary)] px-4 py-2 text-sm font-semibold text-[var(--app-primary-contrast)] transition-colors hover:bg-[var(--app-primary-hover)]">
+          <a href={exportHref(metrics)} download aria-describedby="research-export-description" className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-[var(--app-primary)] px-4 py-2 text-sm font-semibold text-[var(--app-primary-contrast)] transition-colors hover:bg-[var(--app-primary-hover)]">
             <Download aria-hidden="true" size={17} /> สร้างชุดข้อมูลบทที่ 4–5
           </a>
         ) : null}
+        {metrics ? <p id="research-export-description" className="sr-only">ดาวน์โหลดไฟล์ ZIP จำนวน 7 ไฟล์ที่มีเฉพาะข้อมูลรวมและ methodology</p> : null}
       </div>
 
-      <form method="get" action="/admin/analytics" className="rounded-2xl border border-[var(--app-border)] bg-[var(--app-surface)] p-5 shadow-sm" aria-labelledby="metric-filter-heading">
+      <form
+        method="get"
+        action="/admin/analytics"
+        className="rounded-2xl border border-[var(--app-border)] bg-[var(--app-surface)] p-5 shadow-sm"
+        aria-labelledby="metric-filter-heading"
+        aria-describedby={filterError ? 'research-filter-error' : queryError ? 'research-dashboard-error' : undefined}
+      >
         <fieldset>
           <legend id="metric-filter-heading" className="flex items-center gap-2 font-bold"><Filter aria-hidden="true" size={18} /> ตัวกรองข้อมูล</legend>
           <p className="mt-1 text-xs text-[var(--app-text-muted)]">วันที่ใช้ UTC และถูกจำกัดให้อยู่ในช่วงของ campaign โดยอัตโนมัติ</p>
@@ -177,8 +184,8 @@ export default function ResearchAnalyticsDashboard({ campaigns, metrics, filterE
         </div>
       </form>
 
-      {filterError ? <p role="alert" className="mt-4 rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm font-medium text-amber-900 dark:border-amber-700 dark:bg-amber-950/40 dark:text-amber-200">{filterError.message}</p> : null}
-      {queryError ? <p role="alert" className="mt-4 rounded-xl border border-red-300 bg-red-50 px-4 py-3 text-sm font-medium text-red-900 dark:border-red-800 dark:bg-red-950/40 dark:text-red-200">โหลดข้อมูล Dashboard ไม่สำเร็จ กรุณาลองใหม่ โดยข้อมูล campaign ด้านล่างยังจัดการได้ตามปกติ</p> : null}
+      {filterError ? <p id="research-filter-error" role="alert" aria-live="assertive" aria-atomic="true" className="mt-4 rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm font-medium text-amber-900 dark:border-amber-700 dark:bg-amber-950/40 dark:text-amber-200">{filterError.message}</p> : null}
+      {queryError ? <p id="research-dashboard-error" role="alert" aria-live="assertive" aria-atomic="true" className="mt-4 rounded-xl border border-red-300 bg-red-50 px-4 py-3 text-sm font-medium text-red-900 dark:border-red-800 dark:bg-red-950/40 dark:text-red-200">โหลดข้อมูล Dashboard ไม่สำเร็จ กรุณาลองใหม่ โดยข้อมูล campaign ด้านล่างยังจัดการได้ตามปกติ</p> : null}
 
       {!metrics && !filterError && !queryError ? (
         <div className="mt-5 rounded-2xl border border-dashed border-[var(--app-border-strong)] bg-[var(--app-surface)] p-8 text-center">
@@ -237,7 +244,7 @@ export default function ResearchAnalyticsDashboard({ campaigns, metrics, filterE
           <section className="rounded-2xl border border-[var(--app-border)] bg-[var(--app-surface)] p-5 shadow-sm" aria-labelledby="task-heading">
             <h3 id="task-heading" className="text-lg font-bold">Self-reported เทียบ Observed</h3>
             <p className="mt-1 text-sm text-[var(--app-text-muted)]">Unavailable หมายถึงผู้ตอบไม่มี consent ที่ active จึงห้ามตีความว่าไม่สำเร็จ</p>
-            <div className="mt-4 overflow-x-auto rounded-xl border border-[var(--app-border)]">
+            <div role="region" aria-label="ผลภารกิจ — ตารางเลื่อนแนวนอนได้" tabIndex={0} className="mt-4 overflow-x-auto rounded-xl border border-[var(--app-border)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--app-focus-ring)]">
               <table className="min-w-[760px] w-full text-left text-sm">
                 <caption className="sr-only">ผลภารกิจจากแบบประเมินเทียบพฤติกรรมที่สังเกตได้</caption>
                 <thead className="bg-[var(--app-surface-subtle)] text-xs text-[var(--app-text-muted)]"><tr><th scope="col" className="px-4 py-3">งาน</th><th scope="col" className="px-4 py-3 text-right">รายงานว่าสำเร็จ</th><th scope="col" className="px-4 py-3 text-right">Observed</th><th scope="col" className="px-4 py-3 text-right">Not observed</th><th scope="col" className="px-4 py-3 text-right">Unavailable</th><th scope="col" className="px-4 py-3 text-right">Observed rate</th></tr></thead>

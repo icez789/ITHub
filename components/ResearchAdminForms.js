@@ -1,6 +1,4 @@
 'use client';
-
-import { useActionState } from 'react';
 import { ArrowRight, LoaderCircle, Save, Send, Settings2 } from 'lucide-react';
 
 import {
@@ -13,6 +11,10 @@ import {
   PILOT_EVALUATION_NOTICE_VERSION,
   PILOT_QUESTIONNAIRE_VERSION,
 } from '../lib/researchQuestionnaire';
+import {
+  ResearchActionMessage,
+  useResearchActionForm,
+} from './ResearchActionFeedback';
 
 const inputClass = 'min-h-10 w-full rounded-xl border border-[var(--app-border)] bg-[var(--app-surface)] px-3 py-2 text-sm text-[var(--app-text)] outline-none transition-colors focus:border-[var(--app-primary)] focus:ring-2 focus:ring-[var(--app-focus-ring)]/25 disabled:cursor-not-allowed disabled:opacity-50';
 const primaryButtonClass = 'inline-flex min-h-10 items-center justify-center gap-2 rounded-xl bg-[var(--app-primary)] px-4 py-2 text-sm font-semibold text-[var(--app-primary-contrast)] transition-colors hover:bg-[var(--app-primary-hover)] disabled:cursor-wait disabled:opacity-60';
@@ -44,15 +46,6 @@ const themeOptions = [
   ['other', 'อื่น ๆ'],
 ];
 
-function ActionMessage({ state }) {
-  if (!state?.message) return null;
-  return (
-    <p role={state.success ? 'status' : 'alert'} className={`text-sm font-medium ${state.success ? 'text-[var(--app-success)]' : 'text-[var(--app-danger)]'}`}>
-      {state.message}
-    </p>
-  );
-}
-
 function Field({ id, name, label, type = 'text', defaultValue = '', required = false, min, max, placeholder }) {
   return (
     <label htmlFor={id} className="block">
@@ -65,11 +58,11 @@ function Field({ id, name, label, type = 'text', defaultValue = '', required = f
 export function ResearchCampaignForm({ campaign = null }) {
   const isUpdate = Boolean(campaign);
   const serverAction = isUpdate ? updateResearchCampaignAction : createResearchCampaignAction;
-  const [state, action, pending] = useActionState(serverAction, null);
+  const { state, action, pending, messageId, onSubmit } = useResearchActionForm(serverAction);
   const prefix = isUpdate ? `campaign-${campaign.campaignId}` : 'campaign-new';
 
   return (
-    <form action={action} className="space-y-4">
+    <form action={action} onSubmit={onSubmit} className="space-y-4" aria-label={isUpdate ? `แก้ไขรอบประเมิน ${campaign.name}` : 'สร้างรอบประเมิน'} aria-describedby={messageId} aria-busy={pending}>
       {isUpdate ? <input type="hidden" name="campaignId" value={campaign.campaignId} readOnly /> : null}
       <input type="hidden" name="dataScope" value="pilot" readOnly />
       <div className="grid gap-4 sm:grid-cols-2">
@@ -93,16 +86,16 @@ export function ResearchCampaignForm({ campaign = null }) {
           {pending ? <LoaderCircle aria-hidden="true" className="animate-spin motion-reduce:animate-none" size={16} /> : <Save aria-hidden="true" size={16} />}
           {pending ? 'กำลังบันทึก' : isUpdate ? 'บันทึกแบบร่าง' : 'สร้างแบบร่าง'}
         </button>
-        <ActionMessage state={state} />
+        <ResearchActionMessage id={messageId} state={state} />
       </div>
     </form>
   );
 }
 
 export function ResearchCampaignTransitionForm({ campaignId, nextStatus, label }) {
-  const [state, action, pending] = useActionState(transitionResearchCampaignAction, null);
+  const { state, action, pending, messageId, onSubmit } = useResearchActionForm(transitionResearchCampaignAction);
   return (
-    <form action={action}>
+    <form action={action} onSubmit={onSubmit} aria-label={`${label}รอบประเมิน`} aria-describedby={messageId} aria-busy={pending}>
       <input type="hidden" name="campaignId" value={campaignId} readOnly />
       <input type="hidden" name="nextStatus" value={nextStatus} readOnly />
       <div className="flex flex-wrap items-center gap-3">
@@ -110,21 +103,21 @@ export function ResearchCampaignTransitionForm({ campaignId, nextStatus, label }
           {pending ? <LoaderCircle aria-hidden="true" className="animate-spin motion-reduce:animate-none" size={16} /> : <ArrowRight aria-hidden="true" size={16} />}
           {pending ? 'กำลังเปลี่ยนสถานะ' : label}
         </button>
-        <ActionMessage state={state} />
+        <ResearchActionMessage id={messageId} state={state} />
       </div>
     </form>
   );
 }
 
 export function ResearchFeedbackTriageForm({ feedback }) {
-  const [state, action, pending] = useActionState(triageResearchFeedbackAction, null);
+  const { state, action, pending, messageId, onSubmit } = useResearchActionForm(triageResearchFeedbackAction);
   const terminal = feedback.status === 'resolved' || feedback.status === 'declined';
   const allowedStatuses = terminal
     ? statusOptions.filter(([value]) => value === feedback.status)
     : statusOptions.filter(([value]) => value !== 'new' || feedback.status === 'new');
 
   return (
-    <form action={action} className="mt-5 space-y-4 border-t border-[var(--app-border)] pt-5">
+    <form action={action} onSubmit={onSubmit} className="mt-5 space-y-4 border-t border-[var(--app-border)] pt-5" aria-label={`จัดการ Feedback ${feedback.feedbackId}`} aria-describedby={messageId} aria-busy={pending}>
       <input type="hidden" name="feedbackId" value={feedback.feedbackId} readOnly />
       <fieldset>
         <legend className="flex items-center gap-2 text-sm font-bold text-[var(--app-text)]"><Settings2 aria-hidden="true" size={16} /> การจัดการภายใน</legend>
@@ -159,7 +152,7 @@ export function ResearchFeedbackTriageForm({ feedback }) {
           {pending ? <LoaderCircle aria-hidden="true" className="animate-spin motion-reduce:animate-none" size={16} /> : <Send aria-hidden="true" size={16} />}
           {pending ? 'กำลังอัปเดต' : terminal ? 'บันทึกข้อมูลภายใน' : 'อัปเดต Feedback'}
         </button>
-        <ActionMessage state={state} />
+        <ResearchActionMessage id={messageId} state={state} />
       </div>
     </form>
   );
