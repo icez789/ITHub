@@ -14,6 +14,9 @@ ITHub คือเว็บบอร์ดชุมชนด้านไอท�
 - Dark mode, responsive navigation, skip link และ keyboard accessibility
 - Animated Spotlight Tour 6 ขั้นที่พาไปยัง UI จริง พร้อม blur, focus trap, route restoration และหน้าคู่มือฉบับเต็มที่ `/help`
 - AI assistant ผ่าน Gemini และรูปภาพผ่าน Cloudinary
+- แบบประเมิน SUS + งานทดลอง 5 งาน และ Feedback ทั่วไปที่แยกออกจากกัน
+- Research Analytics แบบ opt-in ใช้รหัสนามแฝง HMAC, event allowlist, การถอนความยินยอม และ retention
+- Dashboard ข้อมูลวิจัยสำหรับ Admin/Super Admin พร้อมตัวหาร กฎปกปิด `n < 5` และ ZIP ข้อมูลรวม 7 ไฟล์สำหรับบทที่ 4–5
 
 ## เทคโนโลยี
 
@@ -24,7 +27,7 @@ ITHub คือเว็บบอร์ดชุมชนด้านไอท�
 - Google Gemini
 - Tailwind CSS 4
 - Playwright สำหรับ End-to-End testing
-- Vercel Analytics และ Vercel Hosting
+- Vercel Hosting และ Vercel Analytics สำหรับสถิติภาพรวม; ข้อมูลวิจัยแบบ first-party ใช้ TiDB เป็นแหล่งอ้างอิงหลัก
 
 ## ความต้องการของระบบ
 
@@ -73,6 +76,10 @@ npm run dev
 | `ITHUB_E2E_ALLOW_WRITES` | ต้องเป็น `true` เพื่อยืนยันการเขียนลงฐาน E2E |
 | `ITHUB_E2E_ENVIRONMENT` | ต้องไม่เป็น `production`, `prod` หรือ `live` |
 | `ITHUB_E2E_EMAIL`, `ITHUB_E2E_PASSWORD`, `ITHUB_E2E_USERNAME` | บัญชี E2E แยกจากบัญชีจริง |
+| `ITHUB_ANALYTICS_SECRET` | คีย์เฉพาะ Research Analytics อย่างน้อย 32 ตัวอักษร ห้ามใช้ซ้ำกับ session/action key |
+| `ITHUB_ANALYTICS_KEY_VERSION` | หมายเลขเวอร์ชันคีย์ HMAC สำหรับรองรับการหมุนคีย์ |
+| `ITHUB_RESEARCH_RETENTION_ALLOW_WRITES` | ต้องเป็น `true` เฉพาะรอบที่อนุมัติให้ retention cleanup ลบข้อมูลจริง |
+| `ITHUB_RESEARCH_RETENTION_ALLOW_PRODUCTION` | opt-in ชั้นที่สองเมื่อตั้งใจ execute retention บน Production |
 | `ITHUB_ENVIRONMENT` | ระบุ `production` สำหรับ safety guard ของงานดูแลระบบ |
 | `ITHUB_MEDIA_CLEANUP_ALLOW_PRODUCTION` | ต้องเป็น `true` เมื่อตั้งใจ retry Cloudinary cleanup บน Production |
 | `ITHUB_SEED_EMAIL`, `ITHUB_SEED_PASSWORD`, `ITHUB_SEED_USERNAME` | บัญชีเริ่มต้นสำหรับ development |
@@ -114,6 +121,36 @@ npm run test:e2e
 ```
 
 ทุกคำสั่ง E2E จะหยุดก่อนเชื่อมต่อหรือเขียนข้อมูล หากชื่อฐานไม่ลงท้าย `_e2e`, ไม่ได้ตั้ง `ITHUB_E2E_ALLOW_WRITES=true`, ไม่มีบัญชีทดสอบ หรือ environment ถูกระบุเป็น production
+
+### Feedback และ Research Analytics
+
+ระบบแยกข้อมูลเป็นแบบประเมินอย่างเป็นทางการ, Feedback ทั่วไป และ Research Analytics แบบยินยอม ข้อมูลบทที่ 4–5 ใช้ TiDB เป็นแหล่งอ้างอิงหลัก; Vercel Analytics ใช้ดูภาพรวมเท่านั้นและไม่ใช่แหล่งของ ZIP งานวิจัย
+
+หลังเตรียม `.env.e2e.local` และ migration บนฐาน `_e2e` แล้ว ให้ตรวจ workflow เฉพาะส่วนดังนี้:
+
+```bash
+npm run test:research:migrations:e2e
+npm run test:research:consent:e2e
+npm run test:research:workflows:e2e
+npm run test:research:retention:e2e
+npm run test:research:metrics-performance:e2e
+npm run test:e2e -- tests/research.spec.js tests/research-analytics.spec.js tests/research-dashboard.spec.js
+```
+
+ดูรายการที่เข้าเกณฑ์ retention โดยไม่ลบข้อมูล:
+
+```bash
+npm run research:retention
+npm run research:retention:e2e
+```
+
+การลบจริงไม่มี npm shortcut โดยตั้งใจ ต้องสำรองฐานข้อมูล ตรวจ dry-run และได้รับอนุญาตเฉพาะรอบก่อนตั้ง `ITHUB_RESEARCH_RETENTION_ALLOW_WRITES=true` แล้วจึงรัน:
+
+```bash
+node --env-file-if-exists=.env scripts/research-retention.mjs --execute
+```
+
+บน Production ต้องตั้ง `ITHUB_RESEARCH_RETENTION_ALLOW_PRODUCTION=true` เพิ่มอีกชั้น ห้ามรัน migration 005, retention execute, push ที่สร้าง Preview หรือ deploy จนกว่าจะตรวจว่า Preview ของ branch นี้ใช้ฐาน `_e2e` และ secrets แยกจาก Production เรียบร้อย รายละเอียดอยู่ที่ `.md/features/ITHUB_FEEDBACK_RESEARCH_ANALYTICS_SETUP.md`
 
 ตรวจ XP และจำนวนกระทู้ที่คลาดเคลื่อนโดยไม่แก้ข้อมูล:
 

@@ -2,9 +2,9 @@
 
 > แผนต้นทาง: [`ITHUB_FEEDBACK_RESEARCH_ANALYTICS_PLAN.md`](./ITHUB_FEEDBACK_RESEARCH_ANALYTICS_PLAN.md)
 >
-> Checkpoint ล่าสุด: [`ITHUB_FEEDBACK_RESEARCH_ANALYTICS_CHECKPOINT_04.md`](./ITHUB_FEEDBACK_RESEARCH_ANALYTICS_CHECKPOINT_04.md)
+> Checkpoint ล่าสุด: [`ITHUB_FEEDBACK_RESEARCH_ANALYTICS_CHECKPOINT_06.md`](./ITHUB_FEEDBACK_RESEARCH_ANALYTICS_CHECKPOINT_06.md)
 >
-> สถานะ: Phase 3 consent-gated Analytics ingestion ผ่าน local verification แล้ว; พร้อมเริ่ม Phase 4 metrics/Dashboard/export โดยยังยึด decision gates ที่เปิดอยู่เป็น pilot-only defaults
+> สถานะ: Phase 1–5 และ local verification ผ่านแล้ว; พร้อมเริ่ม Phase 6 Preview/Pilot เมื่อปิด isolation และ academic decision gates
 >
 > อัปเดตล่าสุด: 9 กันยายน 2569
 >
@@ -196,20 +196,20 @@
 
 - [x] กำหนดทางเข้า `/feedback` ที่ไม่เพิ่ม floating primary action ตัวที่สองและไม่ทำลาย Bottom Navigation contract
 - [x] ใช้ภาษาไทยเป็นหลัก, Lucide icons, semantic design tokens และ status colors ตาม `.md/design/`
-- [ ] ตรวจ 5 palettes × Light/Dark สำหรับ surfaces/statuses ที่เพิ่มใหม่
-- [ ] ตรวจ keyboard order, visible focus, labels, fieldset/legend, error association, live region และ focus restoration
-- [ ] ตรวจ Screen Reader flow ของ Evaluation, Feedback, filters, tables และ export
+- [x] ตรวจ 5 palettes × Light/Dark สำหรับ Dashboard/Feedback รวม 20 screenshots พร้อม contrast assertion อย่างน้อย 4.5:1
+- [x] ตรวจ keyboard order, visible focus, labels, fieldset/legend, error association, live region และ focus restoration
+- [x] ตรวจ semantic flow ที่ Screen Reader ใช้ของ Evaluation, Feedback, filters, tables และ export ผ่าน roles/names/captions/live regions บน Chromium/Firefox/WebKit; manual NVDA/VoiceOver ยังคงเป็น Preview/pilot gate
 - [x] ตรวจ 375×812 และ 1280×800 ใน Light/Dark บน Chromium/Firefox/WebKit; ไม่พบ horizontal overflow หรือ error overlay
-- [ ] ตรวจ pending/error/retry/double-submit/offline-like failure โดยไม่ทำข้อมูลซ้ำ
-- [ ] อัปเดต Privacy Policy ด้วย consent purpose, event categories, retention, withdrawal, processors และ contact
-- [ ] อัปเดต Terms, root README, `.env.example` และเอกสาร setup โดยไม่ใส่ secret จริง
+- [x] ตรวจ pending/error/retry/double-submit/offline-like failure โดย draft ไม่หายและฐานมี Feedback เพียง 1 row หลัง retry ซ้ำ
+- [x] อัปเดต Privacy Policy ด้วย consent purpose, event categories, retention, withdrawal, processors และ contact
+- [x] อัปเดต Terms, root README, `.env.example` และเอกสาร setup โดยไม่ใส่ secret จริง
 - [x] บันทึก implementation decisions, viewport/theme/browser และผลทดสอบไว้ใน `.md/features/`
 - [x] บันทึก decision/evidence ของ visual/UX ที่ `.md/design/` ตาม design handoff
 
 ## 9. Phase 6 — Verification, pilot และ rollout
 
 - [x] Unit: SUS, statistics, HMAC, consent, allowlist, route normalization, denominator, suppression, retention, CSV และ ZIP
-- [ ] Integration: campaign transitions, duplicate/concurrent response, withdrawal, consent deletion, retention และ role matrix
+- [x] Integration: campaign transitions, duplicate/concurrent retry, withdrawal, consent deletion, retention และ role matrix ผ่าน unit + isolated DB smoke + E2E
 - [x] E2E: Evaluation, Feedback, Admin triage, Dashboard และ Export บน Chromium/Firefox/WebKit
 - [x] E2E ยืนยัน guest/user/teacher เข้า admin page และ replay admin Server Action โดยตรงไม่ได้; Analytics endpoint ปฏิเสธ guest, no-consent และ cross-origin แล้ว
 - [x] E2E ยืนยันไม่มี event ก่อน consent และไม่มี PII ใน event/export
@@ -218,6 +218,7 @@
 - [x] รัน `npm.cmd run build`
 - [x] รัน migration/preflight/check บน isolated `_e2e`
 - [x] รัน Playwright Phase 2 แบบ serial ด้วย isolated `_e2e` ผ่าน 12/12, Phase 3 Analytics ผ่าน 9/9 และ Phase 4 Dashboard/Export ผ่าน 6/6 บน Chromium/Firefox/WebKit พร้อม cleanup fixture; ยังไม่เปิด parallel จนกว่าจะมี per-worker isolation
+- [x] รัน Phase 5 focused clean reruns ผ่านรวม 22 tests และตั้งใจ skip palette matrix 2 ครั้งใน Firefox/WebKit; fixture users/campaigns หลังจบเหลือ 0
 - [ ] ทำ pilot 5–10 คน แยก campaign/data จากรอบจริง และบันทึกข้อแก้ไขคำถาม
 - [ ] ล็อก questionnaire/campaign หลังผ่าน pilot ก่อนเก็บข้อมูลจริง
 - [ ] สร้าง Preview branch-scoped variables สำหรับ `codex/feedback-research-analytics` โดยใช้ `test_e2e`, secret แยก และ external services เท่าที่จำเป็น
@@ -318,3 +319,15 @@
 - Performance fixture 100,000 events บน `test_e2e`: complete metric read 2,735.48 ms, event aggregate 268.35 ms, search-to-open 479.99 ms; `EXPLAIN` พบ indexes ที่ตั้งใจและ primary queries ต่ำกว่า 2 วินาที
 - ตรวจภาพ 375×812 Light และ 1280×800 Dark จาก Chromium ด้วยตา และทุก engine ผ่าน overflow/no-error assertions; fixture performance/E2E ถูก cleanup เหลือ campaign/user 0 และ `db:check:e2e` ผ่าน integrity ทุกค่าเป็น 0
 - ยังไม่ตรวจ 5 palettes, Screen Reader แบบเต็ม, Preview, pilot หรือ Production และยังไม่มี push/deploy
+
+### 9 กันยายน 2569 — Checkpoint 06 accessibility, failure UX และ release docs — Codex
+
+- เพิ่ม shared Server Action feedback สำหรับ pending, persistent live region, error focus และ offline retry โดยไม่ล้าง draft
+- เพิ่ม nested error boundary ของ `/feedback` และ `/admin/analytics`; Dashboard tables รองรับ keyboard scroll/focus และ export มีคำอธิบาย aggregate-only 7 ไฟล์
+- ตรวจ 5 palettes × Light/Dark ครบ 20 screenshots บน Chromium; contrast token pairs สำคัญผ่าน 4.5:1 และไม่พบ horizontal overflow
+- ตรวจ roles/names, fieldset/legend, table captions, error association/live region, keyboard order และ focus restoration บน Chromium/Firefox/WebKit; manual NVDA/VoiceOver ยังรอ Preview/pilot
+- Offline + reconnect + double-submit E2E ยืนยันฐานเหลือ Feedback 1 row; Server-side idempotency ยังเป็นชั้นป้องกันหลัก
+- Focused clean cross-browser reruns ผ่าน 22 tests และ skip palette matrix 2 ครั้งตามตั้งใจ; Firefox browser-close glitch จากรอบแรกไม่เกิดซ้ำในการแยกรัน
+- Lint, unit 73/73, production build และ `db:check:e2e` ผ่าน; fixture users/campaigns ของชุดวิจัยเหลือ 0
+- อัปเดต Privacy, Terms, README, `.env.example`, setup/release runbook, data contract และ visual decision record โดยไม่ใส่ secret จริง
+- Phase 5 อยู่ใน commit `234735a`; ยังไม่ push, deploy, migrate Production หรือ execute retention

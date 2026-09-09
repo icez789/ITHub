@@ -196,9 +196,9 @@ Implementation Phase 4 ใช้ช่วงเวลาแบบ half-open `[st
 | Forged user/role/subject | ยึด session ฝั่ง server และคำนวณ subject/session key เอง; ไม่รับ authority fields จาก client | ผ่าน guest/authority-field negative E2E และตรวจ DB ไม่มี raw session/user identifier |
 | IDOR | Member query ต้องผูก `user_id` จาก session; Admin/Super Admin actions ต้องตรวจ role ภายใน action/handler ทุกครั้ง | Phase 2 DTO/action boundary และ guest/user/teacher negative tests ผ่าน |
 | CSRF/cross-origin event | Server Actions ใช้ origin protection ของ framework; Route Handler รับ same-origin JSON เท่านั้น | ผ่าน cross-origin, wrong content type และ browser-origin E2E ครบสาม engines |
-| PII ใน payload/log | Client/server event allowlist, route family normalization, byte limits และห้าม log raw body | PII canary ถูกปฏิเสธและไม่ปรากฏใน response/DB/runtime output; export test รอ Phase 4 |
-| CSV formula injection | Sanitize formula prefix ก่อน RFC 4180 escaping และไม่ export raw identifiers/text | Utility unit test ผ่าน; ZIP round-trip รอ Phase 4 |
-| Subgroup inference | Suppress หลังใช้ filter ทุกชุดเมื่อ `n < 5`; ห้าม raw-row export และห้ามเปิด pseudonym | Contract พร้อม; metric tests รอ Phase 4 |
+| PII ใน payload/log | Client/server event allowlist, route family normalization, byte limits และห้าม log raw body | PII canary ถูกปฏิเสธและไม่ปรากฏใน response/DB/runtime output; Dashboard/ZIP E2E ไม่พบ canary หรือ raw text |
+| CSV formula injection | Sanitize formula prefix ก่อน RFC 4180 escaping และไม่ export raw identifiers/text | Utility และ ZIP parser round-trip ผ่าน พร้อมตรวจ UTF-8 BOM, deterministic headers และ CRC |
+| Subgroup inference | Suppress หลังใช้ filter ทุกชุดเมื่อ `n < 5`; ห้าม raw-row export และห้ามเปิด pseudonym | Metric/Export unit และ Dashboard E2E ผ่านทั้ง direct cohort และ whole-breakdown suppression |
 | Retention overrun | Cleanup ต้อง idempotent, dry-run ได้, รายงานเฉพาะ row counts และใช้ UTC cutoff | Unit/E2E ผ่าน; ยังไม่ตั้ง schedule จนกว่าจะยืนยัน owner/deadline |
 
 ## 9. Pending academic/product confirmation
