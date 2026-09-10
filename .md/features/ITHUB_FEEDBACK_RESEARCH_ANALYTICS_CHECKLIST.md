@@ -2,9 +2,9 @@
 
 > แผนต้นทาง: [`ITHUB_FEEDBACK_RESEARCH_ANALYTICS_PLAN.md`](./ITHUB_FEEDBACK_RESEARCH_ANALYTICS_PLAN.md)
 >
-> Checkpoint ล่าสุด: [`ITHUB_FEEDBACK_RESEARCH_ANALYTICS_CHECKPOINT_11.md`](./ITHUB_FEEDBACK_RESEARCH_ANALYTICS_CHECKPOINT_11.md)
+> Checkpoint ล่าสุด: [`ITHUB_FEEDBACK_RESEARCH_ANALYTICS_CHECKPOINT_12.md`](./ITHUB_FEEDBACK_RESEARCH_ANALYTICS_CHECKPOINT_12.md)
 >
-> สถานะ: Phase 1–5, isolated Vercel Preview verification, ชุดดำเนิน Pilot และ Preview-bound fail-closed readiness guard พร้อมแล้ว; รอ decision sign-off, ผู้เข้าร่วม, manual assistive-technology check และ Production gates
+> สถานะ: Phase 1–5 และ exact 5-task technical smoke บน isolated protected Preview ผ่านแล้ว; readiness guard เหลือ human/operational gates 17 รายการก่อน Pilot และ Production
 >
 > อัปเดตล่าสุด: 11 กันยายน 2569
 >
@@ -214,7 +214,7 @@
 - [x] E2E ยืนยัน guest/user/teacher เข้า admin page และ replay admin Server Action โดยตรงไม่ได้; Analytics endpoint ปฏิเสธ guest, no-consent และ cross-origin แล้ว
 - [x] E2E ยืนยันไม่มี event ก่อน consent และไม่มี PII ใน event/export
 - [x] รัน `npm.cmd run lint`
-- [x] รัน `npm.cmd run test:unit` ผ่าน 86/86 หลังเพิ่ม Preview/Pilot readiness guards และ protected-access tests
+- [x] รัน `npm.cmd run test:unit` ผ่าน 89/89 หลังเพิ่ม Preview/Pilot readiness guards, external-service boundary และ dynamic-route regression tests
 - [x] รัน `npm.cmd run build`
 - [x] รัน migration/preflight/check บน isolated `_e2e`
 - [x] รัน `npm.cmd run preview:research:validate` แบบ local-only ผ่าน: branch/project/ฐาน `_e2e` และตัวแปร allowlist 29 รายการ
@@ -227,6 +227,9 @@
 - [x] รัน protected Preview smoke บน Chromium ผ่าน 11/11 รวม role/security, consent/evaluation/feedback, Dashboard/export, 5 palettes × Light/Dark และ responsive 375×812/1280×800
 - [x] ตรวจ Preview build/runtime logs: build สำเร็จ, ไม่พบ error/fatal หรือ 5xx; รหัส 4xx ที่พบมาจาก negative security/validation tests ตามตั้งใจ
 - [x] รัน post-smoke `db:check:e2e` ผ่าน 11/11 และทุก integrity counter เป็น 0; fixture users/campaigns เหลือ 0
+- [x] รัน exact 5-task Pilot smoke บน protected Preview `dpl_GTqwPwbfQpTMc797d9EQkqq8mgHj` จาก `094ad8e` ผ่าน 1/1 โดยปิด Pusher/Gemini/Cloudinary และยืนยัน event สำหรับ search/open, create topic, comment, like/bookmark และ follow/Following ครบ
+- [x] แก้ dynamic route normalization ให้รับ route family ที่ normalize แล้วซ้ำได้ และรอ analytics delivery สำเร็จก่อน navigation/refresh ใน create topic กับ comment
+- [x] ตรวจหลัง exact 5-task smoke แล้ว: application tables 11/11, integrity counters ทุกค่า 0 และไม่พบ Preview error/fatal/5xx
 - [x] ยืนยันรอบนี้ว่าไม่ได้ promote E2E Preview, ย้าย test rows, migrate/deploy Production หรือ execute retention
 - [x] เตรียม Pilot runbook, decision sign-off sheet, session record, manual accessibility script, Go/No-Go และ incident/cleanup boundary แล้ว
 - [x] เพิ่ม local-only `pilot:research:validate`, config ตัวอย่างที่เริ่มแบบ blocked และ tests เพื่อบังคับ branch/project/`test_e2e`, 11 decisions, 5–10 participant codes, versions, UTC/retention, owner/tester และ quiet-window gates ก่อนเปิด campaign
@@ -397,3 +400,12 @@
 - Targeted tests ผ่าน 7/7, unit รวม 86/86 และ lint ผ่าน; production build ผ่านบน Next.js 16.3.4 หลัง rerun พร้อม network เพราะรอบ sandbox แรกโหลด Google Font ไม่ได้
 - CLI fixture สังเคราะห์ที่ผูก HEAD/Preview evidence ครบให้ `ready` และถูกลบทันที; เมื่อไม่มี config จริงคำสั่งกลับไป blocked ด้วย `config_file_missing`
 - Decision sign-off, ผู้เข้าร่วม, NVDA/VoiceOver และ Pilot จริงยังคงรอคนดำเนินการ; Production ไม่ถูกแตะ
+
+### 11 กันยายน 2569 — Checkpoint 12 exact 5-task external-service boundary — Codex
+
+- เพิ่ม exact Pilot smoke สำหรับ search/open, create topic แบบไม่มีรูป, comment, like/bookmark และ follow/Following พร้อมตรวจ analytics outcome จากฐานแยกและ cleanup fixture
+- พบและแก้ regression ที่ route แบบ `/topic/[id]` ถูก normalize ซ้ำแล้วถูกปฏิเสธ ทำให้ event บางชนิดไม่ถูกบันทึก; เพิ่ม regression tests และ delivery acknowledgement ก่อน navigation/refresh
+- ทำ Pusher/Gemini เป็น no-op/fallback เมื่อค่าถูกปิด และไม่เปิด browser realtime connection ใน Preview ที่ปิดบริการภายนอก
+- Local exact smoke ผ่าน 1/1, unit รวม 89/89, lint/build ผ่าน; protected Preview จาก `094ad8e` ผ่าน exact smoke 1/1 และหลังทดสอบฐาน 11/11/counters 0 พร้อมไม่มี error/fatal/5xx
+- `external_services_review` ปิดได้แล้ว; readiness guard เหลือ 17 human/operational gates ได้แก่ approvals 11, owners 3, NVDA/VoiceOver testers 2 และ quiet window 1
+- ยังไม่ได้เปิด Pilot campaign, ใช้ผู้เข้าร่วมจริง, ทดสอบ NVDA/VoiceOver, migrate/deploy/promote Production หรือ execute retention

@@ -4,7 +4,7 @@
 >
 > ปรับปรุงล่าสุด: 11 กันยายน 2569
 >
-> สถานะ: มี Preview-bound fail-closed readiness guard แล้วและพร้อมดำเนินการหลัง decision sign-off; เอกสารนี้ไม่ใช่หลักฐานว่า Pilot หรือ manual screen-reader test ผ่านแล้ว
+> สถานะ: exact 5-task technical smoke ผ่านบน protected Preview แล้ว; พร้อมดำเนินการหลังปิด human/operational readiness gates โดยเอกสารนี้ไม่ใช่หลักฐานว่า Pilot หรือ manual screen-reader test ผ่านแล้ว
 >
 > Environment: protected Vercel Preview ของ `codex/feedback-research-analytics` + isolated `test_e2e` เท่านั้น
 
@@ -16,7 +16,7 @@
 - [ ] มีผู้เข้าร่วม 5–10 คนและกำหนด participant code `P01`–`P10` โดยไม่ใส่ชื่อในเอกสารนี้
 - [ ] Preview ล่าสุดเป็น READY, ยังเปิด Vercel Authentication และ branch variables 29 รายการยังชี้ `test_e2e`
 - [ ] บัญชี Pilot เป็นบัญชีแยกที่ไม่มีชื่อจริง รหัสนักศึกษา หรืออีเมลจริงใน username/email
-- [ ] ผู้ดำเนินการยืนยันว่า Pusher, Gemini และ Cloudinary ที่ถูกปิดไม่กระทบ 5 งานที่ใช้ทดสอบ
+- [x] ยืนยันด้วย exact 5-task smoke บน protected Preview จาก `094ad8e` ว่า Pusher, Gemini และ Cloudinary ที่ถูกปิดไม่กระทบงานที่ใช้ทดสอบ
 - [ ] กำหนดผู้รับผิดชอบ incident, retention และไฟล์ export แล้ว
 - [ ] จองช่วง Pilot ที่ไม่มี Playwright, seed, migration smoke, performance fixture หรือ cleanup job รันกับ `test_e2e`
 - [ ] `npm.cmd run pilot:research:validate` คืน `status: ready` จากไฟล์ที่ผู้รับผิดชอบกรอกหลัง sign-off จริง
@@ -109,11 +109,14 @@ git status --short --branch
 git rev-parse HEAD
 npm.cmd run preview:research:validate
 npm.cmd run pilot:research:validate
+npm.cmd run test:research:pilot-tasks:e2e
 npm.cmd run test:unit
 npm.cmd run lint
 npm.cmd run build
 npm.cmd run db:check:e2e
 ```
+
+`test:research:pilot-tasks:e2e` ต้องชี้ `ITHUB_E2E_BASE_URL` ไปยัง immutable Preview และส่ง temporary access URL ผ่าน environment ส่วนตัวเท่านั้น ชุดนี้สร้างข้อมูลสังเคราะห์, ตรวจ 5 งานกับ analytics และ cleanup จึงรันได้เฉพาะช่วง preflight ก่อนเปิด campaign; ห้ามรันระหว่าง campaign เป็น `open`
 
 ตรวจบน Vercel แบบ metadata-only ว่า deployment มาจาก branch นี้, target เป็น Preview, state เป็น READY และ branch overrides ยังครบ 29 รายการ ห้ามรัน remote configuration helper ซ้ำเมื่อ branch มี overrides อยู่แล้ว
 
@@ -126,6 +129,7 @@ npm.cmd run db:check:e2e
 | Source commit | [กรอก] |
 | Deployment ID + immutable URL | [กรอก; ห้ามใส่ share token] |
 | Branch variables 29/29 | [กรอก] |
+| Exact 5-task Preview smoke | [กรอก deployment/source, 1/1, DB cleanup และ runtime error/5xx scan; ห้ามใส่ share token] |
 | Pilot readiness guard | [กรอก `ready`, Preview SHA ตรง HEAD, 29 variables, authentication, 11/11 decisions และ participant/eligible count; ห้ามคัดลอก secret] |
 | Unit / lint / build | [กรอก] |
 | DB check 11/11 + counters 0 | [กรอก] |
