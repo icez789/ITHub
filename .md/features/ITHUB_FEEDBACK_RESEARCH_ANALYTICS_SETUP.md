@@ -1,10 +1,10 @@
 # ITHub Feedback & Research Analytics — Setup and Release Runbook
 
-> วันที่: 10 กันยายน 2569
+> อัปเดตล่าสุด: 11 กันยายน 2569
 >
 > Branch: `codex/feedback-research-analytics`
 >
-> สถานะ: ฟีเจอร์, local verification, isolated Vercel Preview verification, ชุดดำเนิน Pilot และ fail-closed readiness guard พร้อมแล้ว; ยังไม่ทำ pilot, migrate/deploy Production หรือ execute retention
+> สถานะ: ฟีเจอร์, local verification, isolated Vercel Preview verification, ชุดดำเนิน Pilot และ Preview-bound fail-closed readiness guard พร้อมแล้ว; ยังไม่ทำ pilot, migrate/deploy Production หรือ execute retention
 
 ## 1. ขอบเขตข้อมูล
 
@@ -99,7 +99,7 @@ Performance fixture สร้าง 100,000 events เฉพาะฐาน `_e2
 npm.cmd run pilot:research:validate
 ```
 
-ต้องได้ `status: ready`, decision 11/11, participant 5–10 คนและ eligible snapshot เท่ากัน ตัวตรวจนี้เป็น local read-only completeness gate ไม่ได้สร้างบัญชี/campaign, เชื่อมต่อฐาน/เครือข่าย หรือทดแทนการลงนามของผู้มีอำนาจ ตัวอย่างเริ่มแบบ `blocked` โดยตั้งใจ รายละเอียดการกรอกและ session procedure อยู่ใน Pilot runbook
+ต้องได้ `status: ready`, Preview source SHA ตรงกับ HEAD, state เป็น READY, Vercel target เป็น `null` (Preview), branch variables 29 รายการ, authentication ยังเปิด, decision 11/11 และ participant 5–10 คนที่มี eligible snapshot เท่ากัน Immutable URL ต้องไม่มี path/query/share token ตัวตรวจนี้เป็น local read-only consistency gate ไม่ได้เรียก Vercel, สร้างบัญชี/campaign, เชื่อมต่อฐานข้อมูล หรือทดแทนการลงนามของผู้มีอำนาจ ผู้ตรวจคนที่สองยังต้องเทียบ `previewEvidence` กับ Vercel metadata จริง ตัวอย่างเริ่มแบบ `blocked` โดยตั้งใจ รายละเอียดการกรอกและ session procedure อยู่ใน Pilot runbook
 
 Lifecycle เป็นทางเดียว:
 
@@ -207,5 +207,5 @@ Helper นี้ล็อก project/team/branch, รับเฉพาะ targe
 - Data/privacy contract: [`ITHUB_FEEDBACK_RESEARCH_ANALYTICS_DATA_CONTRACT.md`](./ITHUB_FEEDBACK_RESEARCH_ANALYTICS_DATA_CONTRACT.md)
 - Pilot runbook: [`ITHUB_FEEDBACK_RESEARCH_ANALYTICS_PILOT_RUNBOOK.md`](./ITHUB_FEEDBACK_RESEARCH_ANALYTICS_PILOT_RUNBOOK.md)
 - Pilot config ตัวอย่าง: [`ITHUB_FEEDBACK_RESEARCH_ANALYTICS_PILOT_CONFIG.example.json`](./ITHUB_FEEDBACK_RESEARCH_ANALYTICS_PILOT_CONFIG.example.json)
-- Checkpoint ล่าสุด: [`ITHUB_FEEDBACK_RESEARCH_ANALYTICS_CHECKPOINT_10.md`](./ITHUB_FEEDBACK_RESEARCH_ANALYTICS_CHECKPOINT_10.md)
+- Checkpoint ล่าสุด: [`ITHUB_FEEDBACK_RESEARCH_ANALYTICS_CHECKPOINT_11.md`](./ITHUB_FEEDBACK_RESEARCH_ANALYTICS_CHECKPOINT_11.md)
 - Visual decision: [`../design/2026-09-09_RESEARCH_ANALYTICS_DASHBOARD.md`](../design/2026-09-09_RESEARCH_ANALYTICS_DASHBOARD.md)

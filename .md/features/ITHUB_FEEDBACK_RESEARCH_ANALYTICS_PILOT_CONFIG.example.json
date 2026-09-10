@@ -3,6 +3,16 @@
   "branch": "codex/feedback-research-analytics",
   "target": "preview",
   "database": "test_e2e",
+  "previewEvidence": {
+    "deploymentId": "",
+    "immutableUrl": "",
+    "sourceCommit": "",
+    "state": "pending",
+    "vercelTarget": null,
+    "branchVariableCount": 0,
+    "authenticationProtected": false,
+    "verifiedAt": ""
+  },
   "campaign": {
     "slug": "pilot-2569-round-a",
     "displayLabel": "ITHub Research Pilot Round A",

@@ -10,6 +10,7 @@ import {
 import { RESEARCH_PREVIEW_BRANCH } from '../../scripts/research-preview-config-core.mjs';
 
 const approvedAt = '2026-09-10T02:00:00.000Z';
+const currentCommit = '0123456789abcdef0123456789abcdef01234567';
 const participantCodes = Object.freeze(['P01', 'P02', 'P03', 'P04', 'P05']);
 
 function approvals(status = 'approved_for_pilot') {
@@ -29,6 +30,16 @@ function readyConfig() {
     branch: RESEARCH_PREVIEW_BRANCH,
     target: 'preview',
     database: 'test_e2e',
+    previewEvidence: {
+      deploymentId: 'dpl_12345678901234567890',
+      immutableUrl: 'https://it-pilot-ready.vercel.app',
+      sourceCommit: currentCommit,
+      state: 'READY',
+      vercelTarget: null,
+      branchVariableCount: 29,
+      authenticationProtected: true,
+      verifiedAt: approvedAt,
+    },
     campaign: {
       slug: 'pilot-2569-round-a',
       displayLabel: 'ITHub Research Pilot Round A',
@@ -60,6 +71,7 @@ function readyConfig() {
 
 const safeContext = Object.freeze({
   branch: RESEARCH_PREVIEW_BRANCH,
+  currentCommit,
   databaseName: 'test_e2e',
   projectTargetVerified: true,
   now: new Date('2026-09-10T03:00:00.000Z'),
@@ -123,6 +135,41 @@ test('blocks Production-shaped targets, unsafe versions, and participant mismatc
   }
 });
 
+test('binds readiness to the exact protected Preview deployment evidence', () => {
+  const config = readyConfig();
+  config.previewEvidence = {
+    ...config.previewEvidence,
+    deploymentId: 'invalid-deployment',
+    immutableUrl: 'https://it-pilot-ready.vercel.app/?_vercel_share=do-not-store',
+    sourceCommit: 'abcdefabcdefabcdefabcdefabcdefabcdefabcd',
+    state: 'ERROR',
+    vercelTarget: 'production',
+    branchVariableCount: 28,
+    authenticationProtected: false,
+    verifiedAt: '2026-09-10T04:00:00.000Z',
+  };
+  const report = evaluateResearchPilotReadiness(config, safeContext);
+  for (const failure of [
+    'preview_deployment_id',
+    'preview_immutable_url',
+    'preview_source_commit',
+    'preview_state',
+    'preview_vercel_target',
+    'preview_branch_variables',
+    'preview_authentication',
+    'preview_verified_in_future',
+  ]) {
+    assert.equal(report.failures.includes(failure), true, failure);
+  }
+  assert.throws(
+    () => evaluateResearchPilotReadiness({
+      ...readyConfig(),
+      previewEvidence: { ...readyConfig().previewEvidence, shareToken: 'do-not-store' },
+    }, safeContext),
+    /unsupported fields: shareToken/,
+  );
+});
+
 test('rejects PII-shaped labels, unsafe dates, and unsupported config fields', () => {
   const config = readyConfig();
   config.campaign.displayLabel = 'student@example.com';
@@ -156,6 +203,9 @@ test('keeps the committed Pilot config example intentionally blocked', async () 
   const report = evaluateResearchPilotReadiness(template, safeContext);
   assert.equal(report.status, 'blocked');
   assert.equal(report.approvedDecisionCount, 0);
+  assert.equal(report.failures.includes('preview_deployment_id'), true);
+  assert.equal(report.failures.includes('preview_source_commit'), true);
+  assert.equal(report.failures.includes('preview_state'), true);
   assert.equal(report.failures.includes('approval_susTranslation'), true);
   assert.equal(report.failures.includes('owner_incidentOwnerCode'), true);
   assert.equal(report.failures.includes('accessibility_nvdaTesterCode'), true);

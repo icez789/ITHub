@@ -2,7 +2,9 @@
 
 > วันที่จัดทำ: 10 กันยายน 2569
 >
-> สถานะ: มี fail-closed readiness guard แล้วและพร้อมดำเนินการหลัง decision sign-off; เอกสารนี้ไม่ใช่หลักฐานว่า Pilot หรือ manual screen-reader test ผ่านแล้ว
+> ปรับปรุงล่าสุด: 11 กันยายน 2569
+>
+> สถานะ: มี Preview-bound fail-closed readiness guard แล้วและพร้อมดำเนินการหลัง decision sign-off; เอกสารนี้ไม่ใช่หลักฐานว่า Pilot หรือ manual screen-reader test ผ่านแล้ว
 >
 > Environment: protected Vercel Preview ของ `codex/feedback-research-analytics` + isolated `test_e2e` เท่านั้น
 
@@ -95,8 +97,10 @@ Copy-Item -LiteralPath .md/features/ITHUB_FEEDBACK_RESEARCH_ANALYTICS_PILOT_CONF
 - ใช้สถานะ decision เป็น `approved_for_pilot`, operator code แทนชื่อ และเวลา UTC เท่านั้น ห้ามใส่ชื่อ อีเมล รหัสนักศึกษา password, token หรือ secret ใน config
 - Participant codes ต้องเรียงต่อเนื่อง `P01` เป็นต้นไป จำนวน 5–10 รหัส และต้องเท่ากับ `eligibleMemberCount`
 - Alias ที่คำสั่งแสดง (`pilot_p01`, `pilot.p01@example.invalid`) ใช้เป็นแนวทางตั้งบัญชีสังเคราะห์ได้ แต่ให้สร้าง password แยกในช่องทางลับและห้ามบันทึก password ลง config/Git
+- กรอก `previewEvidence` จาก Vercel metadata แบบ read-only เท่านั้น: deployment ID, immutable URL ที่ไม่มี path/query/share token, full source SHA 40 ตัว, `state=READY`, `vercelTarget=null`, branch variables 29 รายการ, `authenticationProtected=true` และเวลา `verifiedAt` แบบ UTC
+- `previewEvidence.sourceCommit` ต้องตรงกับ `git rev-parse HEAD`; หากมี commit ใหม่ต้องรอ Preview ใหม่และตรวจ metadata ใหม่ก่อนรัน guard อีกครั้ง
 
-ตัวตรวจนี้อ่านเฉพาะ config, Git branch, `.vercel/project.json` และชื่อฐานจาก environment ไม่เชื่อมต่อเครือข่าย ไม่อ่าน/เขียนฐานข้อมูล และไม่สร้างบัญชีหรือ campaign ผล `ready` ยืนยันเพียงว่าข้อมูลที่กรอกครบและตรง guard ไม่ได้พิสูจน์ตัวตนผู้อนุมัติหรือทดแทนลายเซ็นใน decision sheet
+ตัวตรวจนี้อ่านเฉพาะ config, Git branch/HEAD, `.vercel/project.json` และชื่อฐานจาก environment ไม่เชื่อมต่อ Vercel/เครือข่าย ไม่อ่าน/เขียนฐานข้อมูล และไม่สร้างบัญชีหรือ campaign ผล `ready` ยืนยันเพียงว่าหลักฐานที่ผู้ตรวจกรอกครบและสอดคล้องกัน ไม่ได้พิสูจน์ว่า Vercel metadata เป็นข้อมูลจริง ไม่ได้พิสูจน์ตัวตนผู้อนุมัติ และไม่ทดแทนลายเซ็นใน decision sheet จึงต้องมีผู้ตรวจคนที่สองเทียบกับหน้า Vercel จริงก่อนเปิด campaign
 
 บันทึกผลและเวลา ห้ามคัดลอก secret ลงเอกสาร:
 
@@ -122,7 +126,7 @@ npm.cmd run db:check:e2e
 | Source commit | [กรอก] |
 | Deployment ID + immutable URL | [กรอก; ห้ามใส่ share token] |
 | Branch variables 29/29 | [กรอก] |
-| Pilot readiness guard | [กรอก `ready`, 11/11 decisions, participant/eligible count; ห้ามคัดลอก secret] |
+| Pilot readiness guard | [กรอก `ready`, Preview SHA ตรง HEAD, 29 variables, authentication, 11/11 decisions และ participant/eligible count; ห้ามคัดลอก secret] |
 | Unit / lint / build | [กรอก] |
 | DB check 11/11 + counters 0 | [กรอก] |
 | Backup/restore requirement | ไม่ใช้กับ `test_e2e` Pilot; Production ยังถูก block |

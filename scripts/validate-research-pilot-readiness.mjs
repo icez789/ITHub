@@ -32,12 +32,14 @@ function safeFailureCode(error) {
 
 try {
   const configPath = resolveConfigPath(process.argv.slice(2));
-  const [configText, projectText, branchResult] = await Promise.all([
+  const [configText, projectText, branchResult, commitResult] = await Promise.all([
     readFile(configPath, 'utf8'),
     readFile('.vercel/project.json', 'utf8'),
     execFileAsync('git', ['branch', '--show-current'], { encoding: 'utf8' }),
+    execFileAsync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }),
   ]);
   const branch = branchResult.stdout.trim();
+  const currentCommit = commitResult.stdout.trim();
   const project = JSON.parse(projectText);
   assertResearchPreviewTarget(project, branch);
   const { databaseName } = assertE2eSafety({
@@ -46,6 +48,7 @@ try {
   });
   const report = evaluateResearchPilotReadiness(JSON.parse(configText), {
     branch,
+    currentCommit,
     databaseName,
     projectTargetVerified: true,
     now: new Date(),

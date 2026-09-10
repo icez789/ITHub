@@ -25,6 +25,7 @@ const rootFields = Object.freeze([
   'branch',
   'target',
   'database',
+  'previewEvidence',
   'campaign',
   'participants',
   'approvals',
@@ -33,6 +34,16 @@ const rootFields = Object.freeze([
   'quietWindowConfirmed',
   'externalServicesDisabledConfirmed',
   'finalApprovalAfterPilotRequired',
+]);
+const previewEvidenceFields = Object.freeze([
+  'deploymentId',
+  'immutableUrl',
+  'sourceCommit',
+  'state',
+  'vercelTarget',
+  'branchVariableCount',
+  'authenticationProtected',
+  'verifiedAt',
 ]);
 const campaignFields = Object.freeze([
   'slug',
@@ -52,6 +63,9 @@ const accessibilityFields = Object.freeze(['nvdaTesterCode', 'voiceOverTesterCod
 const operatorCodePattern = /^[A-Z][A-Z0-9_-]{2,31}$/;
 const pilotSlugPattern = /^pilot-[a-z0-9]+(?:-[a-z0-9]+)*$/;
 const utcTimestampPattern = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{3})?Z$/;
+const deploymentIdPattern = /^dpl_[A-Za-z0-9]{20,64}$/;
+const immutablePreviewUrlPattern = /^https:\/\/[a-z0-9-]+\.vercel\.app$/;
+const gitCommitPattern = /^[a-f0-9]{40}$/;
 const oneYearMilliseconds = 366 * 24 * 60 * 60 * 1000;
 
 function isPlainObject(value) {
@@ -113,10 +127,12 @@ export function deriveResearchPilotAccountAliases(participantCodes) {
 export function evaluateResearchPilotReadiness(config, context = {}) {
   assertPlainObject(config, 'Pilot config');
   assertExactFields(config, rootFields, 'Pilot config');
+  const previewEvidence = assertPlainObject(config.previewEvidence, 'Pilot Preview evidence');
   const campaign = assertPlainObject(config.campaign, 'Pilot campaign');
   const approvals = assertPlainObject(config.approvals, 'Pilot approvals');
   const owners = assertPlainObject(config.owners, 'Pilot owners');
   const accessibility = assertPlainObject(config.accessibility, 'Pilot accessibility plan');
+  assertExactFields(previewEvidence, previewEvidenceFields, 'Pilot Preview evidence');
   assertExactFields(campaign, campaignFields, 'Pilot campaign');
   assertExactFields(approvals, RESEARCH_PILOT_DECISION_IDS, 'Pilot approvals');
   assertExactFields(owners, ownerFields, 'Pilot owners');
@@ -130,6 +146,39 @@ export function evaluateResearchPilotReadiness(config, context = {}) {
   appendFailure(failures, config.database !== 'test_e2e', 'config_database');
   appendFailure(failures, context.databaseName !== 'test_e2e', 'current_database');
   appendFailure(failures, context.projectTargetVerified !== true, 'preview_project');
+
+  const currentCommit = String(context.currentCommit ?? '').trim().toLowerCase();
+  const sourceCommit = String(previewEvidence.sourceCommit ?? '').trim().toLowerCase();
+  const verifiedAt = utcDate(previewEvidence.verifiedAt);
+  appendFailure(failures, !gitCommitPattern.test(currentCommit), 'current_commit');
+  appendFailure(
+    failures,
+    !deploymentIdPattern.test(String(previewEvidence.deploymentId ?? '')),
+    'preview_deployment_id',
+  );
+  appendFailure(
+    failures,
+    !immutablePreviewUrlPattern.test(String(previewEvidence.immutableUrl ?? '')),
+    'preview_immutable_url',
+  );
+  appendFailure(
+    failures,
+    !gitCommitPattern.test(sourceCommit) || sourceCommit !== currentCommit,
+    'preview_source_commit',
+  );
+  appendFailure(failures, previewEvidence.state !== 'READY', 'preview_state');
+  appendFailure(failures, previewEvidence.vercelTarget !== null, 'preview_vercel_target');
+  appendFailure(
+    failures,
+    previewEvidence.branchVariableCount !== 29,
+    'preview_branch_variables',
+  );
+  appendFailure(
+    failures,
+    previewEvidence.authenticationProtected !== true,
+    'preview_authentication',
+  );
+  appendFailure(failures, verifiedAt === null, 'preview_verified_at_utc');
 
   const displayLabel = String(campaign.displayLabel ?? '').trim();
   appendFailure(
@@ -202,6 +251,13 @@ export function evaluateResearchPilotReadiness(config, context = {}) {
 
   let approvedDecisionCount = 0;
   const now = context.now instanceof Date ? context.now : new Date();
+  if (verifiedAt) {
+    appendFailure(
+      failures,
+      verifiedAt.getTime() > now.getTime() + (5 * 60 * 1000),
+      'preview_verified_in_future',
+    );
+  }
   for (const decisionId of RESEARCH_PILOT_DECISION_IDS) {
     const approval = approvals[decisionId];
     if (!isPlainObject(approval)) {
@@ -245,6 +301,23 @@ export function evaluateResearchPilotReadiness(config, context = {}) {
     status: uniqueFailures.length === 0 ? 'ready' : 'blocked',
     branch: context.branch || null,
     database: context.databaseName || null,
+    preview: Object.freeze({
+      deploymentId: deploymentIdPattern.test(String(previewEvidence.deploymentId ?? ''))
+        ? previewEvidence.deploymentId
+        : null,
+      immutableUrl: immutablePreviewUrlPattern.test(String(previewEvidence.immutableUrl ?? ''))
+        ? previewEvidence.immutableUrl
+        : null,
+      sourceCommit: gitCommitPattern.test(sourceCommit) ? sourceCommit : null,
+      currentCommit: gitCommitPattern.test(currentCommit) ? currentCommit : null,
+      state: previewEvidence.state === 'READY' ? 'READY' : null,
+      vercelTarget: previewEvidence.vercelTarget ?? null,
+      branchVariableCount: Number.isInteger(previewEvidence.branchVariableCount)
+        ? previewEvidence.branchVariableCount
+        : null,
+      authenticationProtected: previewEvidence.authenticationProtected === true,
+      verifiedAt: verifiedAt?.toISOString() ?? null,
+    }),
     campaign: Object.freeze({
       slug: pilotSlugPattern.test(String(campaign.slug ?? '')) ? campaign.slug : null,
       participantCount,

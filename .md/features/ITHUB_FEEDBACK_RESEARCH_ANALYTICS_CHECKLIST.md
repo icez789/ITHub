@@ -2,11 +2,11 @@
 
 > แผนต้นทาง: [`ITHUB_FEEDBACK_RESEARCH_ANALYTICS_PLAN.md`](./ITHUB_FEEDBACK_RESEARCH_ANALYTICS_PLAN.md)
 >
-> Checkpoint ล่าสุด: [`ITHUB_FEEDBACK_RESEARCH_ANALYTICS_CHECKPOINT_10.md`](./ITHUB_FEEDBACK_RESEARCH_ANALYTICS_CHECKPOINT_10.md)
+> Checkpoint ล่าสุด: [`ITHUB_FEEDBACK_RESEARCH_ANALYTICS_CHECKPOINT_11.md`](./ITHUB_FEEDBACK_RESEARCH_ANALYTICS_CHECKPOINT_11.md)
 >
-> สถานะ: Phase 1–5, isolated Vercel Preview verification, ชุดดำเนิน Pilot และ fail-closed readiness guard พร้อมแล้ว; รอ decision sign-off, ผู้เข้าร่วม, manual assistive-technology check และ Production gates
+> สถานะ: Phase 1–5, isolated Vercel Preview verification, ชุดดำเนิน Pilot และ Preview-bound fail-closed readiness guard พร้อมแล้ว; รอ decision sign-off, ผู้เข้าร่วม, manual assistive-technology check และ Production gates
 >
-> อัปเดตล่าสุด: 10 กันยายน 2569
+> อัปเดตล่าสุด: 11 กันยายน 2569
 >
 > หลักการ: ติ๊ก `[x]` เฉพาะเมื่อมีโค้ด ผลทดสอบ หรือหลักฐานตรวจรับรองรับ
 
@@ -214,7 +214,7 @@
 - [x] E2E ยืนยัน guest/user/teacher เข้า admin page และ replay admin Server Action โดยตรงไม่ได้; Analytics endpoint ปฏิเสธ guest, no-consent และ cross-origin แล้ว
 - [x] E2E ยืนยันไม่มี event ก่อน consent และไม่มี PII ใน event/export
 - [x] รัน `npm.cmd run lint`
-- [x] รัน `npm.cmd run test:unit` ผ่าน 85/85 หลังเพิ่ม Preview/Pilot readiness guards และ protected-access tests
+- [x] รัน `npm.cmd run test:unit` ผ่าน 86/86 หลังเพิ่ม Preview/Pilot readiness guards และ protected-access tests
 - [x] รัน `npm.cmd run build`
 - [x] รัน migration/preflight/check บน isolated `_e2e`
 - [x] รัน `npm.cmd run preview:research:validate` แบบ local-only ผ่าน: branch/project/ฐาน `_e2e` และตัวแปร allowlist 29 รายการ
@@ -230,6 +230,7 @@
 - [x] ยืนยันรอบนี้ว่าไม่ได้ promote E2E Preview, ย้าย test rows, migrate/deploy Production หรือ execute retention
 - [x] เตรียม Pilot runbook, decision sign-off sheet, session record, manual accessibility script, Go/No-Go และ incident/cleanup boundary แล้ว
 - [x] เพิ่ม local-only `pilot:research:validate`, config ตัวอย่างที่เริ่มแบบ blocked และ tests เพื่อบังคับ branch/project/`test_e2e`, 11 decisions, 5–10 participant codes, versions, UTC/retention, owner/tester และ quiet-window gates ก่อนเปิด campaign
+- [x] ผูก Pilot readiness กับ full SHA ของ HEAD และ Preview evidence ที่ต้องเป็น immutable URL ไม่มี share token, state READY, Vercel target `null`, branch variables 29 รายการ และ authentication ยังเปิด
 - [ ] ทำ manual NVDA/VoiceOver check ใน Preview/pilot และบันทึกผล
 - [ ] ก่อน Production migration ต้องยืนยัน target, backup, checksum/restore plan และได้รับอนุญาตเฉพาะรอบนั้น
 - [ ] หลัง Production deploy ให้ smoke consent/evaluation/feedback/admin/export ด้วยข้อมูล QA ที่ติดป้ายและ cleanup ได้
@@ -251,6 +252,7 @@
 11. `docs: prepare research pilot execution pack`
 12. `test: add research pilot readiness guard`
 13. `docs: record research pilot guard preview`
+14. `test: bind pilot readiness to preview evidence`
 
 ทุก commit ให้ stage เฉพาะไฟล์ใน scope และมี scoped tests ที่เกี่ยวข้อง ห้ามรวม presentation artifacts, `output/`, `tmp/`, `.codex-artifacts/` หรือเอกสาร Phase 2 ที่ยังไม่ได้ตัดสินใจ
 
@@ -386,3 +388,12 @@
 - Commit `3666c23` ถูก push แล้ว; protected Preview `dpl_4Ty7RVoCocP1TFJ6pBJ42rLTMhD3` จาก full SHA เดียวกันอยู่สถานะ READY, build 12 วินาที, `/login` ตอบ 200 และ runtime scan ไม่พบ error/fatal/5xx
 - Guard ตรวจความครบถ้วนของข้อมูลที่กรอก ไม่ได้พิสูจน์ตัวตนหรือลายเซ็นผู้อนุมัติ; decision sign-off, ผู้เข้าร่วม, NVDA/VoiceOver และ Pilot จริงยังคงรอคนดำเนินการ
 - ยังไม่ได้สร้างบัญชี/campaign, เขียนฐานข้อมูล, เรียกบริการภายนอก, migrate/deploy/promote Production หรือ execute retention
+
+### 11 กันยายน 2569 — Checkpoint 11 bind Pilot readiness to Preview evidence — Codex
+
+- เพิ่ม `previewEvidence` contract แบบ strict และเปรียบเทียบ `sourceCommit` กับ `git rev-parse HEAD` เพื่อไม่ให้ใช้หลักฐานจาก Preview เก่ากับ source ใหม่
+- บังคับ deployment ID, immutable `https://*.vercel.app` URL ที่ไม่มี path/query/share token, state READY, `vercelTarget=null`, variables 29 รายการ, authentication และเวลา UTC ที่ไม่อยู่ในอนาคต
+- รายงาน readiness แสดงเฉพาะ metadata ที่ allowlist; field อย่าง `shareToken` ถูกปฏิเสธ และ validator ยังไม่เรียก Vercel/ฐานข้อมูลหรือเขียนข้อมูลใด ๆ
+- Targeted tests ผ่าน 7/7, unit รวม 86/86 และ lint ผ่าน; production build ผ่านบน Next.js 16.3.4 หลัง rerun พร้อม network เพราะรอบ sandbox แรกโหลด Google Font ไม่ได้
+- CLI fixture สังเคราะห์ที่ผูก HEAD/Preview evidence ครบให้ `ready` และถูกลบทันที; เมื่อไม่มี config จริงคำสั่งกลับไป blocked ด้วย `config_file_missing`
+- Decision sign-off, ผู้เข้าร่วม, NVDA/VoiceOver และ Pilot จริงยังคงรอคนดำเนินการ; Production ไม่ถูกแตะ
