@@ -31,6 +31,7 @@
     "test:research:retention:e2e": "node --env-file-if-exists=.env.e2e.local scripts/research-retention-smoke.mjs --e2e",
     "test:research:workflows:e2e": "node --env-file-if-exists=.env.e2e.local scripts/research-workflows-smoke.mjs --e2e",
     "test:research:metrics-performance:e2e": "node --env-file-if-exists=.env.e2e.local scripts/research-metrics-performance.mjs --e2e",
+    "test:research:pilot-tasks:e2e": "node --env-file-if-exists=.env.e2e.local scripts/run-e2e.mjs tests/research-pilot-tasks.spec.js --project=chromium --reporter=line",
     "preview:research:validate": "node --env-file-if-exists=.env.e2e.local scripts/configure-research-preview-branch.mjs --dry-run",
     "pilot:research:validate": "node --env-file-if-exists=.env.e2e.local scripts/validate-research-pilot-readiness.mjs",
     "check": "npm run lint && npm run build"

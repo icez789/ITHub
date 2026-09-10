@@ -1,6 +1,6 @@
 import { getCurrentUser } from '../../../../lib/auth';
 import { notificationChannelName } from '../../../../lib/pusherChannels';
-import { pusherServer } from '../../../../lib/pusher';
+import { pusherServer, pusherServerEnabled } from '../../../../lib/pusher';
 
 export async function POST(request) {
   const user = await getCurrentUser();
@@ -18,6 +18,10 @@ export async function POST(request) {
 
   if (channelName !== notificationChannelName(user.id)) {
     return Response.json({ error: 'Forbidden' }, { status: 403 });
+  }
+
+  if (!pusherServerEnabled) {
+    return Response.json({ error: 'Realtime notifications unavailable' }, { status: 503 });
   }
 
   return Response.json(pusherServer.authorizeChannel(socketId, channelName));

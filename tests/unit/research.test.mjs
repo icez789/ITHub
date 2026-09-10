@@ -48,6 +48,8 @@ test('normalizes routes without retaining query strings, hashes, or dynamic ids'
   assert.equal(normalizeFeedbackRoute('/topic/123?draft=private'), '/topic/123');
   assert.equal(normalizeAnalyticsRoute('/topic/123?draft=private'), '/topic/[id]');
   assert.equal(normalizeAnalyticsRoute('/edit/456'), '/edit/[id]');
+  assert.equal(normalizeAnalyticsRoute(normalizeAnalyticsRoute('/topic/123')), '/topic/[id]');
+  assert.equal(normalizeAnalyticsRoute(normalizeAnalyticsRoute('/edit/456')), '/edit/[id]');
   assert.equal(normalizeAnalyticsRoute('/admin/analytics?campaign=4'), '/admin/analytics');
   assert.equal(normalizeFeedbackRoute('https://example.com/private'), null);
   assert.equal(normalizeFeedbackRoute('//example.com/private'), null);

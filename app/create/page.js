@@ -78,7 +78,10 @@ export default function CreateTopicPage() {
     }
 
     if (result.success) {
-        trackResearchEvent({ eventName: 'topic_created', outcome: 'success' });
+        await trackResearchEvent(
+          { eventName: 'topic_created', outcome: 'success' },
+          { waitForDelivery: true },
+        );
         toast.success('ตั้งกระทู้สำเร็จ (+10 XP)');
         router.push(`/topic/${result.topicId}`);
     } else {

@@ -26,7 +26,10 @@ export default function CommentComposer({ action, parentId = null, compact = fal
         setError(result?.message || 'ส่งความคิดเห็นไม่สำเร็จ กรุณาลองใหม่');
         return;
       }
-      trackResearchEvent({ eventName: 'comment_created', outcome: 'success', properties });
+      await trackResearchEvent(
+        { eventName: 'comment_created', outcome: 'success', properties },
+        { waitForDelivery: true },
+      );
       setEditorKey((key) => key + 1);
       onSuccess?.();
       router.refresh();

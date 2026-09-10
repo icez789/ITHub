@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Pusher from 'pusher-js';
 import Link from 'next/link';
+import { externalServiceEnabled } from '../lib/externalServicesCore';
 import { notificationChannelName } from '../lib/pusherChannels';
 // 1. ✅ Import Server Action ที่เราเพิ่งสร้าง
 import { markNotificationsAsRead } from '../lib/actions'; 
@@ -25,7 +26,7 @@ export default function NotificationBell({ count: initialCount, notifications: i
   useEffect(() => {
     const key = process.env.NEXT_PUBLIC_PUSHER_KEY;
     const cluster = process.env.NEXT_PUBLIC_PUSHER_CLUSTER;
-    if (!currentUserId || !key || !cluster) return;
+    if (!currentUserId || !externalServiceEnabled(key, cluster)) return;
     const pusher = new Pusher(key, {
       cluster,
       channelAuthorization: {

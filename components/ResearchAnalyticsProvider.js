@@ -12,12 +12,33 @@ const TRACK_EVENT_NAME = 'ithub:research-analytics-track';
 const CONSENT_EVENT_NAME = 'ithub:research-analytics-consent';
 const SESSION_STORAGE_KEY = 'ithub_research_analytics_session_v1';
 const SESSION_IDLE_TIMEOUT_MS = 30 * 60 * 1000;
+const DELIVERY_WAIT_TIMEOUT_MS = 5_000;
 const eventNameSet = new Set(ANALYTICS_EVENT_NAMES);
 const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-export function trackResearchEvent(event) {
-  if (typeof window === 'undefined') return;
-  window.dispatchEvent(new CustomEvent(TRACK_EVENT_NAME, { detail: event }));
+export function trackResearchEvent(event, { waitForDelivery = false } = {}) {
+  if (typeof window === 'undefined') return Promise.resolve({ delivered: false, reason: 'server' });
+  if (!waitForDelivery) {
+    window.dispatchEvent(new CustomEvent(TRACK_EVENT_NAME, { detail: event }));
+    return Promise.resolve({ delivered: false, reason: 'queued' });
+  }
+
+  return new Promise((resolve) => {
+    let settled = false;
+    const finish = (result) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timeout);
+      resolve(result);
+    };
+    const timeout = setTimeout(
+      () => finish({ delivered: false, reason: 'timeout' }),
+      DELIVERY_WAIT_TIMEOUT_MS,
+    );
+    const detail = { ...event, deliveryCallback: finish, deliveryHandled: false };
+    window.dispatchEvent(new CustomEvent(TRACK_EVENT_NAME, { detail }));
+    if (!detail.deliveryHandled) finish({ delivered: false, reason: 'unavailable' });
+  });
 }
 
 export function setResearchAnalyticsEnabled(enabled) {
@@ -81,10 +102,19 @@ export default function ResearchAnalyticsProvider({ initialEnabled = false }) {
   const memorySessionRef = useRef(null);
 
   const sendEvent = useCallback((detail) => {
-    if (!enabledRef.current || !detail || !eventNameSet.has(detail.eventName)) return;
+    const finish = typeof detail?.deliveryCallback === 'function'
+      ? detail.deliveryCallback
+      : null;
+    if (!enabledRef.current || !detail || !eventNameSet.has(detail.eventName)) {
+      finish?.({ delivered: false, reason: 'disabled' });
+      return;
+    }
     const eventId = createUuid();
     const sessionId = getSessionId(memorySessionRef);
-    if (!eventId || !sessionId) return;
+    if (!eventId || !sessionId) {
+      finish?.({ delivered: false, reason: 'session_unavailable' });
+      return;
+    }
 
     const event = {
       eventId,
@@ -103,10 +133,11 @@ export default function ResearchAnalyticsProvider({ initialEnabled = false }) {
     try {
       safeEvent = validateAnalyticsEventPayload(event);
     } catch {
+      finish?.({ delivered: false, reason: 'invalid_event' });
       return;
     }
 
-    void fetch('/api/analytics/events', {
+    const request = fetch('/api/analytics/events', {
       method: 'POST',
       credentials: 'same-origin',
       headers: { 'Content-Type': 'application/json' },
@@ -114,7 +145,12 @@ export default function ResearchAnalyticsProvider({ initialEnabled = false }) {
       keepalive: true,
       mode: 'same-origin',
       referrerPolicy: 'same-origin',
-    }).catch(() => {});
+    }).then((response) => ({
+      delivered: response.ok,
+      status: response.status,
+    })).catch(() => ({ delivered: false, reason: 'network' }));
+    if (finish) void request.then(finish);
+    else void request;
   }, []);
 
   useEffect(() => {
@@ -122,7 +158,12 @@ export default function ResearchAnalyticsProvider({ initialEnabled = false }) {
   }, [initialEnabled]);
 
   useEffect(() => {
-    const handleTrack = (event) => sendEvent(event.detail);
+    const handleTrack = (event) => {
+      const detail = event.detail;
+      if (!detail || typeof detail !== 'object') return;
+      detail.deliveryHandled = true;
+      sendEvent(detail);
+    };
     const handleConsent = (event) => {
       const nextEnabled = Boolean(event.detail?.enabled);
       enabledRef.current = nextEnabled;
