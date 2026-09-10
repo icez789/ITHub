@@ -4,7 +4,7 @@
 >
 > Branch: `codex/feedback-research-analytics`
 >
-> สถานะ: ฟีเจอร์, local verification และ isolated Vercel Preview verification ผ่านแล้ว; ยังไม่ทำ pilot, migrate/deploy Production หรือ execute retention
+> สถานะ: ฟีเจอร์, local verification, isolated Vercel Preview verification และชุดดำเนิน Pilot พร้อมแล้ว; ยังไม่ทำ pilot, migrate/deploy Production หรือ execute retention
 
 ## 1. ขอบเขตข้อมูล
 
@@ -197,5 +197,6 @@ Helper นี้ล็อก project/team/branch, รับเฉพาะ targe
 - แผน: [`ITHUB_FEEDBACK_RESEARCH_ANALYTICS_PLAN.md`](./ITHUB_FEEDBACK_RESEARCH_ANALYTICS_PLAN.md)
 - เช็กลิสต์: [`ITHUB_FEEDBACK_RESEARCH_ANALYTICS_CHECKLIST.md`](./ITHUB_FEEDBACK_RESEARCH_ANALYTICS_CHECKLIST.md)
 - Data/privacy contract: [`ITHUB_FEEDBACK_RESEARCH_ANALYTICS_DATA_CONTRACT.md`](./ITHUB_FEEDBACK_RESEARCH_ANALYTICS_DATA_CONTRACT.md)
-- Checkpoint ล่าสุด: [`ITHUB_FEEDBACK_RESEARCH_ANALYTICS_CHECKPOINT_08.md`](./ITHUB_FEEDBACK_RESEARCH_ANALYTICS_CHECKPOINT_08.md)
+- Pilot runbook: [`ITHUB_FEEDBACK_RESEARCH_ANALYTICS_PILOT_RUNBOOK.md`](./ITHUB_FEEDBACK_RESEARCH_ANALYTICS_PILOT_RUNBOOK.md)
+- Checkpoint ล่าสุด: [`ITHUB_FEEDBACK_RESEARCH_ANALYTICS_CHECKPOINT_09.md`](./ITHUB_FEEDBACK_RESEARCH_ANALYTICS_CHECKPOINT_09.md)
 - Visual decision: [`../design/2026-09-09_RESEARCH_ANALYTICS_DASHBOARD.md`](../design/2026-09-09_RESEARCH_ANALYTICS_DASHBOARD.md)

@@ -2,9 +2,9 @@
 
 > แผนต้นทาง: [`ITHUB_FEEDBACK_RESEARCH_ANALYTICS_PLAN.md`](./ITHUB_FEEDBACK_RESEARCH_ANALYTICS_PLAN.md)
 >
-> Checkpoint ล่าสุด: [`ITHUB_FEEDBACK_RESEARCH_ANALYTICS_CHECKPOINT_08.md`](./ITHUB_FEEDBACK_RESEARCH_ANALYTICS_CHECKPOINT_08.md)
+> Checkpoint ล่าสุด: [`ITHUB_FEEDBACK_RESEARCH_ANALYTICS_CHECKPOINT_09.md`](./ITHUB_FEEDBACK_RESEARCH_ANALYTICS_CHECKPOINT_09.md)
 >
-> สถานะ: Phase 1–5 และ isolated Vercel Preview verification ผ่านแล้ว; รอ pilot, manual assistive-technology check และ Production gates
+> สถานะ: Phase 1–5, isolated Vercel Preview verification และชุดดำเนิน Pilot พร้อมแล้ว; รอ decision sign-off, ผู้เข้าร่วม, manual assistive-technology check และ Production gates
 >
 > อัปเดตล่าสุด: 10 กันยายน 2569
 >
@@ -37,7 +37,7 @@
 
 - [ ] ให้อาจารย์รับรองข้อความ SUS ไทย–อังกฤษ ลำดับข้อ และทิศทาง positive/negative หลัง pilot 5–10 คน
 - [ ] กำหนดประชากรที่มีสิทธิ์ตอบและ denominator ของ response rate แบบ snapshot ต่อ campaign เพื่อไม่ให้ตัวหารเปลี่ยนย้อนหลัง
-- [ ] ยืนยันขอบเขต Analytics: ค่าเริ่มต้นแนะนำให้เก็บเฉพาะสมาชิกที่เข้าสู่ระบบและกดยินยอม เพื่อให้ถอน consent และลบ raw events ได้แน่นอน
+- [x] ยืนยันขอบเขต Analytics เป็นสมาชิกที่เข้าสู่ระบบและกดยินยอมเท่านั้น เพื่อให้ถอน consent และลบ raw events ได้แน่นอน
 - [ ] กำหนด session: ค่าเริ่มต้นแนะนำเป็นรหัสสุ่มต่อ browser session และหมดช่วงหลังไม่มี activity 30 นาที โดยไม่ใช้ IP หรือ User-Agent
 - [ ] กำหนดความหมาย observed success/failure และ denominator ของแต่ละ funnel รวมถึง search-to-open ภายใน 5 นาที
 - [ ] ตัดสินใจการถอนแบบประเมิน: เก็บ tombstone ว่าเคยถอนและห้ามตอบซ้ำ หรืออนุญาตให้ส่งใหม่; ต้องสอดคล้องกับ “หนึ่งครั้งต่อ campaign”
@@ -45,7 +45,7 @@
 - [ ] กำหนดวันสิ้นสุดโครงการ เขตเวลา และผู้รับผิดชอบ retention job สำหรับ raw events 180 วัน และ Evaluation/Feedback ไม่เกินหนึ่งปีหลังโครงการ
 - [ ] กำหนด HMAC key version/rotation; ต้องยังลบ events เก่าของผู้ถอน consent ได้หลังหมุน secret
 - [ ] กำหนด consent/privacy notice version ที่จะบันทึกเป็นหลักฐานพร้อม `consented_at`/`withdrawn_at`
-- [ ] เลือกวิธีสร้าง ZIP ที่ควบคุม memory ได้และผ่านข้อจำกัด runtime ของ Vercel โดยไม่ส่งข้อมูลผ่าน Server Action return payload
+- [x] เลือก aggregate-only deterministic stored ZIP จาก Node.js GET Route; จำกัดขนาด/เวลาใน unit test และไม่ส่ง binary ผ่าน Server Action return payload
 
 ## 3. Phase 0 — Contract, safety และ branch setup
 
@@ -117,7 +117,7 @@
 - [x] เพิ่มแบบประเมิน SUS 10 ข้อ Likert 1–5 โดยเก็บลำดับและทิศทางเดิม พร้อมป้ายชัดเจนว่าเป็นฉบับนำร่อง
 - [x] เพิ่มงานทดลอง 5 งาน พร้อมผล `success / partial / failed / not_attempted` และ difficulty 1–5
 - [x] เก็บ respondent type, experience และ primary device ด้วย controlled vocabulary แบบ pilot
-- [ ] แยก self-reported result ออกจาก observed analytics อย่างชัดเจนใน schema, UI และ export
+- [x] แยก self-reported result ออกจาก `observed / not_observed / unavailable` อย่างชัดเจนใน schema, UI, metrics และ export
 - [x] คำนวณ SUS ฝั่ง server จากคำตอบต้นทาง และทดสอบช่วงคะแนน 0–100
 - [x] ป้องกัน double-submit ด้วย database constraint, client submission UUID และ structured action state; ยังไม่อ้างว่าผ่าน stress test แบบ concurrent
 - [x] รองรับการถอนคำตอบตามค่าเริ่มต้นแบบ tombstone ล้างเนื้อหาและห้ามส่งใหม่ใน campaign เดิม
@@ -130,7 +130,7 @@
 - [x] sanitize/normalize route ฝั่ง server: รับเฉพาะ same-site pathname และตัด query/hash
 - [x] ให้สมาชิกดูเฉพาะรายการของตนและสถานะที่กำหนด
 - [x] ทำ `/admin/feedback` สำหรับ priority, issue theme, status และ internal note โดย Admin/Super Admin เท่านั้น
-- [ ] ไม่ใส่ internal note ใน member DTO, analytics event หรือ export
+- [x] ไม่ใส่ internal note ใน member DTO, analytics event, audit metadata หรือ export และมี canary tests รองรับ
 - [x] เพิ่ม transaction/audit log เมื่อผู้ดูแลเปลี่ยน status/priority/theme โดยไม่คัดลอก internal note ลง audit metadata
 - [x] ใช้ `useActionState`/pending/error/success state และปิดปุ่มระหว่างส่ง
 
@@ -228,6 +228,7 @@
 - [x] ตรวจ Preview build/runtime logs: build สำเร็จ, ไม่พบ error/fatal หรือ 5xx; รหัส 4xx ที่พบมาจาก negative security/validation tests ตามตั้งใจ
 - [x] รัน post-smoke `db:check:e2e` ผ่าน 11/11 และทุก integrity counter เป็น 0; fixture users/campaigns เหลือ 0
 - [x] ยืนยันรอบนี้ว่าไม่ได้ promote E2E Preview, ย้าย test rows, migrate/deploy Production หรือ execute retention
+- [x] เตรียม Pilot runbook, decision sign-off sheet, session record, manual accessibility script, Go/No-Go และ incident/cleanup boundary แล้ว
 - [ ] ทำ manual NVDA/VoiceOver check ใน Preview/pilot และบันทึกผล
 - [ ] ก่อน Production migration ต้องยืนยัน target, backup, checksum/restore plan และได้รับอนุญาตเฉพาะรอบนั้น
 - [ ] หลัง Production deploy ให้ smoke consent/evaluation/feedback/admin/export ด้วยข้อมูล QA ที่ติดป้ายและ cleanup ได้
@@ -246,6 +247,7 @@
 8. `chore: bootstrap isolated research preview branch`
 9. `chore: enable isolated research preview deployment`
 10. `test: verify protected research preview release`
+11. `docs: prepare research pilot execution pack`
 
 ทุก commit ให้ stage เฉพาะไฟล์ใน scope และมี scoped tests ที่เกี่ยวข้อง ห้ามรวม presentation artifacts, `output/`, `tmp/`, `.codex-artifacts/` หรือเอกสาร Phase 2 ที่ยังไม่ได้ตัดสินใจ
 
@@ -363,3 +365,11 @@
 - Full Preview Chromium smoke ผ่าน 11/11 ใน 4.0 นาที ครอบคลุม security/roles, consent/evaluation/feedback, Dashboard/export, visual matrix และ responsive assertions
 - Runtime scan ไม่พบ error/fatal หรือ 5xx; post-smoke database check ผ่าน 11/11, integrity counters เป็น 0 และ fixture users/campaigns เหลือ 0
 - Local unit ผ่าน 79/79, lint ผ่าน และ build ผ่านบน Next.js 16.3.4; Production ยังไม่ถูก migrate, deploy, promote หรือรัน retention
+
+### 10 กันยายน 2569 — Checkpoint 09 Pilot execution readiness — Codex
+
+- เพิ่ม Pilot runbook ที่รวม decision sign-off, campaign sheet, participant/session record, task script, manual NVDA/VoiceOver procedure, Go/No-Go และ incident boundary
+- ตรวจ checklist drift แล้วปิดรายการที่มีหลักฐาน implementation/test แล้ว: member opt-in Analytics scope, bounded GET-route ZIP, self-reported/observed separation และ internal-note exclusion
+- กำหนดให้ใช้ participant code `P01`–`P10`, campaign scope `pilot`, ฐาน `test_e2e` และห้ามคัดลอกชื่อ/อีเมล/รหัสนักศึกษาลง session record
+- บันทึกข้อจำกัดเครื่องปัจจุบัน: Chrome/Edge พร้อม แต่ไม่มี NVDA; VoiceOver ต้องใช้ macOS จึงยังไม่อ้างผล manual assistive-technology
+- ยังไม่สร้าง/เปิด campaign, เชิญผู้เข้าร่วม, lock questionnaire, migrate/deploy Production หรือ execute retention
