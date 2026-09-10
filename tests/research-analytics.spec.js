@@ -7,6 +7,7 @@ import db from '../lib/db.js';
 import { grantAnalyticsConsentRecord, withdrawAnalyticsConsentRecord } from '../lib/researchConsentCore.js';
 import { createResearchSubjectKey } from '../lib/researchPrivacyCore.js';
 import { assertE2eSafety } from '../scripts/e2e-safety.mjs';
+import { authorizeVercelPreview } from './preview-access.mjs';
 
 assertE2eSafety();
 
@@ -82,7 +83,36 @@ async function postAnalytics(page, payload) {
   }, payload);
 }
 
-async function grantConsent(userId) {
+async function grantConsent(page, userId) {
+  if (process.env.ITHUB_E2E_ACCESS_URL) {
+    const analyticsRoute = '**/api/analytics/events';
+    let interceptedEvents = 0;
+    const interceptInitialEvent = async (route) => {
+      interceptedEvents += 1;
+      await route.fulfill({
+        status: 202,
+        contentType: 'application/json',
+        body: JSON.stringify({ ok: true, accepted: 1, duplicates: 0 }),
+      });
+    };
+    await page.route(analyticsRoute, interceptInitialEvent);
+    try {
+      await page.goto('/feedback');
+      await page.locator('input[name="acknowledged"]').check();
+      await page.getByRole('button', { name: 'ยินยอม Research Analytics' }).click();
+      await expect(page.getByText('ยินยอมอยู่')).toBeVisible();
+      await expect.poll(() => interceptedEvents).toBeGreaterThan(0);
+      const [[consent]] = await db.query(
+        "SELECT subject_key FROM analytics_consents WHERE user_id = ? AND status = 'active'",
+        [userId],
+      );
+      expect(consent?.subject_key).toMatch(/^[a-f0-9]{64}$/);
+      return consent.subject_key;
+    } finally {
+      await page.unroute(analyticsRoute, interceptInitialEvent);
+    }
+  }
+
   const keyVersion = Number(process.env.ITHUB_ANALYTICS_KEY_VERSION || 1);
   const subjectKey = createResearchSubjectKey(
     userId,
@@ -108,6 +138,7 @@ test.describe('consented research analytics ingestion', () => {
       window.localStorage.setItem('theme', 'light');
       window.localStorage.setItem('ithub_palette_v1', 'classic');
     });
+    await authorizeVercelPreview(page);
   });
 
   test.afterEach(async () => {
@@ -161,7 +192,7 @@ test.describe('consented research analytics ingestion', () => {
     const member = await createAccount(testInfo, 'storage');
     const campaign = await createOpenCampaign(member.id);
     await login(page, member);
-    const subjectKey = await grantConsent(member.id);
+    const subjectKey = await grantConsent(page, member.id);
     const piiCanary = `private-${randomUUID()}@example.com`;
     const sessionId = randomUUID();
     const payload = {

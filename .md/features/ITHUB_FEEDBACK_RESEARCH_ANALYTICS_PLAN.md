@@ -1,10 +1,10 @@
 # ITHub Feedback & Research Analytics
 
-> สถานะ: กำลังพัฒนา — Phase 1–5, local verification และ Preview configuration guard ผ่านแล้ว; ยังไม่เขียนค่า Vercel/Preview, ทำ Pilot หรือแตะ Production
+> สถานะ: กำลังพัฒนา — Phase 1–5 และ isolated Vercel Preview verification ผ่านแล้ว; รอ pilot, manual assistive-technology check และ Production gates
 >
 > เป้าหมาย: สร้างข้อมูลที่ตรวจสอบได้สำหรับโครงงานบทที่ 4–5
 >
-> อัปเดตล่าสุด: 9 กันยายน 2569
+> อัปเดตล่าสุด: 10 กันยายน 2569
 >
 > เช็กลิสต์การลงมือทำ: [`ITHUB_FEEDBACK_RESEARCH_ANALYTICS_CHECKLIST.md`](./ITHUB_FEEDBACK_RESEARCH_ANALYTICS_CHECKLIST.md)
 >
@@ -12,7 +12,7 @@
 >
 > Setup/release runbook: [`ITHUB_FEEDBACK_RESEARCH_ANALYTICS_SETUP.md`](./ITHUB_FEEDBACK_RESEARCH_ANALYTICS_SETUP.md)
 >
-> Checkpoint ล่าสุด: [`ITHUB_FEEDBACK_RESEARCH_ANALYTICS_CHECKPOINT_07.md`](./ITHUB_FEEDBACK_RESEARCH_ANALYTICS_CHECKPOINT_07.md)
+> Checkpoint ล่าสุด: [`ITHUB_FEEDBACK_RESEARCH_ANALYTICS_CHECKPOINT_08.md`](./ITHUB_FEEDBACK_RESEARCH_ANALYTICS_CHECKPOINT_08.md)
 
 ## 1. เป้าหมาย
 

@@ -2,11 +2,11 @@
 
 > แผนต้นทาง: [`ITHUB_FEEDBACK_RESEARCH_ANALYTICS_PLAN.md`](./ITHUB_FEEDBACK_RESEARCH_ANALYTICS_PLAN.md)
 >
-> Checkpoint ล่าสุด: [`ITHUB_FEEDBACK_RESEARCH_ANALYTICS_CHECKPOINT_07.md`](./ITHUB_FEEDBACK_RESEARCH_ANALYTICS_CHECKPOINT_07.md)
+> Checkpoint ล่าสุด: [`ITHUB_FEEDBACK_RESEARCH_ANALYTICS_CHECKPOINT_08.md`](./ITHUB_FEEDBACK_RESEARCH_ANALYTICS_CHECKPOINT_08.md)
 >
-> สถานะ: Phase 1–5, local verification และ Preview configuration guard ผ่านแล้ว; รออนุญาตเขียนค่า Vercel/Preview และปิด academic decision gates
+> สถานะ: Phase 1–5 และ isolated Vercel Preview verification ผ่านแล้ว; รอ pilot, manual assistive-technology check และ Production gates
 >
-> อัปเดตล่าสุด: 9 กันยายน 2569
+> อัปเดตล่าสุด: 10 กันยายน 2569
 >
 > หลักการ: ติ๊ก `[x]` เฉพาะเมื่อมีโค้ด ผลทดสอบ หรือหลักฐานตรวจรับรองรับ
 
@@ -214,21 +214,25 @@
 - [x] E2E ยืนยัน guest/user/teacher เข้า admin page และ replay admin Server Action โดยตรงไม่ได้; Analytics endpoint ปฏิเสธ guest, no-consent และ cross-origin แล้ว
 - [x] E2E ยืนยันไม่มี event ก่อน consent และไม่มี PII ใน event/export
 - [x] รัน `npm.cmd run lint`
-- [x] รัน `npm.cmd run test:unit` ผ่าน 77/77 หลังเพิ่ม Preview guard tests
+- [x] รัน `npm.cmd run test:unit` ผ่าน 79/79 หลังเพิ่ม Preview guard และ protected-access tests
 - [x] รัน `npm.cmd run build`
 - [x] รัน migration/preflight/check บน isolated `_e2e`
-- [x] รัน `npm.cmd run preview:research:validate` แบบ local-only ผ่าน: branch/project/ฐาน `_e2e` และตัวแปร allowlist 29 รายการ; ยังไม่เขียน Vercel
+- [x] รัน `npm.cmd run preview:research:validate` แบบ local-only ผ่าน: branch/project/ฐาน `_e2e` และตัวแปร allowlist 29 รายการ
 - [x] รัน Playwright Phase 2 แบบ serial ด้วย isolated `_e2e` ผ่าน 12/12, Phase 3 Analytics ผ่าน 9/9 และ Phase 4 Dashboard/Export ผ่าน 6/6 บน Chromium/Firefox/WebKit พร้อม cleanup fixture; ยังไม่เปิด parallel จนกว่าจะมี per-worker isolation
 - [x] รัน Phase 5 focused clean reruns ผ่านรวม 22 tests และตั้งใจ skip palette matrix 2 ครั้งใน Firefox/WebKit; fixture users/campaigns หลังจบเหลือ 0
 - [ ] ทำ pilot 5–10 คน แยก campaign/data จากรอบจริง และบันทึกข้อแก้ไขคำถาม
 - [ ] ล็อก questionnaire/campaign หลังผ่าน pilot ก่อนเก็บข้อมูลจริง
-- [ ] สร้าง Preview branch-scoped variables สำหรับ `codex/feedback-research-analytics` โดยใช้ `test_e2e`, secret แยก และ external services เท่าที่จำเป็น
-- [ ] ยืนยันว่า Preview ไม่ inherit Production DB/secrets ก่อน push ที่ทำให้ Vercel build
-- [ ] รัน Preview smoke, visual/accessibility check, runtime log scan และ post-smoke `db:check:e2e`
-- [ ] ห้าม promote E2E Preview ไป Production และห้ามย้าย pilot/test rows เข้าฐานจริง
+- [x] สร้าง Preview branch-scoped variables 29 รายการสำหรับ `codex/feedback-research-analytics` โดยใช้ `test_e2e`, secret แยก, ปิด runtime write opt-ins และปิด external services ที่ไม่จำเป็น
+- [x] อ่าน metadata กลับและยืนยันว่าทั้ง 29 variables อยู่เฉพาะ branch + Preview โดยไม่มี missing, duplicate, wrong branch หรือ wrong target ก่อนเปิด Git deployment
+- [x] รัน protected Preview smoke บน Chromium ผ่าน 11/11 รวม role/security, consent/evaluation/feedback, Dashboard/export, 5 palettes × Light/Dark และ responsive 375×812/1280×800
+- [x] ตรวจ Preview build/runtime logs: build สำเร็จ, ไม่พบ error/fatal หรือ 5xx; รหัส 4xx ที่พบมาจาก negative security/validation tests ตามตั้งใจ
+- [x] รัน post-smoke `db:check:e2e` ผ่าน 11/11 และทุก integrity counter เป็น 0; fixture users/campaigns เหลือ 0
+- [x] ยืนยันรอบนี้ว่าไม่ได้ promote E2E Preview, ย้าย test rows, migrate/deploy Production หรือ execute retention
+- [ ] ทำ manual NVDA/VoiceOver check ใน Preview/pilot และบันทึกผล
 - [ ] ก่อน Production migration ต้องยืนยัน target, backup, checksum/restore plan และได้รับอนุญาตเฉพาะรอบนั้น
 - [ ] หลัง Production deploy ให้ smoke consent/evaluation/feedback/admin/export ด้วยข้อมูล QA ที่ติดป้ายและ cleanup ได้
-- [ ] บันทึก source commit, migration result, Preview/Production URLs, test counts, known limits และ rollback steps
+- [x] บันทึก Preview source commit, deployment ID/URLs, test counts, database cleanup, known limits และ rollback boundary ใน Checkpoint 08
+- [ ] บันทึก Production migration/deployment URL และผลหลัง deploy เมื่อผ่าน pilot และได้รับอนุญาตแล้วเท่านั้น
 
 ## 10. Commit plan
 
@@ -239,6 +243,9 @@
 5. `test: verify feedback research analytics rollout`
 6. `docs: document feedback research analytics release`
 7. `chore: prepare isolated research preview configuration`
+8. `chore: bootstrap isolated research preview branch`
+9. `chore: enable isolated research preview deployment`
+10. `test: verify protected research preview release`
 
 ทุก commit ให้ stage เฉพาะไฟล์ใน scope และมี scoped tests ที่เกี่ยวข้อง ห้ามรวม presentation artifacts, `output/`, `tmp/`, `.codex-artifacts/` หรือเอกสาร Phase 2 ที่ยังไม่ได้ตัดสินใจ
 
@@ -346,3 +353,13 @@
 - Remote-write path ไม่มี `--force` และมี metadata preflight ที่ปฏิเสธ branch ซึ่งมี override อยู่แล้ว เพื่อไม่หมุน secrets/key version โดยปริยาย
 - `npm.cmd run preview:research:validate` ผ่านบน project link ปัจจุบันด้วยสถานะ `validated-local-only`; ยังไม่ได้เรียก Vercel API หรือเปลี่ยน environment ภายนอก
 - ยังไม่ push, deploy, migrate Production หรือ execute retention
+
+### 10 กันยายน 2569 — Checkpoint 08 isolated Preview verification — Codex
+
+- สร้าง branch บน remote แบบปิด Git deployment ชั่วคราวก่อน แล้วตั้ง variables 29 รายการเฉพาะ `codex/feedback-research-analytics` + Preview โดยไม่สร้าง deployment ที่อาจ inherit Production
+- ยืนยัน metadata หลังตั้งค่า: 29/29, ไม่มี missing/unexpected/duplicate/wrong-branch/wrong-target; ฐานคือ `test_e2e`, secret แยก และ runtime E2E/retention writes เป็น `false`
+- เปิด Git deployment หลัง isolation พร้อมแล้ว; deployment `dpl_5f2pGBEohdTp5a3anKgLt6UVCsTx` จาก `ea8dfa5` อยู่สถานะ READY และยังเปิด Vercel Authentication
+- เพิ่ม harness สำหรับ temporary protected-Preview access โดยจำกัด origin ให้ตรง immutable deployment และไม่เก็บ share token ใน Git
+- Full Preview Chromium smoke ผ่าน 11/11 ใน 4.0 นาที ครอบคลุม security/roles, consent/evaluation/feedback, Dashboard/export, visual matrix และ responsive assertions
+- Runtime scan ไม่พบ error/fatal หรือ 5xx; post-smoke database check ผ่าน 11/11, integrity counters เป็น 0 และ fixture users/campaigns เหลือ 0
+- Local unit ผ่าน 79/79, lint ผ่าน และ build ผ่านบน Next.js 16.3.4; Production ยังไม่ถูก migrate, deploy, promote หรือรัน retention

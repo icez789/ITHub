@@ -5,6 +5,7 @@ import bcrypt from 'bcryptjs';
 
 import db from '../lib/db.js';
 import { assertE2eSafety } from '../scripts/e2e-safety.mjs';
+import { authorizeVercelPreview } from './preview-access.mjs';
 
 assertE2eSafety();
 
@@ -91,6 +92,7 @@ test.describe('Feedback and research Phase 2', () => {
       window.localStorage.setItem('theme', 'light');
       window.localStorage.setItem('ithub_palette_v1', 'classic');
     });
+    await authorizeVercelPreview(page);
   });
 
   test.afterEach(async () => {
@@ -107,7 +109,7 @@ test.describe('Feedback and research Phase 2', () => {
     await login(page, member);
     await page.goto('/admin/feedback');
     await expect(page).toHaveURL('/');
-    await page.context().clearCookies();
+    await page.context().clearCookies({ name: 'user_session' });
 
     const teacher = await createAccount('teacher', testInfo, 'teacher-guard');
     await login(page, teacher);
@@ -322,7 +324,7 @@ test.describe('Feedback and research Phase 2', () => {
         [admin.id],
       ))[0][0].count)).toBe(1);
     }
-    await page.context().clearCookies();
+    await page.context().clearCookies({ name: 'user_session' });
     const guestResponse = await replayServerAction(page, actionRequest);
     expect(guestResponse.ok()).toBe(true);
     expect(await guestResponse.text()).not.toContain(noteCanary);
@@ -341,6 +343,7 @@ test.describe('Feedback and research Phase 2', () => {
   });
 
   test('lets Super Admin create and advance a pilot campaign and keeps the UI responsive', async ({ page }, testInfo) => {
+    test.setTimeout(180_000);
     const superAdmin = await createAccount('super_admin', testInfo, 'super-campaign');
     const suffix = randomUUID().slice(0, 8);
     const campaignName = `Research UI E2E Campaign ${suffix}`;
@@ -370,12 +373,24 @@ test.describe('Feedback and research Phase 2', () => {
     await db.query("UPDATE users SET role = 'super_admin' WHERE id = ?", [superAdmin.id]);
     await fillCampaignForm();
     await page.getByRole('button', { name: 'สร้างแบบร่าง' }).click();
-    await expect(page.getByRole('heading', { level: 3, name: campaignName })).toBeVisible();
+    await expect.poll(async () => Number((await db.query(
+      'SELECT COUNT(*) AS count FROM evaluation_campaigns WHERE slug = ?',
+      [`${fixtureSlugPrefix}${suffix}`],
+    ))[0][0].count), { timeout: 30_000 }).toBe(1);
+    await expect(page.getByRole('heading', { level: 3, name: campaignName })).toBeVisible({ timeout: 30_000 });
+    const campaignStatus = async () => (await db.query(
+      'SELECT status FROM evaluation_campaigns WHERE slug = ?',
+      [`${fixtureSlugPrefix}${suffix}`],
+    ))[0][0]?.status;
     await page.getByRole('button', { name: 'เปิดรับคำตอบ' }).click();
-    await expect(page.getByText('เปิดรับคำตอบ', { exact: true }).first()).toBeVisible();
+    await expect.poll(campaignStatus, { timeout: 30_000 }).toBe('open');
+    await expect(page.getByRole('button', { name: 'ปิดรับคำตอบ' })).toBeVisible({ timeout: 30_000 });
     await page.getByRole('button', { name: 'ปิดรับคำตอบ' }).click();
+    await expect.poll(campaignStatus, { timeout: 30_000 }).toBe('closed');
+    await expect(page.getByRole('button', { name: 'ล็อกรอบประเมิน' })).toBeVisible({ timeout: 30_000 });
     await page.getByRole('button', { name: 'ล็อกรอบประเมิน' }).click();
-    await expect(page.getByText('ล็อกแล้ว', { exact: true })).toBeVisible();
+    await expect.poll(campaignStatus, { timeout: 30_000 }).toBe('locked');
+    await expect(page.getByText('ล็อกแล้ว', { exact: true })).toBeVisible({ timeout: 30_000 });
 
     const [[campaign]] = await db.query(
       'SELECT status, data_scope, questionnaire_version FROM evaluation_campaigns WHERE slug = ?',

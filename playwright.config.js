@@ -1,6 +1,7 @@
 // @ts-check
 import { defineConfig, devices } from '@playwright/test';
 import { loadEnvConfig } from '@next/env';
+import { isDiscoveryPreviewUrl } from './scripts/discovery-preview-safety.mjs';
 import { assertE2eSafety } from './scripts/e2e-safety.mjs';
 
 /**
@@ -10,11 +11,21 @@ import { assertE2eSafety } from './scripts/e2e-safety.mjs';
 loadEnvConfig(process.cwd(), true);
 assertE2eSafety();
 
+const localBaseURL = 'http://127.0.0.1:3000';
+const baseURL = String(process.env.ITHUB_E2E_BASE_URL || localBaseURL).trim().replace(/\/$/, '');
+const usesLocalServer = baseURL === localBaseURL;
+if (!usesLocalServer && !isDiscoveryPreviewUrl(baseURL)) {
+  throw new Error('Remote E2E is limited to an immutable ITHub Preview deployment URL');
+}
+
 /**
  * @see https://playwright.dev/docs/test-configuration
  */
 export default defineConfig({
   testDir: './tests',
+  // Remote Server Actions include network and cold-start latency; keep local
+  // feedback fast while allowing Preview assertions to observe their result.
+  expect: { timeout: usesLocalServer ? 5_000 : 30_000 },
   // Node's unit-test runner owns these files; Playwright must not import them.
   testIgnore: ['**/unit/**'],
   /* Run tests in files in parallel */
@@ -30,7 +41,7 @@ export default defineConfig({
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
     /* Base URL to use in actions like `await page.goto('')`. */
-    baseURL: 'http://127.0.0.1:3000',
+    baseURL,
 
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
     trace: 'on-first-retry',
@@ -75,12 +86,12 @@ export default defineConfig({
   ],
 
   /* Run your local dev server before starting the tests */
-  webServer: {
+  webServer: usesLocalServer ? {
     command: 'npm start',
-    url: 'http://127.0.0.1:3000',
+    url: localBaseURL,
     // Reusing an arbitrary local server could point guarded tests at a
     // different database than the verified _e2e environment.
     reuseExistingServer: false,
     timeout: 120_000,
-  },
+  } : undefined,
 });

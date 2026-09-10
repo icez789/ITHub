@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { isDiscoveryPreviewUrl, previewDatabaseIdentity } from '../../scripts/discovery-preview-safety.mjs';
+import { validatePreviewAccessUrl } from '../preview-access.mjs';
 
 test('preview smoke never accepts production or unrelated deployment URLs', () => {
   assert.equal(isDiscoveryPreviewUrl('https://it-abc123-thiraphat-s-projects.vercel.app'), true);
@@ -8,6 +9,20 @@ test('preview smoke never accepts production or unrelated deployment URLs', () =
     'http://it-abc123-thiraphat-s-projects.vercel.app']) {
     assert.equal(isDiscoveryPreviewUrl(url), false);
   }
+});
+
+test('protected Preview access accepts only a token for the same immutable deployment', () => {
+  const base = 'https://it-abc123-thiraphat-s-projects.vercel.app';
+  assert.equal(
+    validatePreviewAccessUrl(base, `${base}/?_vercel_share=temporary-test-token`),
+    `${base}/?_vercel_share=temporary-test-token`,
+  );
+  assert.equal(validatePreviewAccessUrl(base, ''), null);
+  assert.throws(
+    () => validatePreviewAccessUrl(base, 'https://it-other-thiraphat-s-projects.vercel.app/?_vercel_share=x'),
+    /must match/,
+  );
+  assert.throws(() => validatePreviewAccessUrl(base, `${base}/`), /share token/);
 });
 
 test('preview database guard requires isolated write opt-in and real credentials', () => {

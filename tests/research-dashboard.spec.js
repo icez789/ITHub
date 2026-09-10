@@ -6,6 +6,7 @@ import bcrypt from 'bcryptjs';
 import db from '../lib/db.js';
 import { readStoredZipEntries, RESEARCH_EXPORT_ENTRY_NAMES } from '../lib/researchExportCore.js';
 import { assertE2eSafety } from '../scripts/e2e-safety.mjs';
+import { authorizeVercelPreview } from './preview-access.mjs';
 
 assertE2eSafety();
 
@@ -195,6 +196,7 @@ test.describe('Research analytics dashboard and export', () => {
       if (!window.localStorage.getItem('theme')) window.localStorage.setItem('theme', 'light');
       if (!window.localStorage.getItem('ithub_palette_v1')) window.localStorage.setItem('ithub_palette_v1', 'classic');
     });
+    await authorizeVercelPreview(page);
   });
 
   test.afterEach(async () => {
@@ -213,7 +215,7 @@ test.describe('Research analytics dashboard and export', () => {
     await expect(page).toHaveURL('/');
 
     await db.query("UPDATE users SET role = 'admin' WHERE id = ?", [teacher.id]);
-    await page.context().clearCookies();
+    await page.context().clearCookies({ name: 'user_session' });
     await login(page, teacher);
     await page.goto('/admin/analytics?respondent=private-free-text');
     const filterError = page.getByText('ตัวกรองไม่ถูกต้อง กรุณาเลือกข้อมูลใหม่', { exact: true });
@@ -306,7 +308,7 @@ test.describe('Research analytics dashboard and export', () => {
         await expect(page.locator('html')).toHaveAttribute('data-mode', mode);
         await expect(page.locator('html')).toHaveAttribute('data-palette', palette);
         await expect(page.getByRole('heading', { level: 1, name: 'แบบประเมินและ Feedback' })).toBeVisible();
-        await expect(page.getByText('เปิดรับคำตอบ', { exact: true })).toBeVisible();
+        await expect(page.getByText('เปิดรับคำตอบ', { exact: true }).first()).toBeVisible();
         expect(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)).toBe(true);
         await page.screenshot({ path: testInfo.outputPath(`research-feedback-${palette}-${mode}.png`), fullPage: false, animations: 'disabled' });
       }

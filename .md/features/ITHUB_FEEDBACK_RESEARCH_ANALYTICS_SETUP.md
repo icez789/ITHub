@@ -1,10 +1,10 @@
 # ITHub Feedback & Research Analytics — Setup and Release Runbook
 
-> วันที่: 9 กันยายน 2569
+> วันที่: 10 กันยายน 2569
 >
 > Branch: `codex/feedback-research-analytics`
 >
-> สถานะ: ฟีเจอร์, local verification และ Preview configuration guard พร้อมแล้ว; ยังไม่เขียนค่า Vercel, push, สร้าง Preview, migrate Production หรือ deploy
+> สถานะ: ฟีเจอร์, local verification และ isolated Vercel Preview verification ผ่านแล้ว; ยังไม่ทำ pilot, migrate/deploy Production หรือ execute retention
 
 ## 1. ขอบเขตข้อมูล
 
@@ -136,9 +136,9 @@ node --env-file-if-exists=.env scripts/research-retention.mjs --execute
 
 Production ต้องมี opt-in ชั้นที่สอง `ITHUB_RESEARCH_RETENTION_ALLOW_PRODUCTION=true` การ execute ทำใน transaction เดียวและ rollback หากการลบกลุ่มใดล้มเหลว แต่ backup/restore plan ยังเป็นข้อบังคับก่อนรัน
 
-## 9. Preview gate ก่อน push ครั้งแรก
+## 9. Preview gate และรอบที่ตรวจผ่านแล้ว
 
-ยังห้าม push branch นี้จนกว่าจะตรวจครบทุกข้อ:
+ทุกครั้งที่สร้าง branch Preview ใหม่ต้องตรวจครบก่อนเปิด Git deployment:
 
 - สร้าง variables แบบ branch-scoped สำหรับ `codex/feedback-research-analytics`
 - `DB_NAME` ชี้ฐาน `test_e2e` หรือฐาน isolated ที่ชื่อลงท้าย `_e2e`; ห้าม inherit Production database variables
@@ -163,9 +163,18 @@ node --env-file-if-exists=.env.e2e.local scripts/configure-research-preview-bran
 
 Helper นี้ล็อก project/team/branch, รับเฉพาะ target `preview`, ส่งค่าผ่าน stdin, สร้าง session/action/analytics secrets และ disabled E2E password ใหม่คนละค่า, ปิด E2E/retention writes, override legacy Pusher/E2E variables ที่อาจ inherit จาก project scope และไม่พิมพ์ค่า sensitive ลงหลักฐาน
 
-ก่อนเขียนค่า helper จะเรียก `env ls` แบบ metadata-only และปฏิเสธหาก branch มี override แม้แต่รายการเดียว จึงไม่มี `--force` และไม่หมุน Analytics secret โดยปริยาย หากรอบก่อนล้มกลางทาง ให้หยุด ตรวจ partial overrides และวางแผน recovery แยก; ห้ามลบ/ทับหรือเพิ่ม key version เอง ส่วน `scripts/configure-discovery-preview-branch.mjs` ยังคงล็อกไว้สำหรับ branch Discovery เดิมและห้ามใช้กับ release นี้
+ก่อนเขียนค่า helper จะเรียก `env ls` แบบ metadata-only และปฏิเสธหาก branch มี override แม้แต่รายการเดียว คำสั่งภายในใช้ `--force` เฉพาะเพื่อสร้าง branch override ที่มีชื่อซ้ำกับ project-level variable หลัง preflight ยืนยันว่า branch ยังว่าง จึงไม่ใช่การอนุญาตให้หมุนค่าของ branch ที่ตั้งไว้แล้ว หากรอบก่อนล้มกลางทาง ให้หยุด ตรวจ partial overrides และวางแผน recovery แยก; ห้ามลบ/ทับหรือเพิ่ม key version เอง ส่วน `scripts/configure-discovery-preview-branch.mjs` ยังคงล็อกไว้สำหรับ branch Discovery เดิมและห้ามใช้กับ release นี้
 
 หลัง Preview พร้อม ให้ตรวจ guest/member/teacher/admin/super-admin, consent/evaluation/feedback, Dashboard/export, 375×812 และ 1280×800, keyboard/assistive technology, runtime error logs และ `db:check:e2e` หลัง cleanup ห้าม promote Preview ที่ผูก E2E ไป Production
+
+รอบที่ตรวจเมื่อ 10 กันยายน 2569:
+
+- ตั้ง branch-scoped Preview variables ครบ 29 รายการบน `codex/feedback-research-analytics`; metadata readback ตรง branch/target ทุกค่าและไม่มีรายการขาด เกิน หรือซ้ำ
+- ใช้ฐาน `test_e2e`, Preview-only secrets และปิด E2E/retention writes กับบริการภายนอกที่ไม่จำเป็น
+- Preview จาก source commit `ea8dfa5` อยู่สถานะ READY และยังเปิด Vercel Authentication
+- การทดสอบ protected Preview ใช้ temporary share URL เฉพาะ process; ห้ามบันทึก token ลง `.env`, Git, checkpoint หรือ test output
+- Chromium smoke ผ่าน 11/11; build/runtime ไม่พบ error/fatal/5xx; post-smoke database check และ fixture cleanup ผ่าน
+- รายละเอียด deployment, counts และข้อจำกัดอยู่ใน Checkpoint 08; manual NVDA/VoiceOver และ pilot ยังเป็น gate ถัดไป
 
 ## 10. Export และการจัดการไฟล์
 
@@ -188,5 +197,5 @@ Helper นี้ล็อก project/team/branch, รับเฉพาะ targe
 - แผน: [`ITHUB_FEEDBACK_RESEARCH_ANALYTICS_PLAN.md`](./ITHUB_FEEDBACK_RESEARCH_ANALYTICS_PLAN.md)
 - เช็กลิสต์: [`ITHUB_FEEDBACK_RESEARCH_ANALYTICS_CHECKLIST.md`](./ITHUB_FEEDBACK_RESEARCH_ANALYTICS_CHECKLIST.md)
 - Data/privacy contract: [`ITHUB_FEEDBACK_RESEARCH_ANALYTICS_DATA_CONTRACT.md`](./ITHUB_FEEDBACK_RESEARCH_ANALYTICS_DATA_CONTRACT.md)
-- Checkpoint ล่าสุด: [`ITHUB_FEEDBACK_RESEARCH_ANALYTICS_CHECKPOINT_07.md`](./ITHUB_FEEDBACK_RESEARCH_ANALYTICS_CHECKPOINT_07.md)
+- Checkpoint ล่าสุด: [`ITHUB_FEEDBACK_RESEARCH_ANALYTICS_CHECKPOINT_08.md`](./ITHUB_FEEDBACK_RESEARCH_ANALYTICS_CHECKPOINT_08.md)
 - Visual decision: [`../design/2026-09-09_RESEARCH_ANALYTICS_DASHBOARD.md`](../design/2026-09-09_RESEARCH_ANALYTICS_DASHBOARD.md)
