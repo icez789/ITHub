@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   BarChart3,
   CheckCircle2,
@@ -57,25 +57,24 @@ function SelectField({ id, name, label, options, required = true, defaultValue =
 }
 
 export function ResearchEvaluationForm({ campaign, clientSubmissionId }) {
-  const { state, action, pending, messageId, onSubmit } = useResearchActionForm(submitResearchEvaluationAction);
   const [taskResults, setTaskResults] = useState(() => RESEARCH_TASKS.map(() => ''));
   const startedRef = useRef(false);
-  const trackedSubmissionRef = useRef(null);
-
-  useEffect(() => {
+  const submitWithAnalytics = useCallback(async (previousState, formData) => {
+    const nextState = await submitResearchEvaluationAction(previousState, formData);
     if (
-      !state?.success
-      || state.result?.status !== 'submitted'
-      || state.result?.idempotent
-      || trackedSubmissionRef.current === state.result.evaluationId
-    ) return;
-    trackedSubmissionRef.current = state.result.evaluationId;
-    trackResearchEvent({
-      eventName: 'evaluation_submitted',
-      outcome: 'success',
-      campaignId: campaign.campaignId,
-    });
-  }, [campaign.campaignId, state]);
+      nextState?.success
+      && nextState.result?.status === 'submitted'
+      && !nextState.result?.idempotent
+    ) {
+      await trackResearchEvent({
+        eventName: 'evaluation_submitted',
+        outcome: 'success',
+        campaignId: campaign.campaignId,
+      }, { waitForDelivery: true });
+    }
+    return nextState;
+  }, [campaign.campaignId]);
+  const { state, action, pending, messageId, onSubmit } = useResearchActionForm(submitWithAnalytics);
 
   const trackStart = () => {
     if (startedRef.current) return;
@@ -211,32 +210,28 @@ export function ResearchEvaluationForm({ campaign, clientSubmissionId }) {
 }
 
 export function ResearchFeedbackForm({ campaigns, clientSubmissionId, routePath }) {
-  const { state, action, pending, messageId, onSubmit } = useResearchActionForm(submitResearchFeedbackAction);
-  const formRef = useRef(null);
-  const trackedSubmissionRef = useRef(null);
-
-  useEffect(() => {
+  const submitWithAnalytics = useCallback(async (previousState, formData) => {
+    const category = String(formData.get('category') || '');
+    const rawCampaignId = String(formData.get('campaignId') || '');
+    const nextState = await submitResearchFeedbackAction(previousState, formData);
     if (
-      !state?.success
-      || state.result?.status !== 'submitted'
-      || state.result?.idempotent
-      || trackedSubmissionRef.current === state.result.feedbackId
-    ) return;
-    const formData = formRef.current ? new FormData(formRef.current) : null;
-    const category = String(formData?.get('category') || '');
-    const rawCampaignId = String(formData?.get('campaignId') || '');
-    trackedSubmissionRef.current = state.result.feedbackId;
-    trackResearchEvent({
-      eventName: 'feedback_submitted',
-      outcome: 'success',
-      campaignId: rawCampaignId ? Number(rawCampaignId) : undefined,
-      properties: { category },
-    });
-  }, [state]);
+      nextState?.success
+      && nextState.result?.status === 'submitted'
+      && !nextState.result?.idempotent
+    ) {
+      await trackResearchEvent({
+        eventName: 'feedback_submitted',
+        outcome: 'success',
+        campaignId: rawCampaignId ? Number(rawCampaignId) : undefined,
+        properties: { category },
+      }, { waitForDelivery: true });
+    }
+    return nextState;
+  }, []);
+  const { state, action, pending, messageId, onSubmit } = useResearchActionForm(submitWithAnalytics);
 
   return (
     <form
-      ref={formRef}
       action={action}
       onSubmit={onSubmit}
       className="space-y-5"
