@@ -2,7 +2,7 @@
 
 > วันที่จัดทำ: 10 กันยายน 2569
 >
-> สถานะ: พร้อมดำเนินการหลัง decision sign-off; เอกสารนี้ไม่ใช่หลักฐานว่า Pilot หรือ manual screen-reader test ผ่านแล้ว
+> สถานะ: มี fail-closed readiness guard แล้วและพร้อมดำเนินการหลัง decision sign-off; เอกสารนี้ไม่ใช่หลักฐานว่า Pilot หรือ manual screen-reader test ผ่านแล้ว
 >
 > Environment: protected Vercel Preview ของ `codex/feedback-research-analytics` + isolated `test_e2e` เท่านั้น
 
@@ -17,6 +17,7 @@
 - [ ] ผู้ดำเนินการยืนยันว่า Pusher, Gemini และ Cloudinary ที่ถูกปิดไม่กระทบ 5 งานที่ใช้ทดสอบ
 - [ ] กำหนดผู้รับผิดชอบ incident, retention และไฟล์ export แล้ว
 - [ ] จองช่วง Pilot ที่ไม่มี Playwright, seed, migration smoke, performance fixture หรือ cleanup job รันกับ `test_e2e`
+- [ ] `npm.cmd run pilot:research:validate` คืน `status: ready` จากไฟล์ที่ผู้รับผิดชอบกรอกหลัง sign-off จริง
 
 ห้ามใช้ Production URL/ฐานข้อมูล, ห้าม promote Preview นี้ และห้ามนำ fixture/Pilot rows ไปคัดลอกเข้าฐานจริง
 
@@ -83,12 +84,27 @@ Lifecycle เดินหน้าอย่างเดียว ห้ามย
 
 ## 5. Technical preflight
 
+สร้างไฟล์ทำงานที่ถูก Git ignore จาก [ตัวอย่าง Pilot config](./ITHUB_FEEDBACK_RESEARCH_ANALYTICS_PILOT_CONFIG.example.json) แล้วกรอกตาม decision sheet:
+
+```powershell
+New-Item -ItemType Directory -Force -Path .vercel/release-evidence | Out-Null
+Copy-Item -LiteralPath .md/features/ITHUB_FEEDBACK_RESEARCH_ANALYTICS_PILOT_CONFIG.example.json -Destination .vercel/release-evidence/research-pilot-config.json
+```
+
+- ตัวอย่างตั้ง decision เป็น `pending`, owner/tester ว่าง และ confirmation เป็น `false` โดยตั้งใจ จึงต้องถูกบล็อกจนกว่าจะกรอกข้อมูลที่ได้รับอนุมัติจริง
+- ใช้สถานะ decision เป็น `approved_for_pilot`, operator code แทนชื่อ และเวลา UTC เท่านั้น ห้ามใส่ชื่อ อีเมล รหัสนักศึกษา password, token หรือ secret ใน config
+- Participant codes ต้องเรียงต่อเนื่อง `P01` เป็นต้นไป จำนวน 5–10 รหัส และต้องเท่ากับ `eligibleMemberCount`
+- Alias ที่คำสั่งแสดง (`pilot_p01`, `pilot.p01@example.invalid`) ใช้เป็นแนวทางตั้งบัญชีสังเคราะห์ได้ แต่ให้สร้าง password แยกในช่องทางลับและห้ามบันทึก password ลง config/Git
+
+ตัวตรวจนี้อ่านเฉพาะ config, Git branch, `.vercel/project.json` และชื่อฐานจาก environment ไม่เชื่อมต่อเครือข่าย ไม่อ่าน/เขียนฐานข้อมูล และไม่สร้างบัญชีหรือ campaign ผล `ready` ยืนยันเพียงว่าข้อมูลที่กรอกครบและตรง guard ไม่ได้พิสูจน์ตัวตนผู้อนุมัติหรือทดแทนลายเซ็นใน decision sheet
+
 บันทึกผลและเวลา ห้ามคัดลอก secret ลงเอกสาร:
 
 ```powershell
 git status --short --branch
 git rev-parse HEAD
 npm.cmd run preview:research:validate
+npm.cmd run pilot:research:validate
 npm.cmd run test:unit
 npm.cmd run lint
 npm.cmd run build
@@ -106,6 +122,7 @@ npm.cmd run db:check:e2e
 | Source commit | [กรอก] |
 | Deployment ID + immutable URL | [กรอก; ห้ามใส่ share token] |
 | Branch variables 29/29 | [กรอก] |
+| Pilot readiness guard | [กรอก `ready`, 11/11 decisions, participant/eligible count; ห้ามคัดลอก secret] |
 | Unit / lint / build | [กรอก] |
 | DB check 11/11 + counters 0 | [กรอก] |
 | Backup/restore requirement | ไม่ใช้กับ `test_e2e` Pilot; Production ยังถูก block |

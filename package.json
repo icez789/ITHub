@@ -32,6 +32,7 @@
     "test:research:workflows:e2e": "node --env-file-if-exists=.env.e2e.local scripts/research-workflows-smoke.mjs --e2e",
     "test:research:metrics-performance:e2e": "node --env-file-if-exists=.env.e2e.local scripts/research-metrics-performance.mjs --e2e",
     "preview:research:validate": "node --env-file-if-exists=.env.e2e.local scripts/configure-research-preview-branch.mjs --dry-run",
+    "pilot:research:validate": "node --env-file-if-exists=.env.e2e.local scripts/validate-research-pilot-readiness.mjs",
     "check": "npm run lint && npm run build"
   },
   "dependencies": {

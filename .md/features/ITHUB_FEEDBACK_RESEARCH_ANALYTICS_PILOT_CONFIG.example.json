@@ -1,0 +1,94 @@
+{
+  "schemaVersion": 1,
+  "branch": "codex/feedback-research-analytics",
+  "target": "preview",
+  "database": "test_e2e",
+  "campaign": {
+    "slug": "pilot-2569-round-a",
+    "displayLabel": "ITHub Research Pilot Round A",
+    "dataScope": "pilot",
+    "questionnaireVersion": "sus-th-pilot-v1",
+    "evaluationNoticeVersion": "research-notice-pilot-v1",
+    "analyticsNoticeVersion": "research-analytics-pilot-v1",
+    "eligibleMemberCount": 5,
+    "startsAt": "2026-09-15T02:00:00.000Z",
+    "endsAt": "2026-09-15T05:00:00.000Z",
+    "retentionUntil": "2027-09-15T05:00:00.000Z"
+  },
+  "participants": [
+    "P01",
+    "P02",
+    "P03",
+    "P04",
+    "P05"
+  ],
+  "approvals": {
+    "susTranslation": {
+      "status": "pending",
+      "approvedByCode": "",
+      "approvedAt": ""
+    },
+    "eligiblePopulation": {
+      "status": "pending",
+      "approvedByCode": "",
+      "approvedAt": ""
+    },
+    "analyticsScope": {
+      "status": "pending",
+      "approvedByCode": "",
+      "approvedAt": ""
+    },
+    "sessionDefinition": {
+      "status": "pending",
+      "approvedByCode": "",
+      "approvedAt": ""
+    },
+    "observedTasks": {
+      "status": "pending",
+      "approvedByCode": "",
+      "approvedAt": ""
+    },
+    "evaluationWithdrawal": {
+      "status": "pending",
+      "approvedByCode": "",
+      "approvedAt": ""
+    },
+    "openTextPolicy": {
+      "status": "pending",
+      "approvedByCode": "",
+      "approvedAt": ""
+    },
+    "statistics": {
+      "status": "pending",
+      "approvedByCode": "",
+      "approvedAt": ""
+    },
+    "retention": {
+      "status": "pending",
+      "approvedByCode": "",
+      "approvedAt": ""
+    },
+    "hmacOwnership": {
+      "status": "pending",
+      "approvedByCode": "",
+      "approvedAt": ""
+    },
+    "noticeVersions": {
+      "status": "pending",
+      "approvedByCode": "",
+      "approvedAt": ""
+    }
+  },
+  "owners": {
+    "incidentOwnerCode": "",
+    "retentionOwnerCode": "",
+    "exportOwnerCode": ""
+  },
+  "accessibility": {
+    "nvdaTesterCode": "",
+    "voiceOverTesterCode": ""
+  },
+  "quietWindowConfirmed": false,
+  "externalServicesDisabledConfirmed": false,
+  "finalApprovalAfterPilotRequired": true
+}

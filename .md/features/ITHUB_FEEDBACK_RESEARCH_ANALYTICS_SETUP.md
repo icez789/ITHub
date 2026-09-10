@@ -4,7 +4,7 @@
 >
 > Branch: `codex/feedback-research-analytics`
 >
-> สถานะ: ฟีเจอร์, local verification, isolated Vercel Preview verification และชุดดำเนิน Pilot พร้อมแล้ว; ยังไม่ทำ pilot, migrate/deploy Production หรือ execute retention
+> สถานะ: ฟีเจอร์, local verification, isolated Vercel Preview verification, ชุดดำเนิน Pilot และ fail-closed readiness guard พร้อมแล้ว; ยังไม่ทำ pilot, migrate/deploy Production หรือ execute retention
 
 ## 1. ขอบเขตข้อมูล
 
@@ -92,6 +92,14 @@ Performance fixture สร้าง 100,000 events เฉพาะฐาน `_e2
 - กติกาตอบใหม่หลังถอน Evaluation
 - วันสิ้นสุดโครงการ, `retention_until`, retention owner และรอบ cleanup
 - HMAC key owner และแผนหมุนคีย์
+
+ก่อนสร้าง campaign ให้คัดลอก [Pilot config ตัวอย่าง](./ITHUB_FEEDBACK_RESEARCH_ANALYTICS_PILOT_CONFIG.example.json) ไปที่ `.vercel/release-evidence/research-pilot-config.json`, กรอกด้วย operator/participant codes โดยไม่ใส่ PII หรือ secret แล้วรัน:
+
+```powershell
+npm.cmd run pilot:research:validate
+```
+
+ต้องได้ `status: ready`, decision 11/11, participant 5–10 คนและ eligible snapshot เท่ากัน ตัวตรวจนี้เป็น local read-only completeness gate ไม่ได้สร้างบัญชี/campaign, เชื่อมต่อฐาน/เครือข่าย หรือทดแทนการลงนามของผู้มีอำนาจ ตัวอย่างเริ่มแบบ `blocked` โดยตั้งใจ รายละเอียดการกรอกและ session procedure อยู่ใน Pilot runbook
 
 Lifecycle เป็นทางเดียว:
 
@@ -198,5 +206,6 @@ Helper นี้ล็อก project/team/branch, รับเฉพาะ targe
 - เช็กลิสต์: [`ITHUB_FEEDBACK_RESEARCH_ANALYTICS_CHECKLIST.md`](./ITHUB_FEEDBACK_RESEARCH_ANALYTICS_CHECKLIST.md)
 - Data/privacy contract: [`ITHUB_FEEDBACK_RESEARCH_ANALYTICS_DATA_CONTRACT.md`](./ITHUB_FEEDBACK_RESEARCH_ANALYTICS_DATA_CONTRACT.md)
 - Pilot runbook: [`ITHUB_FEEDBACK_RESEARCH_ANALYTICS_PILOT_RUNBOOK.md`](./ITHUB_FEEDBACK_RESEARCH_ANALYTICS_PILOT_RUNBOOK.md)
-- Checkpoint ล่าสุด: [`ITHUB_FEEDBACK_RESEARCH_ANALYTICS_CHECKPOINT_09.md`](./ITHUB_FEEDBACK_RESEARCH_ANALYTICS_CHECKPOINT_09.md)
+- Pilot config ตัวอย่าง: [`ITHUB_FEEDBACK_RESEARCH_ANALYTICS_PILOT_CONFIG.example.json`](./ITHUB_FEEDBACK_RESEARCH_ANALYTICS_PILOT_CONFIG.example.json)
+- Checkpoint ล่าสุด: [`ITHUB_FEEDBACK_RESEARCH_ANALYTICS_CHECKPOINT_10.md`](./ITHUB_FEEDBACK_RESEARCH_ANALYTICS_CHECKPOINT_10.md)
 - Visual decision: [`../design/2026-09-09_RESEARCH_ANALYTICS_DASHBOARD.md`](../design/2026-09-09_RESEARCH_ANALYTICS_DASHBOARD.md)

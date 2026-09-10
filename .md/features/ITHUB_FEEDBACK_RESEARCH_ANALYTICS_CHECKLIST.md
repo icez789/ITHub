@@ -2,9 +2,9 @@
 
 > แผนต้นทาง: [`ITHUB_FEEDBACK_RESEARCH_ANALYTICS_PLAN.md`](./ITHUB_FEEDBACK_RESEARCH_ANALYTICS_PLAN.md)
 >
-> Checkpoint ล่าสุด: [`ITHUB_FEEDBACK_RESEARCH_ANALYTICS_CHECKPOINT_09.md`](./ITHUB_FEEDBACK_RESEARCH_ANALYTICS_CHECKPOINT_09.md)
+> Checkpoint ล่าสุด: [`ITHUB_FEEDBACK_RESEARCH_ANALYTICS_CHECKPOINT_10.md`](./ITHUB_FEEDBACK_RESEARCH_ANALYTICS_CHECKPOINT_10.md)
 >
-> สถานะ: Phase 1–5, isolated Vercel Preview verification และชุดดำเนิน Pilot พร้อมแล้ว; รอ decision sign-off, ผู้เข้าร่วม, manual assistive-technology check และ Production gates
+> สถานะ: Phase 1–5, isolated Vercel Preview verification, ชุดดำเนิน Pilot และ fail-closed readiness guard พร้อมแล้ว; รอ decision sign-off, ผู้เข้าร่วม, manual assistive-technology check และ Production gates
 >
 > อัปเดตล่าสุด: 10 กันยายน 2569
 >
@@ -214,7 +214,7 @@
 - [x] E2E ยืนยัน guest/user/teacher เข้า admin page และ replay admin Server Action โดยตรงไม่ได้; Analytics endpoint ปฏิเสธ guest, no-consent และ cross-origin แล้ว
 - [x] E2E ยืนยันไม่มี event ก่อน consent และไม่มี PII ใน event/export
 - [x] รัน `npm.cmd run lint`
-- [x] รัน `npm.cmd run test:unit` ผ่าน 79/79 หลังเพิ่ม Preview guard และ protected-access tests
+- [x] รัน `npm.cmd run test:unit` ผ่าน 85/85 หลังเพิ่ม Preview/Pilot readiness guards และ protected-access tests
 - [x] รัน `npm.cmd run build`
 - [x] รัน migration/preflight/check บน isolated `_e2e`
 - [x] รัน `npm.cmd run preview:research:validate` แบบ local-only ผ่าน: branch/project/ฐาน `_e2e` และตัวแปร allowlist 29 รายการ
@@ -229,6 +229,7 @@
 - [x] รัน post-smoke `db:check:e2e` ผ่าน 11/11 และทุก integrity counter เป็น 0; fixture users/campaigns เหลือ 0
 - [x] ยืนยันรอบนี้ว่าไม่ได้ promote E2E Preview, ย้าย test rows, migrate/deploy Production หรือ execute retention
 - [x] เตรียม Pilot runbook, decision sign-off sheet, session record, manual accessibility script, Go/No-Go และ incident/cleanup boundary แล้ว
+- [x] เพิ่ม local-only `pilot:research:validate`, config ตัวอย่างที่เริ่มแบบ blocked และ tests เพื่อบังคับ branch/project/`test_e2e`, 11 decisions, 5–10 participant codes, versions, UTC/retention, owner/tester และ quiet-window gates ก่อนเปิด campaign
 - [ ] ทำ manual NVDA/VoiceOver check ใน Preview/pilot และบันทึกผล
 - [ ] ก่อน Production migration ต้องยืนยัน target, backup, checksum/restore plan และได้รับอนุญาตเฉพาะรอบนั้น
 - [ ] หลัง Production deploy ให้ smoke consent/evaluation/feedback/admin/export ด้วยข้อมูล QA ที่ติดป้ายและ cleanup ได้
@@ -248,6 +249,7 @@
 9. `chore: enable isolated research preview deployment`
 10. `test: verify protected research preview release`
 11. `docs: prepare research pilot execution pack`
+12. `test: add research pilot readiness guard`
 
 ทุก commit ให้ stage เฉพาะไฟล์ใน scope และมี scoped tests ที่เกี่ยวข้อง ห้ามรวม presentation artifacts, `output/`, `tmp/`, `.codex-artifacts/` หรือเอกสาร Phase 2 ที่ยังไม่ได้ตัดสินใจ
 
@@ -373,3 +375,12 @@
 - กำหนดให้ใช้ participant code `P01`–`P10`, campaign scope `pilot`, ฐาน `test_e2e` และห้ามคัดลอกชื่อ/อีเมล/รหัสนักศึกษาลง session record
 - บันทึกข้อจำกัดเครื่องปัจจุบัน: Chrome/Edge พร้อม แต่ไม่มี NVDA; VoiceOver ต้องใช้ macOS จึงยังไม่อ้างผล manual assistive-technology
 - ยังไม่สร้าง/เปิด campaign, เชิญผู้เข้าร่วม, lock questionnaire, migrate/deploy Production หรือ execute retention
+
+### 10 กันยายน 2569 — Checkpoint 10 fail-closed Pilot readiness guard — Codex
+
+- เพิ่ม config contract แบบ strict และ validator ที่อ่านเฉพาะไฟล์ local เพื่อหยุดก่อนเริ่ม Pilot หาก branch/project/ฐาน, scope/version, participant snapshot, UTC/retention, decision/owner/tester หรือ quiet window ไม่ครบ
+- ตัวอย่าง config ตั้ง decision เป็น `pending`, owner/tester ว่าง และ confirmation เป็น `false` โดยตั้งใจ; ไฟล์ใช้งานจริงอยู่ใต้ `.vercel/release-evidence/` ซึ่งถูก Git ignore
+- รายงานแสดงเฉพาะ participant codes และบัญชี alias สังเคราะห์ ไม่รับ password/token/secret หรือ field นอก allowlist และไม่เชื่อมต่อเครือข่าย/ฐานข้อมูล
+- Targeted tests ผ่าน 6/6, unit รวม 85/85, lint ผ่าน; คำสั่งจริงบล็อกเมื่อ config หาย และผ่าน `ready` 11/11 ด้วย fixture ที่ครบก่อนลบ fixture ทิ้ง
+- Guard ตรวจความครบถ้วนของข้อมูลที่กรอก ไม่ได้พิสูจน์ตัวตนหรือลายเซ็นผู้อนุมัติ; decision sign-off, ผู้เข้าร่วม, NVDA/VoiceOver และ Pilot จริงยังคงรอคนดำเนินการ
+- ยังไม่ได้สร้างบัญชี/campaign, เขียนฐานข้อมูล, เรียกบริการภายนอก, migrate/deploy/promote Production หรือ execute retention
