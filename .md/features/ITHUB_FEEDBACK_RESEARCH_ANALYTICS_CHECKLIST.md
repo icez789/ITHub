@@ -250,6 +250,7 @@
 10. `test: verify protected research preview release`
 11. `docs: prepare research pilot execution pack`
 12. `test: add research pilot readiness guard`
+13. `docs: record research pilot guard preview`
 
 ทุก commit ให้ stage เฉพาะไฟล์ใน scope และมี scoped tests ที่เกี่ยวข้อง ห้ามรวม presentation artifacts, `output/`, `tmp/`, `.codex-artifacts/` หรือเอกสาร Phase 2 ที่ยังไม่ได้ตัดสินใจ
 
@@ -382,5 +383,6 @@
 - ตัวอย่าง config ตั้ง decision เป็น `pending`, owner/tester ว่าง และ confirmation เป็น `false` โดยตั้งใจ; ไฟล์ใช้งานจริงอยู่ใต้ `.vercel/release-evidence/` ซึ่งถูก Git ignore
 - รายงานแสดงเฉพาะ participant codes และบัญชี alias สังเคราะห์ ไม่รับ password/token/secret หรือ field นอก allowlist และไม่เชื่อมต่อเครือข่าย/ฐานข้อมูล
 - Targeted tests ผ่าน 6/6, unit รวม 85/85, lint ผ่าน; คำสั่งจริงบล็อกเมื่อ config หาย และผ่าน `ready` 11/11 ด้วย fixture ที่ครบก่อนลบ fixture ทิ้ง
+- Commit `3666c23` ถูก push แล้ว; protected Preview `dpl_4Ty7RVoCocP1TFJ6pBJ42rLTMhD3` จาก full SHA เดียวกันอยู่สถานะ READY, build 12 วินาที, `/login` ตอบ 200 และ runtime scan ไม่พบ error/fatal/5xx
 - Guard ตรวจความครบถ้วนของข้อมูลที่กรอก ไม่ได้พิสูจน์ตัวตนหรือลายเซ็นผู้อนุมัติ; decision sign-off, ผู้เข้าร่วม, NVDA/VoiceOver และ Pilot จริงยังคงรอคนดำเนินการ
 - ยังไม่ได้สร้างบัญชี/campaign, เขียนฐานข้อมูล, เรียกบริการภายนอก, migrate/deploy/promote Production หรือ execute retention

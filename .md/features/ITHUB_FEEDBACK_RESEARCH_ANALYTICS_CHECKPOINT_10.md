@@ -41,6 +41,16 @@
 | CLI fixture ที่ครบ | `ready`, decision 11/11, participant/eligible 5/5; fixture ถูกลบหลังตรวจ |
 | Diff whitespace check | ผ่าน; มีเฉพาะคำเตือน LF/CRLF ตาม checkout Windows |
 
+## Git และ protected Preview evidence
+
+- Implementation commit: `3666c2343c4f52a350fec4791ff16a75bf9faf10` (`test: add research pilot readiness guard`)
+- Push: สำเร็จไปยัง `origin/codex/feedback-research-analytics`
+- Deployment: `dpl_4Ty7RVoCocP1TFJ6pBJ42rLTMhD3`
+- Immutable URL: `https://it-haz3f5bao-thiraphat-s-projects.vercel.app`
+- Vercel state/target: `READY` / Preview (`target=null`); Git branch และ full source SHA ตรงกับ commit ข้างต้น
+- Build: สำเร็จใน 12 วินาทีบน Next.js 16.3.4; มีเพียง npm allow-scripts warning เดิม
+- Protection/runtime check: root ยังคงถูก Vercel Authentication กั้น, `/login` ตอบ 200 ผ่าน authenticated fetch และไม่พบ runtime `error`, `fatal` หรือ 5xx หลังตรวจ
+
 ## สิ่งที่ยังไม่อ้างว่าผ่าน
 
 - Decision 11 หัวข้อและลายเซ็นผู้มีอำนาจยังไม่ถูกกรอก
