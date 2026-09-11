@@ -84,11 +84,15 @@ async function createMonitoredPage(browser, testInfo, label, viewport = { width:
     const reportOnlyCspNoise = text.includes(
       "The Content Security Policy directive 'upgrade-insecure-requests' is ignored when delivered in a report-only policy.",
     );
+    const vercelToolbarReportOnlyNoise = text.includes("Framing 'https://vercel.live/'")
+      && text.includes('report-only Content Security Policy directive');
     const localInsightsNoise = localRun && (
       text.includes('/_vercel/insights/script.js')
       || text === 'Failed to load resource: the server responded with a status of 404 (Not Found)'
     );
-    if (reportOnlyCspNoise || localInsightsNoise) telemetry.ignoredConsole.push(`${label}: ${text}`);
+    if (reportOnlyCspNoise || vercelToolbarReportOnlyNoise || localInsightsNoise) {
+      telemetry.ignoredConsole.push(`${label}: ${text}`);
+    }
     else telemetry.consoleErrors.push(`${label}: ${text}`);
   });
   page.on('pageerror', (error) => telemetry.pageErrors.push(`${label}: ${error.message}`));

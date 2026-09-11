@@ -2,9 +2,9 @@
 
 > แผนต้นทาง: [`ITHUB_FEEDBACK_RESEARCH_ANALYTICS_PLAN.md`](./ITHUB_FEEDBACK_RESEARCH_ANALYTICS_PLAN.md)
 >
-> Checkpoint ล่าสุด: [`ITHUB_FEEDBACK_RESEARCH_ANALYTICS_CHECKPOINT_12.md`](./ITHUB_FEEDBACK_RESEARCH_ANALYTICS_CHECKPOINT_12.md)
+> Checkpoint ล่าสุด: [`ITHUB_FEEDBACK_RESEARCH_ANALYTICS_CHECKPOINT_13.md`](./ITHUB_FEEDBACK_RESEARCH_ANALYTICS_CHECKPOINT_13.md)
 >
-> สถานะ: Phase 1–5 และ exact 5-task technical smoke บน isolated protected Preview ผ่านแล้ว; readiness guard เหลือ human/operational gates 17 รายการก่อน Pilot และ Production
+> สถานะ: Phase 1–5 และ full-story synthetic Pilot P01–P05 บน isolated protected Preview ผ่านแล้ว; human research, manual NVDA/VoiceOver และ Production rollout ยังเป็น gate แยก
 >
 > อัปเดตล่าสุด: 11 กันยายน 2569
 >
@@ -34,6 +34,8 @@
 ## 2. Decision gates
 
 รายการกลุ่มนี้ไม่ขวางการเริ่มเขียน data contract และ tests แต่ต้องปิดก่อน pilot หรือก่อนเก็บข้อมูลจริง
+
+> รอบสังเคราะห์วันที่ 11 กันยายน 2569 บันทึก approval 11/11, owner code 3 รายการ, participant code P01–P05 และ quiet window ใน config ที่ Git ignore เพื่อทดสอบ contract ตามคำอนุมัติของผู้ใช้แล้ว การอนุมัตินี้ครอบคลุม technical rehearsal เท่านั้น จึงไม่ติ๊กแทนการรับรองวิชาการหลัง human Pilot หรือการทดสอบ screen reader ด้วยคน
 
 - [ ] ให้อาจารย์รับรองข้อความ SUS ไทย–อังกฤษ ลำดับข้อ และทิศทาง positive/negative หลัง pilot 5–10 คน
 - [ ] กำหนดประชากรที่มีสิทธิ์ตอบและ denominator ของ response rate แบบ snapshot ต่อ campaign เพื่อไม่ให้ตัวหารเปลี่ยนย้อนหลัง
@@ -230,11 +232,16 @@
 - [x] รัน exact 5-task Pilot smoke บน protected Preview `dpl_GTqwPwbfQpTMc797d9EQkqq8mgHj` จาก `094ad8e` ผ่าน 1/1 โดยปิด Pusher/Gemini/Cloudinary และยืนยัน event สำหรับ search/open, create topic, comment, like/bookmark และ follow/Following ครบ
 - [x] แก้ dynamic route normalization ให้รับ route family ที่ normalize แล้วซ้ำได้ และรอ analytics delivery สำเร็จก่อน navigation/refresh ใน create topic กับ comment
 - [x] ตรวจหลัง exact 5-task smoke แล้ว: application tables 11/11, integrity counters ทุกค่า 0 และไม่พบ Preview error/fatal/5xx
+- [x] รัน full-story synthetic Pilot P01–P05 บน protected Preview `dpl_2XFWF7Cm383EJ8P25yd9T8yjLCWX` จาก `49e0a57` ผ่าน 1/1: campaign lifecycle, consent, 5 งาน, Evaluation/SUS, Feedback, Dashboard, ZIP 7 ไฟล์, lock และ cleanup ครบ
+- [x] แก้ success analytics ของ Evaluation/Feedback ที่สูญหายระหว่าง `revalidatePath()` และบังคับ mysql2 ใช้ UTC หลัง synthetic flow เปิดเผย metric window ที่เลื่อน 7 ชั่วโมง
+- [x] ยืนยัน synthetic cleanup: active consent, open campaign และ synthetic account เหลือ 0; post-run `db:check:e2e` ผ่าน 11/11 และ integrity counters ทุกค่า 0
+- [x] ตรวจ Dashboard screenshot 1280×800 ด้วยตา: แถว 5 งานมี self-reported 5, observed 5, unavailable 0 และ observed rate 100% โดยไม่พบ horizontal overflow
+- [x] ตรวจ Preview build READY ใน 11 วินาทีและไม่พบ error/fatal, HTTP 4xx/5xx; บันทึกว่า runtime request breakdown ว่าง จึงยังมี observability gap
 - [x] ยืนยันรอบนี้ว่าไม่ได้ promote E2E Preview, ย้าย test rows, migrate/deploy Production หรือ execute retention
 - [x] เตรียม Pilot runbook, decision sign-off sheet, session record, manual accessibility script, Go/No-Go และ incident/cleanup boundary แล้ว
 - [x] เพิ่ม local-only `pilot:research:validate`, config ตัวอย่างที่เริ่มแบบ blocked และ tests เพื่อบังคับ branch/project/`test_e2e`, 11 decisions, 5–10 participant codes, versions, UTC/retention, owner/tester และ quiet-window gates ก่อนเปิด campaign
 - [x] ผูก Pilot readiness กับ full SHA ของ HEAD และ Preview evidence ที่ต้องเป็น immutable URL ไม่มี share token, state READY, Vercel target `null`, branch variables 29 รายการ และ authentication ยังเปิด
-- [ ] ทำ manual NVDA/VoiceOver check ใน Preview/pilot และบันทึกผล
+- [ ] ทำ manual NVDA/VoiceOver check ใน Preview/pilot และบันทึกผล; รหัส `SIM-*` ไม่ถือเป็นหลักฐาน manual accessibility
 - [ ] ก่อน Production migration ต้องยืนยัน target, backup, checksum/restore plan และได้รับอนุญาตเฉพาะรอบนั้น
 - [ ] หลัง Production deploy ให้ smoke consent/evaluation/feedback/admin/export ด้วยข้อมูล QA ที่ติดป้ายและ cleanup ได้
 - [x] บันทึก Preview source commit, deployment ID/URLs, test counts, database cleanup, known limits และ rollback boundary ใน Checkpoint 08
@@ -256,6 +263,10 @@
 12. `test: add research pilot readiness guard`
 13. `docs: record research pilot guard preview`
 14. `test: bind pilot readiness to preview evidence`
+15. `fix: preserve pilot analytics without external services`
+16. `docs: record research pilot five-task verification`
+17. `fix: preserve pilot submission analytics and UTC metrics`
+18. `test: record synthetic research pilot verification`
 
 ทุก commit ให้ stage เฉพาะไฟล์ใน scope และมี scoped tests ที่เกี่ยวข้อง ห้ามรวม presentation artifacts, `output/`, `tmp/`, `.codex-artifacts/` หรือเอกสาร Phase 2 ที่ยังไม่ได้ตัดสินใจ
 
@@ -409,3 +420,15 @@
 - Local exact smoke ผ่าน 1/1, unit รวม 89/89, lint/build ผ่าน; protected Preview จาก `094ad8e` ผ่าน exact smoke 1/1 และหลังทดสอบฐาน 11/11/counters 0 พร้อมไม่มี error/fatal/5xx
 - `external_services_review` ปิดได้แล้ว; readiness guard เหลือ 17 human/operational gates ได้แก่ approvals 11, owners 3, NVDA/VoiceOver testers 2 และ quiet window 1
 - ยังไม่ได้เปิด Pilot campaign, ใช้ผู้เข้าร่วมจริง, ทดสอบ NVDA/VoiceOver, migrate/deploy/promote Production หรือ execute retention
+
+### 11 กันยายน 2569 — Checkpoint 13 synthetic Pilot full-story verification — Codex
+
+- รับคำอนุมัติจากผู้ใช้สำหรับ decision 11 รายการและการจำลองผู้เข้าร่วม แล้วกรอก local ignored config ด้วยรหัส `CHAT-USER`, `SIM-*` และ P01–P05 โดยไม่ใส่ข้อมูลส่วนบุคคลหรือ secret
+- Pilot readiness guard ผ่าน `ready` ด้วย decision 11/11, participant/eligible count 5/5, protected Preview, variables 29 รายการ และฐาน `test_e2e`
+- เพิ่ม full-story Playwright ซึ่งสร้าง/เปิด campaign ผ่าน UI, ให้ผู้เข้าร่วมสังเคราะห์ 5 คนทำ 5 งาน ส่ง Evaluation/Feedback, ตรวจ Dashboard/ZIP, ปิด/ล็อก campaign และ cleanup
+- พบและแก้ Evaluation/Feedback success event หายหลัง revalidation และ Dashboard metric เลื่อนช่วงเวลา 7 ชั่วโมงจาก mysql2 local timezone; เพิ่ม regression assertions ใน flow เดียวกัน
+- Local synthetic Pilot ผ่าน 1/1 ใน 1.7 นาที พร้อม summary: response 5, mean SUS 80, Feedback 5, active consent 5, observed participant 5 และ Analytics 120 events
+- Protected Preview จาก `49e0a57` ผ่าน 1/1; Dashboard screenshot แสดง 5/5 observed ครบทุกงาน และ export มี 7 entries โดยไม่มี raw open text/identity fields
+- Vercel deployment READY, build 11 วินาที, ไม่พบ error/fatal/4xx/5xx; request breakdown ว่างจึงบันทึก observability gap แทนการอ้างว่า logs ครบ
+- Post-run `db:check:e2e` ผ่าน application tables 11/11 และ integrity counters ทุกค่า 0; final synthetic/quiet-window counters เป็น 0
+- ผลนี้เป็น technical simulation ไม่ใช่ human research หรือ manual NVDA/VoiceOver; Production migration/deploy ยังคงเป็นงานแยกที่ต้องมี target, backup, checksum, restore plan และคำอนุญาตเฉพาะรอบ

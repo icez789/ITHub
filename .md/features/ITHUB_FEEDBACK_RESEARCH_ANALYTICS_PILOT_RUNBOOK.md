@@ -4,11 +4,13 @@
 >
 > ปรับปรุงล่าสุด: 11 กันยายน 2569
 >
-> สถานะ: exact 5-task technical smoke ผ่านบน protected Preview แล้ว; พร้อมดำเนินการหลังปิด human/operational readiness gates โดยเอกสารนี้ไม่ใช่หลักฐานว่า Pilot หรือ manual screen-reader test ผ่านแล้ว
+> สถานะ: exact 5-task smoke และ full-story synthetic Pilot P01–P05 ผ่านบน protected Preview แล้ว; เอกสารนี้ยังไม่ใช่หลักฐาน human research หรือ manual screen-reader test
 >
 > Environment: protected Vercel Preview ของ `codex/feedback-research-analytics` + isolated `test_e2e` เท่านั้น
 
 ## 1. Hard stops
+
+รอบจำลองทางเทคนิควันที่ 11 กันยายน 2569 ได้รับ approval 11/11 จากผู้ใช้ ใช้ participant/owner/tester code สังเคราะห์และผ่าน readiness guard แล้ว ข้อมูลนี้อนุญาตเฉพาะ automation ใน `test_e2e`; ไม่ทดแทน consent ของมนุษย์ ผู้ดำเนินการจริง การรับรองวิชาการ หรือ manual NVDA/VoiceOver
 
 ห้ามเปิด campaign หรือเริ่มเก็บข้อมูลจนกว่ารายการเหล่านี้ครบ:
 
@@ -16,10 +18,12 @@
 - [ ] มีผู้เข้าร่วม 5–10 คนและกำหนด participant code `P01`–`P10` โดยไม่ใส่ชื่อในเอกสารนี้
 - [ ] Preview ล่าสุดเป็น READY, ยังเปิด Vercel Authentication และ branch variables 29 รายการยังชี้ `test_e2e`
 - [ ] บัญชี Pilot เป็นบัญชีแยกที่ไม่มีชื่อจริง รหัสนักศึกษา หรืออีเมลจริงใน username/email
-- [x] ยืนยันด้วย exact 5-task smoke บน protected Preview จาก `094ad8e` ว่า Pusher, Gemini และ Cloudinary ที่ถูกปิดไม่กระทบงานที่ใช้ทดสอบ
+- [x] ยืนยันด้วย exact 5-task smoke และ full-story synthetic Pilot บน protected Preview จาก `49e0a57` ว่า Pusher, Gemini และ Cloudinary ที่ปิดไม่กระทบ 5 งาน, Evaluation, Feedback, Dashboard หรือ Export
 - [ ] กำหนดผู้รับผิดชอบ incident, retention และไฟล์ export แล้ว
 - [ ] จองช่วง Pilot ที่ไม่มี Playwright, seed, migration smoke, performance fixture หรือ cleanup job รันกับ `test_e2e`
 - [ ] `npm.cmd run pilot:research:validate` คืน `status: ready` จากไฟล์ที่ผู้รับผิดชอบกรอกหลัง sign-off จริง
+
+สำหรับรอบสังเคราะห์เท่านั้น `pilot:research:validate` คืน `ready` ด้วย P01–P05, owner/tester code `SIM-*`, decision 11/11 และ quiet window แล้ว แต่ hard stop ด้านคนจริงข้างต้นยังคงเดิม
 
 ห้ามใช้ Production URL/ฐานข้อมูล, ห้าม promote Preview นี้ และห้ามนำ fixture/Pilot rows ไปคัดลอกเข้าฐานจริง
 
@@ -110,6 +114,7 @@ git rev-parse HEAD
 npm.cmd run preview:research:validate
 npm.cmd run pilot:research:validate
 npm.cmd run test:research:pilot-tasks:e2e
+npm.cmd run test:research:simulated-pilot:e2e
 npm.cmd run test:unit
 npm.cmd run lint
 npm.cmd run build
@@ -117,6 +122,8 @@ npm.cmd run db:check:e2e
 ```
 
 `test:research:pilot-tasks:e2e` ต้องชี้ `ITHUB_E2E_BASE_URL` ไปยัง immutable Preview และส่ง temporary access URL ผ่าน environment ส่วนตัวเท่านั้น ชุดนี้สร้างข้อมูลสังเคราะห์, ตรวจ 5 งานกับ analytics และ cleanup จึงรันได้เฉพาะช่วง preflight ก่อนเปิด campaign; ห้ามรันระหว่าง campaign เป็น `open`
+
+`test:research:simulated-pilot:e2e` ขยายเป็น full story: สร้าง Super Admin/author/P01–P05 แบบสังเคราะห์, เปิด campaign ผ่าน UI, แยก browser context ต่อคน, consent, ทำ 5 งาน, ส่ง Evaluation/Feedback, ตรวจ Dashboard/ZIP, ปิด/ล็อก campaign และ cleanup พร้อม quiet-window assertion ห้ามใช้ผลนี้อ้างว่าเป็นการวิจัยกับมนุษย์หรือ manual accessibility
 
 ตรวจบน Vercel แบบ metadata-only ว่า deployment มาจาก branch นี้, target เป็น Preview, state เป็น READY และ branch overrides ยังครบ 29 รายการ ห้ามรัน remote configuration helper ซ้ำเมื่อ branch มี overrides อยู่แล้ว
 
@@ -134,6 +141,20 @@ npm.cmd run db:check:e2e
 | Unit / lint / build | [กรอก] |
 | DB check 11/11 + counters 0 | [กรอก] |
 | Backup/restore requirement | ไม่ใช้กับ `test_e2e` Pilot; Production ยังถูก block |
+
+### ผล full-story synthetic rehearsal ล่าสุด
+
+| รายการ | ผล |
+| --- | --- |
+| Source / Preview | `49e0a579baac8125280030e171786574a24a7448` / `dpl_2XFWF7Cm383EJ8P25yd9T8yjLCWX` |
+| Readiness | `ready`; decisions 11/11, P01–P05 5/5, variables 29, protected Preview, `test_e2e` |
+| Flow | ผ่าน 1/1: campaign → consent → 5 tasks → Evaluation/Feedback → Dashboard/ZIP → closed/locked → cleanup |
+| Metrics | response 5, Feedback 5, active consent 5, observed participant 5; local reference SUS mean 80 และ Analytics 120 events |
+| Export | 7 ไฟล์ตาม allowlist; ไม่มี raw open text หรือ identity fields |
+| Post-check | quiet-window counters 0; database 11/11 และ integrity counters 0 |
+| Vercel | READY, build 11 วินาที, ไม่พบ error/fatal/4xx/5xx; request breakdown ไม่ถูกคืน จึงมี observability gap |
+
+Vercel Toolbar CSP แบบ report-only ถูกกรองใน test ด้วยข้อความ exact-match เฉพาะ `vercel.live` เท่านั้น ไม่มีการเปลี่ยน security header และ console/app errors อื่นยังทำให้ test ล้มเหลว
 
 ## 6. Session script
 
@@ -193,6 +214,8 @@ Host audit วันที่ 10 กันยายน 2569 พบ Chrome/Edge �
 บันทึกต่อรายการ: `Pass / Fail / Blocked`, browser + screen reader version, route, ขั้นตอนทำซ้ำ, expected/actual และ issue ID โดยไม่บันทึกเสียงหรือข้อความที่มี PII หากยังไม่มี NVDA/VoiceOver ให้ระบุ `Blocked — tool unavailable`; ห้ามใช้ผล automated แทน
 
 ## 8. Go / No-Go
+
+ผล synthetic rehearsal ใช้ปิด technical flow เท่านั้น รายการด้าน human session, final academic approval และ manual NVDA/VoiceOver ด้านล่างต้องมีหลักฐานจริงก่อนอ้างผลวิจัยหรือ accessibility
 
 Go เพื่อจบ Pilot และล็อก questionnaire ได้เมื่อ:
 
